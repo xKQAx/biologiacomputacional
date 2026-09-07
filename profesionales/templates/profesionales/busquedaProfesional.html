@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Profesionales{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/busquedaProfesional.css' %}" />
+{% endblock %}
+
+{% block content %}
+
+<!-- Mini-hero -->
+<section class="page-hero-sm">
+  <div class="container">
+    <div class="mb-3">
+      <span class="hero-badge">
+        <i class="fa-solid fa-users me-2" aria-hidden="true"></i>
+        Comunidad BioCOM
+      </span>
+    </div>
+    <h1 class="page-hero-title">Nuestros Profesionales</h1>
+    <p class="page-hero-subtitle">
+      Investigadores, científicos e ingenieros unidos por la biología computacional.
+      Explora sus perfiles y contribuciones.
+    </p>
+  </div>
+</section>
+
+<div class="container mt-4 mb-5">
+
+  <!-- Sección de introducción -->
+  <div class="profesionales-intro-section mb-5">
+    <p class="fw-light profesionales-intro-card">
+      ¡Bienvenido a nuestra comunidad de biología computacional!
+      Nuestros miembros son una mezcla diversa de investigadores,
+      científicos de datos, ingenieros informáticos, académicos y
+      estudiantes, todos unidos por su dedicación compartida a la
+      integración de la biología y la informática en sus prácticas
+      profesionales.<br /><br />
+      Cada uno de nuestros miembros aporta una perspectiva única y valiosa al
+      campo. Desde el diseño de algoritmos hasta el análisis de datos biológicos
+      y la creación de modelos computacionales, nuestros profesionales impulsan
+      el avance de la ciencia. Te invitamos a explorar sus perfiles.
+    </p>
+    <div class="d-flex justify-content-center">
+      <img
+        src="{% static 'images/profesionales1.jpeg' %}"
+        alt="Profesionales de biología computacional"
+        class="profesionales-intro-img"
+        loading="lazy"
+      />
+    </div>
+  </div>
+
+  {% if user.is_superuser %}
+  <ul class="nav nav-tabs mb-4">
+    <li class="nav-item">
+      <a class="nav-link active bg-light text-black disabled" aria-disabled="true"
+        href="{% url 'buscarProfesional' %}">Gestionar profesional</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link text-black" href="{% url 'agregar_profesional' %}">Agregar profesional</a>
+    </li>
+  </ul>
+  {% elif user.is_staff %}
+  <ul class="nav nav-tabs mb-4">
+    <li class="nav-item">
+      <a class="nav-link active bg-white text-black" aria-current="page" href="#">Gestionar profesional</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link text-black" href="{% url 'agregar_profesional' %}">Agregar profesional</a>
+    </li>
+  </ul>
+  {% endif %}
+
+  <!-- Grid de profesionales -->
+  <div class="profesionales-grid">
+    {% for profesional in profesionales %}
+    <div class="tarjetaprofesional">
+      <img
+        src="{{ profesional.foto.url }}"
+        alt="Foto de {{ profesional.nombre }} {{ profesional.apellido }}"
+        width="120"
+        height="120"
+      />
+      <h3>{{ profesional.nombre }}</h3>
+      <h3>{{ profesional.apellido }}</h3>
+      <a
+        class="view-button"
+        href="id={{ profesional.id }}"
+        aria-label="Ver perfil de {{ profesional.nombre }} {{ profesional.apellido }}"
+      >
+        Ver perfil
+        <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+      </a>
+    </div>
+    {% empty %}
+    <p class="text-center w-100 py-4">No hay profesionales registrados aún.</p>
+    {% endfor %}
+  </div>
+
+</div>
+
+<!-- Notificaciones Toast -->
+<div aria-live="polite" aria-atomic="true">
+  {% for message in messages %}
+    {% if message.tags == 'error' %}
+    <div
+      class="toast align-items-center bg-danger text-white border-0"
+      role="alert" aria-live="assertive" aria-atomic="true"
+      id="errorToast"
+      style="position: fixed; top: 80px; right: 10px; z-index: 1050;"
+    >
+      <div class="d-flex">
+        <div class="toast-body">
+          <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+          {{ message }}
+        </div>
+        <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"
+          aria-label="Cerrar notificación"></button>
+      </div>
+    </div>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        new bootstrap.Toast(document.getElementById("errorToast")).show();
+      });
+    </script>
+    {% elif message.tags == 'success' %}
+    <div
+      class="toast align-items-center bg-success text-white border-0"
+      role="alert" aria-live="assertive" aria-atomic="true"
+      id="successToast"
+      style="position: fixed; top: 80px; right: 10px; z-index: 1050;"
+    >
+      <div class="d-flex">
+        <div class="toast-body">
+          <i class="fa-solid fa-check" aria-hidden="true"></i>
+          {{ message }}
+        </div>
+        <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"
+          aria-label="Cerrar notificación"></button>
+      </div>
+    </div>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        new bootstrap.Toast(document.getElementById("successToast")).show();
+      });
+    </script>
+    {% endif %}
+  {% endfor %}
+</div>
+
+{% endblock %}

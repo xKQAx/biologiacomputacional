@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Contacto{% endblock %}
+
+{% block content %}
+
+<!-- Mini-hero -->
+<section class="page-hero-sm">
+  <div class="container">
+    <div class="mb-3">
+      <span class="hero-badge">
+        <i class="fa-solid fa-paper-plane me-2" aria-hidden="true"></i>
+        Contáctanos
+      </span>
+    </div>
+    <h1 class="page-hero-title">¿Cómo podemos ayudarte?</h1>
+    <p class="page-hero-subtitle">
+      ¿Tienes alguna pregunta, comentario o sugerencia?
+      Estamos siempre disponibles y listos para atenderte.
+    </p>
+  </div>
+</section>
+
+<div class="container py-5">
+  <div class="row gy-4 justify-content-center">
+
+    <!-- Información de contacto -->
+    <div class="col-12 col-md-4">
+      <div class="contact-info-card h-100">
+        <div class="section-tag mb-4">
+          <i class="fa-solid fa-circle-info me-2" aria-hidden="true"></i>
+          Información de contacto
+        </div>
+
+        <div class="contact-info-item">
+          <div class="contact-info-icon">
+            <i class="fa-solid fa-phone" aria-hidden="true"></i>
+          </div>
+          <div>
+            <p class="contact-info-label">Teléfono</p>
+            <p class="contact-info-value">PBX: +57 607 6516500</p>
+          </div>
+        </div>
+
+        <div class="contact-info-item">
+          <div class="contact-info-icon">
+            <i class="fa-solid fa-envelope" aria-hidden="true"></i>
+          </div>
+          <div>
+            <p class="contact-info-label">Correo electrónico</p>
+            <p class="contact-info-value">biocomp@udes.edu.co</p>
+          </div>
+        </div>
+
+        <div class="contact-info-item">
+          <div class="contact-info-icon">
+            <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+          </div>
+          <div>
+            <p class="contact-info-label">Ubicación</p>
+            <p class="contact-info-value">
+              Campus Lagos del Cacique<br>
+              Calle 70 No. 55-210<br>
+              Bucaramanga, Colombia
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Formulario -->
+    <div class="col-12 col-md-7 col-lg-6">
+      <div class="contact-form-card">
+        <h5 class="fw-bold mb-4">Envíanos un mensaje</h5>
+
+        <form class="needs-validation" novalidate method="POST">
+          {% csrf_token %}
+
+          <div class="row g-2">
+            <div class="col-md">
+              <div class="form-floating has-validation mb-2">
+                <input type="text" class="form-control" name="nombres"
+                  id="validationCustomName" placeholder="" required
+                  autocomplete="given-name">
+                <label for="validationCustomName">Nombres</label>
+                <div class="invalid-feedback">Este campo es obligatorio.</div>
+              </div>
+            </div>
+            <div class="col-md">
+              <div class="form-floating has-validation mb-2">
+                <input type="text" class="form-control" name="apellidos"
+                  id="validationCustomLast_name" placeholder="" required
+                  autocomplete="family-name">
+                <label for="validationCustomLast_name">Apellidos</label>
+                <div class="invalid-feedback">Este campo es obligatorio.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-floating has-validation mb-2">
+            <input type="email" class="form-control" name="email"
+              id="validationCustomEmail" placeholder="" required
+              autocomplete="email">
+            <label for="validationCustomEmail">Correo electrónico</label>
+            <div class="invalid-feedback">Este campo es obligatorio.</div>
+          </div>
+
+          <div class="form-floating has-validation mb-2">
+            <input type="tel" class="form-control" name="telefono"
+              id="validationCustomPhone" placeholder="" required
+              autocomplete="tel">
+            <label for="validationCustomPhone">Teléfono</label>
+            <div class="invalid-feedback">Este campo es obligatorio.</div>
+          </div>
+
+          <div class="form-floating has-validation mb-4">
+            <textarea class="form-control" placeholder="" name="opiniones"
+              id="validationCustomOpinions" required
+              style="height: 130px;"></textarea>
+            <label for="validationCustomOpinions">Mensaje</label>
+            <div class="invalid-feedback">Este campo es obligatorio.</div>
+          </div>
+
+          <button class="btn btn-primary-custom w-100" type="submit">
+            <i class="fa-solid fa-paper-plane me-2" aria-hidden="true"></i>
+            Enviar mensaje
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Notificaciones Toast -->
+{% for message in messages %}
+{% if message.tags == 'error' %}
+<div class="toast align-items-center bg-danger text-white border-0"
+  role="alert" aria-live="assertive" aria-atomic="true"
+  id="errorToast"
+  style="position: fixed; top: 80px; right: 10px; z-index: 1050;">
+  <div class="d-flex">
+    <div class="toast-body">
+      <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+      {{ message }}
+    </div>
+    <button type="button" class="btn-close me-2 m-auto"
+      data-bs-dismiss="toast" aria-label="Cerrar"></button>
+  </div>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    new bootstrap.Toast(document.getElementById('errorToast')).show();
+  });
+</script>
+{% elif message.tags == 'success' %}
+<div class="toast align-items-center bg-success text-white border-0"
+  role="alert" aria-live="assertive" aria-atomic="true"
+  id="successToast"
+  style="position: fixed; top: 80px; right: 10px; z-index: 1050;">
+  <div class="d-flex">
+    <div class="toast-body">
+      <i class="fa-solid fa-check" aria-hidden="true"></i>
+      {{ message }}
+    </div>
+    <button type="button" class="btn-close me-2 m-auto"
+      data-bs-dismiss="toast" aria-label="Cerrar"></button>
+  </div>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    new bootstrap.Toast(document.getElementById('successToast')).show();
+  });
+</script>
+{% endif %}
+{% endfor %}
+
+<script src="{% static 'js/contacto.js' %}"></script>
+{% endblock %}

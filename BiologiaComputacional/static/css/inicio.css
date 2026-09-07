@@ -1,0 +1,653 @@
+/* ========================================
+   PÁGINA DE INICIO - DISEÑO MODERNO
+   Variables en tokens.css — no se definen aquí
+   ======================================== */
+
+/* ========================================
+   HERO SECTION
+   ======================================== */
+
+.inicio {
+  min-height: 100vh;
+  background-image: url("/static/images/fondo.jpg");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-color: var(--bg-clean);
+  padding: 6rem 2rem 5rem;
+  position: relative;
+}
+
+.inicio::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    160deg,
+    rgba(2, 45, 124, 0.92) 0%,
+    rgba(3, 82, 166, 0.85) 50%,
+    rgba(0, 0, 0, 0.88) 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+.inicio > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* Badge chip sobre el título */
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(239, 184, 16, 0.15);
+  color: var(--accent-gold);
+  border: 1px solid rgba(239, 184, 16, 0.4);
+  border-radius: 50px;
+  padding: 0.45rem 1.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  backdrop-filter: blur(4px);
+}
+
+/* Título hero */
+.hero-title {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.15;
+  letter-spacing: -0.5px;
+  font-family: "Montserrat", sans-serif;
+}
+
+.hero-title-accent {
+  color: var(--accent-gold);
+  display: block;
+}
+
+/* Subtítulo hero */
+.inicio-subtitle {
+  max-width: 620px;
+  margin: 0 auto 0.5rem;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+/* Botones CTA del hero */
+.hero-cta {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.hero-btn-primary {
+  background-color: var(--accent-gold);
+  color: var(--primary-dark);
+  border: 2px solid var(--accent-gold);
+  border-radius: 50px;
+  padding: 0.8rem 2.2rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  transition: background-color 0.3s ease, transform 0.3s ease,
+              box-shadow 0.3s ease;
+  box-shadow: 0 4px 15px rgba(239, 184, 16, 0.35);
+}
+
+.hero-btn-primary:hover {
+  background-color: var(--accent-gold-dark);
+  border-color: var(--accent-gold-dark);
+  color: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(239, 184, 16, 0.5);
+}
+
+.hero-btn-outline {
+  background-color: transparent;
+  color: rgba(255, 255, 255, 0.92);
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: 50px;
+  padding: 0.8rem 2.2rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: background-color 0.3s ease, border-color 0.3s ease,
+              color 0.3s ease, transform 0.3s ease;
+}
+
+.hero-btn-outline:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.85);
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+/* Indicador scroll */
+.hero-scroll-indicator {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  animation: heroScrollBounce 2s ease-in-out infinite;
+}
+
+.scroll-dot {
+  width: 8px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  margin: 0 auto;
+}
+
+@keyframes heroScrollBounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50%       { transform: translateX(-50%) translateY(10px); }
+}
+
+/* ========================================
+   PARTNERS / INSTITUCIONES
+   ======================================== */
+
+.partners-section {
+  background-color: var(--bg-subtle);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.partners-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+.partner-logo {
+  object-fit: contain;
+  filter: grayscale(80%) opacity(0.55);
+  transition: filter 0.4s ease, transform 0.3s ease;
+  max-width: 120px;
+  height: auto;
+}
+
+.partner-logo:hover {
+  filter: grayscale(0%) opacity(1);
+  transform: scale(1.05);
+}
+
+/* ========================================
+   HIGHLIGHTS — CARACTERÍSTICAS CLAVE
+   ======================================== */
+
+.highlights-section {
+  background-color: var(--bg-clean);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.highlight-card {
+  background-color: var(--bg-clean);
+  border-radius: 16px;
+  padding: 2rem 1.25rem;
+  box-shadow: var(--shadow-soft);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  height: 100%;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.highlight-card:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-6px);
+}
+
+.highlight-icon {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-dark) 100%);
+  color: #ffffff;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  box-shadow: 0 4px 12px rgba(3, 82, 166, 0.25);
+}
+
+.highlight-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.4rem;
+}
+
+.highlight-text {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ========================================
+   ENCABEZADOS DE SECCIÓN
+   ======================================== */
+
+.section-header {
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.section-title {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 700;
+  color: var(--primary-blue);
+  font-family: "Montserrat", sans-serif;
+  margin-bottom: 0.5rem;
+}
+
+.section-subtitle {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* Tag de sección (pill pequeño) */
+.section-tag {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(3, 82, 166, 0.08);
+  color: var(--primary-blue);
+  border-radius: 50px;
+  padding: 0.35rem 1rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+/* ========================================
+   TARJETAS DE CONTENIDO (CARDBOX)
+   ======================================== */
+
+.cardbox {
+  background-color: var(--bg-clean);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 380px;
+  padding: 2rem;
+  box-shadow: var(--shadow-soft);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: center;
+}
+
+.card-image-container {
+  height: 200px;
+  overflow: hidden;
+  border-radius: 10px 10px 0 0;
+  margin: -2rem -2rem 1.5rem -2rem;
+}
+
+.card-image-container img,
+.card-img-fit {
+  object-fit: cover;
+  object-position: center;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.4s ease;
+}
+
+.cardbox:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-8px);
+}
+
+.cardbox:hover .card-img-fit {
+  transform: scale(1.05);
+}
+
+.cardbox a {
+  color: var(--primary-blue);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.cardbox a h5 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--primary-blue);
+  font-family: "Montserrat", sans-serif;
+  transition: color 0.3s ease;
+}
+
+.cardbox a:hover h5 {
+  color: var(--accent-gold);
+}
+
+.cardbox p {
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+  line-height: 1.7;
+}
+
+/* Animation delays */
+.cardbox--delay-1 { animation-delay: 0.1s; }
+.cardbox--delay-2 { animation-delay: 0.2s; }
+.cardbox--delay-3 { animation-delay: 0.3s; }
+
+/* ========================================
+   SECCIÓN NOSOTROS
+   ======================================== */
+
+.nosotros-section {
+  background-color: var(--bg-subtle);
+}
+
+/* Contenedor principal de la tarjeta larga */
+.longcardbox {
+  background-color: var(--bg-clean);
+  border-radius: 20px;
+  padding: 3rem 2.5rem;
+  box-shadow: var(--shadow-soft);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.3s ease;
+  width: 100%;
+}
+
+.longcardbox:hover {
+  box-shadow: var(--shadow-medium);
+}
+
+.nosotros {
+  flex: 1;
+  min-width: 0;
+  padding: 1.5rem;
+}
+
+.nosotros-title {
+  font-size: clamp(1.4rem, 2.5vw, 1.9rem);
+  font-weight: 700;
+  color: var(--primary-blue);
+  font-family: "Montserrat", sans-serif;
+}
+
+.nosotros p {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.9;
+}
+
+.nosotros-lottie {
+  max-width: 35%;
+  height: auto;
+  flex-shrink: 0;
+}
+
+/* ========================================
+   SECCIÓN BENEFICIOS
+   ======================================== */
+
+.beneficios-section {
+  background: linear-gradient(135deg, var(--bg-subtle) 0%, var(--bg-clean) 100%);
+}
+
+.beneficio-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.1rem;
+  background: var(--bg-clean);
+  border-radius: 14px;
+  padding: 1.2rem 1.5rem;
+  box-shadow: var(--shadow-soft);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.beneficio-card:hover {
+  box-shadow: var(--shadow-medium);
+  transform: translateY(-3px);
+}
+
+.beneficio-icon {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-dark) 100%);
+  color: #ffffff;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+
+.beneficio-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.beneficio-text {
+  color: var(--text-secondary);
+  font-size: 0.87rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.beneficios-lottie {
+  max-width: 90%;
+  height: auto;
+  max-height: 400px;
+}
+
+/* ========================================
+   CTA FINAL
+   ======================================== */
+
+.cta-section {
+  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-dark) 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-section::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,60 C400,0 800,120 1200,60 L1200,120 L0,120 Z" fill="rgba(255,255,255,0.04)"/></svg>') no-repeat bottom;
+  background-size: 100% 80px;
+  pointer-events: none;
+}
+
+.cta-title {
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-weight: 800;
+  color: #ffffff;
+  font-family: "Montserrat", sans-serif;
+}
+
+.cta-subtitle {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 1.05rem;
+  line-height: 1.7;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.cta-btn-primary {
+  background-color: var(--accent-gold);
+  color: var(--primary-dark);
+  border: 2px solid var(--accent-gold);
+  border-radius: 50px;
+  padding: 0.9rem 2.5rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  transition: background-color 0.3s ease, transform 0.3s ease,
+              box-shadow 0.3s ease;
+  box-shadow: 0 4px 15px rgba(239, 184, 16, 0.4);
+}
+
+.cta-btn-primary:hover {
+  background-color: var(--accent-gold-dark);
+  border-color: var(--accent-gold-dark);
+  color: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(239, 184, 16, 0.55);
+}
+
+.cta-btn-outline {
+  background-color: transparent;
+  color: rgba(255, 255, 255, 0.9);
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: 50px;
+  padding: 0.9rem 2.5rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: background-color 0.3s ease, border-color 0.3s ease,
+              transform 0.3s ease;
+}
+
+.cta-btn-outline:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.85);
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+/* ========================================
+   ANIMACIONES DE ENTRADA
+   ======================================== */
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ========================================
+   RESPONSIVIDAD
+   ======================================== */
+
+@media (max-width: 768px) {
+  .inicio {
+    padding: 5rem 1rem 4rem;
+    background-attachment: scroll;
+  }
+
+  .hero-title {
+    font-size: 1.9rem;
+  }
+
+  .inicio-subtitle {
+    font-size: 1rem !important;
+  }
+
+  .hero-cta {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .hero-btn-primary,
+  .hero-btn-outline {
+    width: 100%;
+    max-width: 300px;
+    text-align: center;
+  }
+
+  .longcardbox {
+    padding: 2rem 1.25rem;
+  }
+
+  .nosotros {
+    width: 100%;
+    padding: 1rem;
+  }
+
+  .nosotros-lottie {
+    max-width: 65%;
+    margin: 0 auto;
+  }
+
+  .beneficios-lottie {
+    max-width: 100%;
+  }
+
+  .highlight-card {
+    padding: 1.25rem 1rem;
+  }
+
+  .highlight-icon {
+    width: 44px;
+    height: 44px;
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .inicio {
+    padding: 4rem 0.75rem 3rem;
+  }
+
+  .longcardbox {
+    padding: 1.5rem 1rem;
+  }
+
+  .hero-title {
+    font-size: 1.6rem;
+  }
+
+  .section-title {
+    font-size: 1.4rem;
+  }
+
+  .cardbox {
+    max-width: 100%;
+    padding: 1.25rem;
+  }
+
+  .card-image-container {
+    height: 160px;
+  }
+
+  .cta-title {
+    font-size: 1.5rem;
+  }
+
+  .cta-btn-primary,
+  .cta-btn-outline {
+    width: 100%;
+    text-align: center;
+  }
+
+  .partner-logo {
+    max-width: 80px;
+  }
+}
+
+/* Soporte para reducción de movimiento */
+@media (prefers-reduced-motion: reduce) {
+  .cardbox,
+  .hero-scroll-indicator {
+    animation: none;
+  }
+
+  .hero-btn-primary,
+  .hero-btn-outline,
+  .cta-btn-primary,
+  .cta-btn-outline,
+  .highlight-card,
+  .beneficio-card,
+  .cardbox,
+  .partner-logo {
+    transition: none;
+  }
+}

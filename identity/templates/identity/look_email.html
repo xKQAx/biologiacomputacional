@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Verificación de correo electrónico{% endblock %}
+
+{% block content %}
+<div class="container text-center py-5">
+  <img src="{% static 'images/logo-color.png' %}" class="mb-4" width="90" height="75"
+    alt="Logo Biología Computacional">
+
+  <div class="info-card">
+    <i class="info-card-icon fa-solid fa-envelope-open-text text-primary" aria-hidden="true"></i>
+    <h2>Verifica tu correo electrónico</h2>
+    <p>¡Gracias por registrarte! Hemos enviado un correo a la dirección que proporcionaste.</p>
+    <p class="mb-0">Por favor, revisa tu bandeja de entrada y haz clic en el enlace de
+      verificación para activar tu cuenta. Si no lo encuentras, verifica la carpeta de
+      <strong>spam</strong>.</p>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,290 @@
+/* ========================================
+   ESTILOS AVANZADOS DEL FOOTER
+   ======================================== */
+
+/* Variables en tokens.css — no se definen aquí */
+
+/* Footer Principal */
+footer {
+  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-dark) 100%);
+  color: rgba(255, 255, 255, 0.95);
+  position: relative;
+  overflow: hidden;
+}
+
+footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,10 C300,30 900,10 1200,0 L1200,120 L0,120 Z" fill="rgba(255,255,255,0.05)"></path></svg>') repeat-x bottom;
+  background-size: 100% 60px;
+  z-index: 0;
+  pointer-events: none;
+}
+
+footer > .container {
+  position: relative;
+  z-index: 1;
+}
+
+/* Secciones del Footer */
+footer .col-sm-12,
+footer .col-md-2,
+footer .col-md-3,
+footer .col-md-4 {
+  transition: transform 0.3s ease;
+}
+
+footer .col-sm-12:hover,
+footer .col-md-2:hover,
+footer .col-md-3:hover,
+footer .col-md-4:hover {
+  transform: translateY(-4px);
+}
+
+/* Títulos de secciones */
+footer h6 {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  color: var(--accent-gold);
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
+  position: relative;
+  padding-bottom: 0.8rem;
+}
+
+footer h6::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 40px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent-gold), transparent);
+  border-radius: 1px;
+}
+
+/* Párrafos */
+footer p {
+  font-family: 'Montserrat', sans-serif;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.9rem;
+  line-height: 1.8;
+}
+
+footer p.light-text {
+  font-weight: 300;
+  opacity: 0.85;
+}
+
+/* Enlaces en footer */
+footer a {
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  font-weight: 500;
+}
+
+footer a:hover {
+  color: var(--accent-gold);
+  transform: translateX(4px);
+}
+
+footer a::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background-color: var(--accent-gold);
+  transition: width 0.3s ease;
+}
+
+footer a:hover::after {
+  width: 100%;
+}
+
+/* Iconos en footer */
+footer i {
+  color: var(--accent-gold);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              text-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-block;
+  margin-right: 0.5rem;
+}
+
+footer a:hover i {
+  transform: scale(1.3) rotate(-5deg);
+  text-shadow: 0 0 8px rgba(239, 184, 16, 0.5);
+}
+
+/* Redes sociales */
+footer .fa-facebook,
+footer .fa-instagram,
+footer .fa-x-twitter,
+footer .fa-linkedin {
+  transition: transform 0.3s ease, filter 0.3s ease;
+  font-size: 1.3rem;
+  margin-right: 1rem;
+}
+
+footer a .fa-facebook:hover,
+footer a .fa-instagram:hover,
+footer a .fa-x-twitter:hover,
+footer a .fa-linkedin:hover {
+  transform: scale(1.4) rotate(10deg);
+  filter: drop-shadow(0 0 8px rgba(239, 184, 16, 0.6));
+}
+
+/* Divisor */
+footer hr {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  margin: 2rem 0;
+  transition: border-top-color 0.3s ease;
+}
+
+footer hr:hover {
+  border-top-color: rgba(239, 184, 16, 0.4);
+}
+
+/* Copyright */
+footer .text-center p {
+  font-size: 0.85rem;
+  opacity: 0.8;
+  margin-bottom: 0.5rem;
+}
+
+footer .text-center p:last-child {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  margin: 0;
+}
+
+/* Logo animado */
+footer .navbar-brand {
+  transition: transform 0.3s ease, filter 0.3s ease;
+  display: inline-block;
+}
+
+footer .navbar-brand:hover {
+  transform: scale(1.1) rotate(-5deg);
+  filter: drop-shadow(0 0 8px rgba(239, 184, 16, 0.4));
+}
+
+/* Animaciones de entrada */
+.fade-in-left {
+  animation: fadeInLeft 0.6s ease-out;
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.fade-in-right {
+  animation: fadeInRight 0.6s ease-out;
+}
+
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Responsividad */
+@media (max-width: 768px) {
+  footer {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+  }
+
+  footer h6 {
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+  }
+
+  footer h6::after {
+    width: 30px;
+  }
+
+  footer p {
+    font-size: 0.85rem;
+  }
+
+  footer .col-sm-12 {
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+
+  footer .col-sm-12 p {
+    margin-bottom: 0.5rem;
+  }
+
+  footer a {
+    display: inline-block;
+    margin: 0.25rem;
+  }
+}
+
+/* Efecto de enfoque para accesibilidad */
+footer a:focus-visible {
+  outline: 2px solid var(--accent-gold);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Soporte para reducción de movimiento */
+@media (prefers-reduced-motion: reduce) {
+  footer a,
+  footer i,
+  footer p,
+  footer h6 {
+    transition: none;
+    animation: none;
+  }
+
+  footer a:hover {
+    transform: none;
+  }
+
+  footer a .fa-facebook:hover,
+  footer a .fa-instagram:hover,
+  footer a .fa-x-twitter:hover,
+  footer a .fa-linkedin:hover {
+    transform: none;
+  }
+}

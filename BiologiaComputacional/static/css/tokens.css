@@ -1,0 +1,33 @@
+/* ========================================
+   DESIGN TOKENS — ÚNICA FUENTE DE VERDAD
+   Cargar PRIMERO en base.html antes que cualquier otro CSS
+   ======================================== */
+:root {
+  /* Colores principales */
+  --primary-blue: #0352a6;
+  --primary-dark: #022d7c;
+  --accent-gold: #efb810;
+  --accent-gold-dark: #d4a000;
+  --color-danger: #dc3545;
+
+  /* Texto */
+  --text-primary: #1a1a1a;
+  --text-secondary: #555;
+
+  /* Fondos */
+  --bg-clean: #ffffff;
+  --bg-subtle: #f8f9fa;
+
+  /* Sombras */
+  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.12);
+  --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.15);
+
+  /* Layout */
+  --navbar-height: 80px;
+
+  /* Transiciones base */
+  --transition-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: all 0.6s ease-out;
+}

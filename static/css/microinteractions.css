@@ -1,0 +1,448 @@
+/* ========================================
+   MICRO-INTERACCIONES SUAVES Y MODERNAS
+   ======================================== */
+
+:root {
+  --primary-blue: #0352a6;
+  --accent-gold: #efb810;
+  --text-primary: #1a1a1a;
+  --text-secondary: #555;
+  --bg-clean: #ffffff;
+  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ========================================
+   EFECTOS DE BOTONES
+   ======================================== */
+
+/* Botones genéricos */
+.btn {
+  transition: var(--transition-smooth);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Efecto ripple en botones */
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn:active::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* Botones con elevación */
+.btn-elevated {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: var(--transition-smooth);
+}
+
+.btn-elevated:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  transform: translateY(-3px);
+}
+
+.btn-elevated:active {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+/* ========================================
+   EFECTOS DE ENLACES
+   ======================================== */
+
+a {
+  transition: var(--transition-fast);
+}
+
+a:hover {
+  font-weight: 600;
+}
+
+/* Enlaces con subrayado animado */
+.link-animated {
+  position: relative;
+  text-decoration: none;
+}
+
+.link-animated::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: var(--accent-gold);
+  transition: width 0.3s ease;
+}
+
+.link-animated:hover::after {
+  width: 100%;
+}
+
+/* ========================================
+   EFECTOS DE TARJETAS
+   ======================================== */
+
+.card {
+  transition: var(--transition-smooth);
+}
+
+.card:hover {
+  transform: translateY(-4px);
+}
+
+/* Card con borde dinámico */
+.card-hover-border {
+  position: relative;
+  border: 2px solid transparent;
+  transition: var(--transition-smooth);
+}
+
+.card-hover-border:hover {
+  border-color: var(--primary-blue);
+}
+
+/* ========================================
+   EFECTOS DE ENTRADA (FADE-IN)
+   ======================================== */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Aplicar animaciones */
+.fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.fade-in-down {
+  animation: fadeInDown 0.6s ease-out;
+}
+
+.fade-in-left {
+  animation: fadeInLeft 0.6s ease-out;
+}
+
+.fade-in-right {
+  animation: fadeInRight 0.6s ease-out;
+}
+
+/* ========================================
+   EFECTOS DE ICONO
+   ======================================== */
+
+i, .icon {
+  transition: var(--transition-fast);
+}
+
+a:hover i,
+.btn:hover i {
+  transform: scale(1.2) rotate(5deg);
+}
+
+/* Icono de flecha animada */
+.icon-arrow {
+  transition: transform 0.3s ease;
+  display: inline-block;
+}
+
+a:hover .icon-arrow {
+  transform: translateX(4px);
+}
+
+/* ========================================
+   EFECTOS DE INPUTS
+   ======================================== */
+
+input, textarea, select {
+  transition: var(--transition-smooth);
+}
+
+input:focus, textarea:focus, select:focus {
+  transform: scale(1.01);
+}
+
+/* Label animado */
+.form-floating > label {
+  transition: var(--transition-smooth);
+}
+
+.form-floating > input:focus ~ label,
+.form-floating > select:focus ~ label {
+  color: var(--primary-blue);
+}
+
+/* ========================================
+   EFECTOS DE NAVEGACIÓN
+   ======================================== */
+
+.nav-link {
+  transition: var(--transition-fast);
+  position: relative;
+}
+
+.nav-link:hover {
+  color: var(--accent-gold) !important;
+}
+
+/* Indicador activo animado */
+.nav-link.active {
+  font-weight: 600;
+}
+
+/* ========================================
+   EFECTOS DE TOOLTIP
+   ======================================== */
+
+.tooltip-inner {
+  transition: var(--transition-smooth);
+}
+
+.bs-tooltip-top .tooltip-arrow::before,
+.bs-tooltip-bottom .tooltip-arrow::before {
+  transition: var(--transition-fast);
+}
+
+/* ========================================
+   EFECTOS DE DROPDOWN
+   ======================================== */
+
+.dropdown-menu {
+  animation: fadeInUp 0.2s ease-out;
+}
+
+.dropdown-item {
+  transition: var(--transition-fast);
+}
+
+.dropdown-item:hover {
+  background-color: var(--bg-clean);
+  color: var(--primary-blue);
+  padding-left: 2rem;
+}
+
+/* ========================================
+   EFECTOS DE MODAL
+   ======================================== */
+
+.modal.show .modal-dialog {
+  animation: slideInUp 0.3s ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========================================
+   EFECTOS DE SCROLL
+   ======================================== */
+
+/* Aparición suave al hacer scroll */
+.scroll-fade-in {
+  opacity: 0;
+  animation: fadeInUp 0.8s ease-out forwards;
+}
+
+/* ========================================
+   ESTADO DESHABILITADO
+   ======================================== */
+
+.btn:disabled,
+button:disabled,
+input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* ========================================
+   PULSACIÓN O LATIDO
+   ======================================== */
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ========================================
+   ROTACIÓN SUAVE
+   ======================================== */
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+/* ========================================
+   EFECTO BRILLO
+   ======================================== */
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e0e0e0 50%,
+    #f0f0f0 75%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* ========================================
+   TRANSICIONES SUAVES DE ALTURA
+   ======================================== */
+
+.collapse {
+  transition: height 0.3s ease;
+}
+
+/* ========================================
+   EFECTOS DE TEXTO
+   ======================================== */
+
+/* Texto que cambia de color al hover */
+.text-hover-accent {
+  transition: color 0.3s ease;
+}
+
+.text-hover-accent:hover {
+  color: var(--accent-gold);
+}
+
+/* Resaltado suave */
+::selection {
+  background-color: var(--primary-blue);
+  color: var(--bg-clean);
+}
+
+::-moz-selection {
+  background-color: var(--primary-blue);
+  color: var(--bg-clean);
+}
+
+/* ========================================
+   EFECTOS DE FONDO (GRADIENTES SUAVES)
+   ======================================== */
+
+.bg-gradient-subtle {
+  background: linear-gradient(135deg, var(--bg-clean) 0%, var(--accent-gold) 0.5%, var(--bg-clean) 100%);
+  background-size: 200% 200%;
+  animation: gradientShift 15s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* ========================================
+   VISIBILIDAD Y ACCESIBILIDAD
+   ======================================== */
+
+/* Focus visible para navegación por teclado */
+.btn:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 3px solid var(--accent-gold);
+  outline-offset: 2px;
+}
+
+/* Animación suave de visibilidad */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,472 @@
+/* ========================================
+   PÁGINA DE INICIO - ESTILOS MODERNIZADOS
+   ======================================== */
+
+:root {
+  --primary-blue: #0352a6;
+  --accent-gold: #efb810;
+  --text-primary: #1a1a1a;
+  --text-secondary: #555;
+  --bg-clean: #ffffff;
+  --bg-subtle: #f8f9fa;
+  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.12);
+  --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* ========================================
+   SECCIÓN HÉROE - INICIO
+   ======================================== */
+
+.inicio {
+  min-height: 100vh;
+  background-image: url("/static/images/fondo.jpg");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-color: var(--bg-clean);
+  padding: 4rem 2rem;
+  position: relative;
+}
+
+.inicio::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(0, 0, 0, 0.85) 0%,
+    rgba(0, 0, 0, 0.85) 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+.inicio > * {
+  position: relative;
+  z-index: 2;
+}
+
+.boton-inicio {
+  margin-bottom: 2rem;
+  animation: fadeInDown 0.6s ease;
+}
+
+h1.fw-bold {
+  font-size: 3rem;
+  font-weight: 800;
+  color: var(--primary-blue);
+  margin-bottom: 1.5rem;
+  letter-spacing: -1px;
+  line-height: 1.2;
+}
+
+h1.fw-bold::after {
+  content: "";
+  display: block;
+  width: 120px;
+  height: 4px;
+  background: gradient linear(90deg, var(--accent-gold), transparent);
+  margin: 1rem auto 0;
+}
+
+.fs-5.text-center {
+  color: var(--text-secondary);
+  font-weight: 400;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.8;
+}
+
+/* ========================================
+   BOTONES DE REGISTRO/CONTACTO
+   ======================================== */
+
+.registro-correo,
+.registro-google {
+  border: 2px solid var(--primary-blue);
+  color: var(--primary-blue);
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 12px 24px;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-soft);
+}
+
+.registro-correo:hover,
+.registro-google:hover {
+  background-color: var(--primary-blue);
+  color: var(--bg-clean);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-medium);
+}
+
+.custom-boton {
+  background-color: var(--primary-blue);
+  color: var(--bg-clean);
+  border-radius: 8px;
+  padding: 14px 32px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-soft);
+}
+
+.custom-boton:hover {
+  background-color: #022d7c;
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-medium);
+}
+
+/* ========================================
+   TARJETAS DE CONTENIDO (CARDBOX)
+   ======================================== */
+
+.cardbox {
+  background-color: var(--bg-clean);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 380px;
+  margin: 1.5rem auto;
+  padding: 2rem;
+  box-shadow: var(--shadow-soft);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  text-align: center;
+}
+
+.cardbox:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-8px);
+  background-color: var(--bg-subtle);
+}
+
+.cardbox img {
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  transition: transform 0.3s ease;
+  object-fit: cover;
+}
+
+.cardbox:hover img {
+  transform: scale(1.05);
+}
+
+.cardbox a {
+  color: var(--primary-blue);
+  text-decoration: none;
+  transition: color 0.3s ease;
+  font-weight: 700;
+}
+
+.cardbox a h5 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary-blue);
+  margin: 1rem 0;
+  font-family: "Montserrat", sans-serif;
+}
+
+.cardbox a:hover {
+  color: var(--accent-gold);
+}
+
+.cardbox a:hover h5 {
+  color: var(--accent-gold);
+}
+
+.cardbox p {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.7;
+  font-weight: 400;
+}
+
+/* ========================================
+   SECCIÓN DE BENEFICIOS (LONGCARDBOX)
+   ======================================== */
+
+.longcardbox {
+  background-color: var(--bg-clean);
+  border-radius: 12px;
+  padding: 3rem 2rem;
+  box-shadow: var(--shadow-soft);
+  margin: 3rem 0;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.longcardbox:hover {
+  box-shadow: var(--shadow-medium);
+}
+
+.nosotros {
+  width: 100%;
+  padding: 1.5rem;
+}
+
+.nosotros h5,
+.longcardbox h5 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary-blue);
+  margin-bottom: 1.5rem;
+  font-family: "Montserrat", sans-serif;
+}
+
+.nosotros p,
+.longcardbox p {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.9;
+  text-align: justify;
+}
+
+/* ========================================
+   ÉNFASIS EN TEXTO (STRONG-CUSTOM)
+   ======================================== */
+
+.strong-custom {
+  color: var(--accent-gold);
+  font-weight: 700;
+  display: inline-block;
+}
+
+.strong-bg-custom {
+  color: var(--bg-clean);
+  background-color: var(--primary-blue);
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-weight: 700;
+  display: inline-block;
+}
+
+/* ========================================
+   ANIMACIONES
+   ======================================== */
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.cardbox {
+  animation: slideInUp 0.6s ease-out;
+}
+
+.cardbox:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.cardbox:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.cardbox:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+/* ========================================
+   ESTILOS DE FOOTER MEJORADO
+   ======================================== */
+
+footer a {
+  transition: all 0.3s ease;
+}
+
+footer a:hover {
+  color: #efb810 !important;
+  opacity: 1 !important;
+  transform: translateX(4px);
+}
+
+footer h6 {
+  position: relative;
+  padding-bottom: 0.8rem;
+}
+
+footer h6::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 40px;
+  height: 2px;
+  background-color: #efb810;
+  border-radius: 1px;
+}
+
+/* Ícono hover animado */
+footer i {
+  transition:
+    transform 0.3s ease,
+    color 0.3s ease;
+}
+
+footer a:hover i {
+  transform: scale(1.2) rotate(5deg);
+  color: #efb810 !important;
+}
+
+/* Redes sociales animadas */
+footer .text-white i {
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+
+footer a:hover i.fa-facebook,
+footer a:hover i.fa-instagram,
+footer a:hover i.fa-x-twitter,
+footer a:hover i.fa-linkedin {
+  transform: scale(1.3) rotate(-5deg);
+  color: #efb810;
+}
+
+/* ========================================
+   SECCIÓN DE BENEFICIOS
+   ======================================== */
+
+.col-md-6 {
+  transition: all 0.3s ease;
+}
+
+.col-md-6:hover {
+  transform: translateY(-2px);
+}
+
+.col-md-6 h5 {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 700;
+  color: #0352a6;
+  font-size: 1.8rem;
+}
+
+.col-md-6 p {
+  font-family: "Montserrat", sans-serif;
+  color: #555;
+  line-height: 2;
+  font-weight: 400;
+}
+
+dotlottie-player {
+  transition: all 0.3s ease;
+}
+
+.col-md-6 dotlottie-player:hover {
+  filter: drop-shadow(0 8px 20px rgba(3, 82, 166, 0.2));
+  transform: scale(1.05);
+}
+
+/* ========================================
+   RESPONSIVIDAD
+   ======================================== */
+
+@media (max-width: 768px) {
+  .inicio {
+    padding: 2rem 0.5rem !important;
+    min-height: auto;
+  }
+
+  h1.fw-bold {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+  }
+
+  .fs-5.text-center {
+    font-size: 0.95rem !important;
+    max-width: 100%;
+  }
+
+  .col-md-4 {
+    margin-bottom: 1.5rem;
+  }
+
+  .cardbox {
+    margin: 1rem auto !important;
+    max-width: 100% !important;
+    padding: 1.5rem;
+  }
+
+  .longcardbox {
+    margin: 1.5rem 0 !important;
+    padding: 1.5rem 1rem;
+  }
+
+  .nosotros {
+    padding: 1rem;
+  }
+
+  .nosotros h5 {
+    font-size: 1.5rem;
+  }
+
+  .col-md-6 {
+    margin-bottom: 2rem;
+  }
+
+  .col-md-6 h5 {
+    font-size: 1.3rem;
+  }
+
+  .d-flex.justify-content-center {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 576px) {
+  .inicio {
+    padding: 1.5rem 0.5rem !important;
+  }
+
+  h1.fw-bold {
+    font-size: 1.4rem;
+  }
+
+  .btn {
+    width: 100%;
+    margin: 0.5rem 0 !important;
+  }
+
+  .cardbox {
+    padding: 1rem;
+  }
+
+  .registration-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .row.g-4 {
+    gap: 1rem !important;
+  }
+
+  .container {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  dotlottie-player {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+}

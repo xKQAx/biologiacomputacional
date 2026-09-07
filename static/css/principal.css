@@ -1,0 +1,471 @@
+/* ========================================
+   PALETA DE COLORES MODERNA
+   ======================================== */
+:root {
+  --primary-blue: #0352a6;
+  --accent-gold: #efb810;
+  --text-primary: #1a1a1a;
+  --text-secondary: #555;
+  --bg-clean: #ffffff;
+  --bg-subtle: #f8f9fa;
+  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+body {
+  font-family: "Montserrat", "Poppins", sans-serif;
+  background: var(--bg-clean);
+  color: var(--text-primary);
+  letter-spacing: 0.3px;
+  padding-top: 100px;
+}
+
+a {
+  text-decoration: none;
+  color: var(--primary-blue);
+  transition: color 0.3s ease;
+}
+
+a:hover {
+  color: var(--accent-gold);
+}
+
+.navbar-custom {
+  background: rgba(255, 255, 255, 0.7) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 44px !important;
+  max-width: 95% !important;
+  width: 60% !important;
+  height: 80px;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06) !important;
+  font-weight: 500;
+  font-size: 16px;
+  color: var(--text-primary);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  position: fixed !important;
+  top: 1rem !important;
+  z-index: 999 !important;
+}
+
+.navbar-custom:hover {
+  background: rgba(255, 255, 255, 0.85) !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1) !important;
+  transform: translateX(-50%) translateY(-2px) !important;
+}
+
+.light-text {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 300;
+  font-size: 16px;
+  color: var(--text-secondary);
+}
+
+.regular-text {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 400;
+}
+
+.medium-text {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 600;
+}
+
+/* ========================================
+   NAVBAR Y TRANSICIONES
+   ======================================== */
+
+.navbar-no-shadow {
+  box-shadow: none !important;
+}
+
+.nav-link {
+  font-weight: 500;
+  font-size: 15px;
+  color: var(--text-primary);
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0.75rem 1.2rem !important;
+  border-radius: 44px;
+}
+
+.nav-link:hover {
+  background: rgba(3, 82, 166, 0.08);
+}
+
+.nav-link::after {
+  content: "";
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent-gold), transparent);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateX(-50%);
+}
+
+.nav-link:hover::after {
+  width: 50%;
+}
+
+.nav-link.active {
+  color: var(--primary-blue);
+  background: rgba(3, 82, 166, 0.12);
+}
+
+.nav-link.active::after {
+  width: 50%;
+}
+
+/* ========================================
+   BOTONES CON MICRO-INTERACCIONES
+   ======================================== */
+
+.btn.btn-white.rounded-pill {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--bg-clean);
+  border: 2px solid var(--primary-blue);
+  color: var(--primary-blue);
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-soft);
+}
+
+.btn.btn-white.rounded-pill:hover {
+  background-color: var(--primary-blue);
+  color: var(--bg-clean);
+  box-shadow: var(--shadow-medium);
+  transform: translateY(-2px);
+}
+
+.btn.btn-white.rounded-pill .button-text {
+  margin-right: 0px;
+  transition: margin-right 0.3s ease;
+}
+
+.btn.btn-white.rounded-pill:hover .button-text {
+  margin-right: 25px;
+}
+
+.btn.btn-white.rounded-pill i {
+  position: absolute;
+  right: -20px;
+  top: 55%;
+  transform: translateY(-50%);
+  transition:
+    right 0.3s ease,
+    opacity 0.3s ease;
+  opacity: 0;
+}
+
+.btn.btn-white.rounded-pill:hover i {
+  right: 10%;
+  top: 55%;
+  opacity: 1;
+}
+
+/* CTA Botones Dorados */
+.btn.btn-primary-custom {
+  background-color: var(--primary-blue);
+  border-color: var(--primary-blue);
+  color: var(--bg-clean);
+  font-weight: 600;
+  padding: 12px 32px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-soft);
+}
+
+.btn.btn-primary-custom:hover {
+  background-color: #022d7c;
+  box-shadow: var(--shadow-medium);
+  transform: translateY(-3px);
+}
+
+.btn.btn-accent-gold {
+  background-color: var(--accent-gold);
+  border-color: var(--accent-gold);
+  color: var(--primary-blue);
+  font-weight: 700;
+  padding: 12px 32px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-soft);
+}
+
+.btn.btn-accent-gold:hover {
+  background-color: #d4a000;
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-medium);
+}
+
+.btn.btn-warning.rounded-pill.shadow-sm {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--accent-gold);
+  border: 2px solid var(--accent-gold);
+  color: var(--primary-blue);
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn.btn-warning.rounded-pill.shadow-sm:hover {
+  background-color: #d4a000;
+  color: var(--bg-clean);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-medium);
+}
+
+.btn.btn-warning.rounded-pill.shadow-sm .button-text {
+  margin-right: 0px;
+  transition: margin-right 0.3s ease;
+}
+
+.btn.btn-warning.rounded-pill.shadow-sm:hover .button-text {
+  margin-right: 25px;
+}
+
+.btn.btn-warning.rounded-pill.shadow-sm i {
+  position: absolute;
+  right: -20px;
+  top: 55%;
+  transform: translateY(-50%);
+  transition:
+    right 0.3s ease,
+    opacity 0.3s ease;
+  opacity: 0;
+}
+
+.btn.btn-warning.rounded-pill.shadow-sm:hover i {
+  right: 10%;
+  top: 55%;
+  opacity: 1;
+}
+
+/* ========================================
+   ESPACIADO Y BORDES MODERNOS
+   ======================================== */
+
+/* Contenedores */
+.container {
+  padding: 2rem 1rem;
+}
+
+.container-fluid {
+  padding: 2rem 1rem;
+}
+
+/* Secciones */
+section {
+  padding: 3rem 0;
+  margin: 1rem 0;
+}
+
+/* Filas y columnas */
+.row {
+  margin-bottom: 2rem;
+  gap: 1.5rem;
+}
+
+.col,
+.col-md-4,
+.col-md-6,
+.col-md-12 {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Espaciado entre elementos */
+hr {
+  border: none;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  margin: 2rem 0;
+}
+
+/* Bordes sutiles */
+.border {
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border-radius: 8px;
+}
+
+.border-top {
+  border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+.border-bottom {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Tarjetas Bootstrap */
+.card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  margin-bottom: 1.5rem;
+}
+
+.card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  transform: translateY(-4px);
+}
+
+.card-header {
+  background-color: var(--bg-subtle);
+  border: none;
+  border-radius: 12px 12px 0 0;
+  padding: 1.5rem;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+.card-footer {
+  background-color: var(--bg-subtle);
+  border: none;
+  padding: 1.5rem;
+  border-radius: 0 0 12px 12px;
+}
+
+/* Tablas */
+.table {
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.table thead {
+  background-color: var(--primary-blue);
+  color: var(--bg-clean);
+}
+
+.table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.table tbody tr:hover {
+  background-color: var(--bg-subtle);
+}
+
+.table td,
+.table th {
+  padding: 1rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Formularios */
+.form-control,
+.form-select {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  transition: all 0.3s ease;
+  font-family: "Montserrat", sans-serif;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 3px rgba(3, 82, 166, 0.1);
+}
+
+.form-label {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+/* Inputs */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+textarea {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-family: "Montserrat", sans-serif;
+  transition: all 0.3s ease;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="search"]:focus,
+textarea:focus {
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 3px rgba(3, 82, 166, 0.1);
+  outline: none;
+}
+
+/* Espaciado de márgenes y pads */
+.mt-3 {
+  margin-top: 1.5rem !important;
+}
+
+.mb-3 {
+  margin-bottom: 1.5rem !important;
+}
+
+.pt-3 {
+  padding-top: 1.5rem !important;
+}
+
+.pb-3 {
+  padding-bottom: 1.5rem !important;
+}
+
+.px-3 {
+  padding-left: 1.5rem !important;
+  padding-right: 1.5rem !important;
+}
+
+.py-3 {
+  padding-top: 1.5rem !important;
+  padding-bottom: 1.5rem !important;
+}
+
+/* Dropdown */
+.dropdown-menu {
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.dropdown-item {
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+}
+
+.dropdown-item:hover {
+  background-color: var(--bg-subtle);
+  color: var(--primary-blue);
+}
+
+/* Modales */
+.modal-content {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-footer {
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+}

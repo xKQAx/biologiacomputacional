@@ -1,0 +1,701 @@
+/* Variables en tokens.css — no se definen aquí */
+
+body {
+  font-family: "Montserrat", "Poppins", sans-serif;
+  background: var(--bg-clean);
+  color: var(--text-primary);
+  letter-spacing: 0.3px;
+  padding-top: var(--navbar-height);
+  overflow-x: hidden;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+a {
+  text-decoration: none;
+  color: var(--primary-blue);
+  transition: color 0.3s ease;
+}
+
+a:hover {
+  color: var(--accent-gold);
+}
+
+.navbar-custom {
+  background: rgba(255, 255, 255, 0.7) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 44px !important;
+  max-width: 95% !important;
+  width: min(60%, 900px) !important;
+  min-height: var(--navbar-height);
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06) !important;
+  font-weight: 500;
+  font-size: 16px;
+  color: var(--text-primary);
+  transition: background 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  position: fixed !important;
+  top: 1rem !important;
+  z-index: 999 !important;
+}
+
+@media (min-width: 992px) {
+  .navbar-custom {
+    height: var(--navbar-height);
+  }
+}
+
+@media (max-width: 991px) {
+  .navbar-custom {
+    width: 95% !important;
+    border-radius: 12px !important;
+    top: 0.5rem !important;
+  }
+}
+
+.navbar-custom:hover {
+  background: rgba(255, 255, 255, 0.85) !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1) !important;
+  transform: translateX(-50%) translateY(-2px) !important;
+}
+
+.light-text {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 300;
+  font-size: 16px;
+  color: var(--text-secondary);
+}
+
+.regular-text {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 400;
+}
+
+.medium-text {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 600;
+}
+
+/* ========================================
+   NAVBAR Y TRANSICIONES
+   ======================================== */
+
+.navbar-no-shadow {
+  box-shadow: none !important;
+}
+
+.nav-link {
+  font-weight: 500;
+  font-size: 15px;
+  color: var(--text-primary);
+  position: relative;
+  transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0.75rem 1.2rem !important;
+  border-radius: 44px;
+}
+
+.nav-link:hover {
+  background: rgba(3, 82, 166, 0.08);
+}
+
+.nav-link::after {
+  content: "";
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent-gold), transparent);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateX(-50%);
+}
+
+.nav-link:hover::after {
+  width: 50%;
+}
+
+.nav-link.active {
+  color: var(--primary-blue);
+  background: rgba(3, 82, 166, 0.12);
+}
+
+.nav-link.active::after {
+  width: 50%;
+}
+
+/* ========================================
+   BOTONES CON MICRO-INTERACCIONES
+   ======================================== */
+
+.btn.btn-white.rounded-pill {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--bg-clean);
+  border: 2px solid var(--primary-blue);
+  color: var(--primary-blue);
+  font-weight: 600;
+  transition: background-color 0.3s ease, color 0.3s ease,
+              box-shadow 0.3s ease, transform 0.3s ease;
+  box-shadow: var(--shadow-soft);
+}
+
+.btn.btn-white.rounded-pill:hover {
+  background-color: var(--primary-blue);
+  color: var(--bg-clean);
+  box-shadow: var(--shadow-medium);
+  transform: translateY(-2px);
+}
+
+.btn.btn-white.rounded-pill .button-text {
+  margin-right: 0px;
+  transition: margin-right 0.3s ease;
+}
+
+.btn.btn-white.rounded-pill:hover .button-text {
+  margin-right: 25px;
+}
+
+.btn.btn-white.rounded-pill i {
+  position: absolute;
+  right: -20px;
+  top: 55%;
+  transform: translateY(-50%);
+  transition:
+    right 0.3s ease,
+    opacity 0.3s ease;
+  opacity: 0;
+}
+
+.btn.btn-white.rounded-pill:hover i {
+  right: 10%;
+  top: 55%;
+  opacity: 1;
+}
+
+/* CTA Botones Dorados */
+.btn.btn-primary-custom {
+  background-color: var(--primary-blue);
+  border-color: var(--primary-blue);
+  color: var(--bg-clean);
+  font-weight: 600;
+  padding: 12px 32px;
+  border-radius: 8px;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+  box-shadow: var(--shadow-soft);
+}
+
+.btn.btn-primary-custom:hover {
+  background-color: var(--primary-dark);
+  box-shadow: var(--shadow-medium);
+  transform: translateY(-3px);
+}
+
+.btn.btn-accent-gold {
+  background-color: var(--accent-gold);
+  border-color: var(--accent-gold);
+  color: var(--primary-blue);
+  font-weight: 700;
+  padding: 12px 32px;
+  border-radius: 8px;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+  box-shadow: var(--shadow-soft);
+}
+
+.btn.btn-accent-gold:hover {
+  background-color: var(--accent-gold-dark);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-medium);
+}
+
+.btn.btn-warning.rounded-pill.shadow-sm {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--accent-gold);
+  border: 2px solid var(--accent-gold);
+  color: var(--primary-blue);
+  font-weight: 600;
+  transition: background-color 0.3s ease, color 0.3s ease,
+              box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.btn.btn-warning.rounded-pill.shadow-sm:hover {
+  background-color: var(--accent-gold-dark);
+  color: var(--bg-clean);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-medium);
+}
+
+.btn.btn-warning.rounded-pill.shadow-sm .button-text {
+  margin-right: 0px;
+  transition: margin-right 0.3s ease;
+}
+
+.btn.btn-warning.rounded-pill.shadow-sm:hover .button-text {
+  margin-right: 25px;
+}
+
+.btn.btn-warning.rounded-pill.shadow-sm i {
+  position: absolute;
+  right: -20px;
+  top: 55%;
+  transform: translateY(-50%);
+  transition:
+    right 0.3s ease,
+    opacity 0.3s ease;
+  opacity: 0;
+}
+
+.btn.btn-warning.rounded-pill.shadow-sm:hover i {
+  right: 10%;
+  top: 55%;
+  opacity: 1;
+}
+
+/* ========================================
+   ESPACIADO Y BORDES MODERNOS
+   ======================================== */
+
+/* Contenedores */
+.container {
+  padding: 2rem 1rem;
+}
+
+.container-fluid {
+  padding: 2rem 1rem;
+}
+
+/* Secciones */
+section {
+  padding: 3rem 0;
+  margin: 1rem 0;
+}
+
+/* Filas */
+.row {
+  margin-bottom: 1.5rem;
+}
+
+/* Espaciado entre elementos */
+hr {
+  border: none;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  margin: 2rem 0;
+}
+
+/* Bordes sutiles */
+.border {
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border-radius: 8px;
+}
+
+.border-top {
+  border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+.border-bottom {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Tarjetas Bootstrap */
+.card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+  margin-bottom: 1.5rem;
+}
+
+/* Avatar de perfil en navbar */
+.avatar-xs {
+  width: 28px;
+  height: 28px;
+  object-fit: cover;
+}
+
+.card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  transform: translateY(-4px);
+}
+
+.card-header {
+  background-color: var(--bg-subtle);
+  border: none;
+  border-radius: 12px 12px 0 0;
+  padding: 1.5rem;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+.card-footer {
+  background-color: var(--bg-subtle);
+  border: none;
+  padding: 1.5rem;
+  border-radius: 0 0 12px 12px;
+}
+
+/* Tablas */
+.table {
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.table thead {
+  background-color: var(--primary-blue);
+  color: var(--bg-clean);
+}
+
+.table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.table tbody tr:hover {
+  background-color: var(--bg-subtle);
+}
+
+.table td,
+.table th {
+  padding: 1rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Formularios */
+.form-control,
+.form-select {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  font-family: "Montserrat", sans-serif;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 3px rgba(3, 82, 166, 0.1);
+}
+
+.form-label {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+/* Inputs */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+textarea {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-family: "Montserrat", sans-serif;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="search"]:focus,
+textarea:focus {
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 3px rgba(3, 82, 166, 0.1);
+  outline: none;
+}
+
+/* Espaciado de márgenes y pads */
+.mt-3 {
+  margin-top: 1.5rem !important;
+}
+
+.mb-3 {
+  margin-bottom: 1.5rem !important;
+}
+
+.pt-3 {
+  padding-top: 1.5rem !important;
+}
+
+.pb-3 {
+  padding-bottom: 1.5rem !important;
+}
+
+.px-3 {
+  padding-left: 1.5rem !important;
+  padding-right: 1.5rem !important;
+}
+
+.py-3 {
+  padding-top: 1.5rem !important;
+  padding-bottom: 1.5rem !important;
+}
+
+/* Dropdown */
+.dropdown-menu {
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.dropdown-item {
+  color: var(--text-primary);
+  transition: background-color 0.2s ease, color 0.2s ease, padding-left 0.2s ease;
+}
+
+.dropdown-item:hover {
+  background-color: var(--bg-subtle);
+  color: var(--primary-blue);
+}
+
+/* ========================================
+   RESPONSIVIDAD GLOBAL
+   ======================================== */
+
+@media (max-width: 768px) {
+  .container,
+  .container-fluid {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+
+  section {
+    padding: 1.5rem 0;
+    margin: 0.5rem 0;
+  }
+}
+
+@media (max-width: 576px) {
+  .container,
+  .container-fluid {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .btn {
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+  }
+}
+
+/* Modales */
+.modal-content {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-footer {
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+}
+
+/* ========================================
+   BADGES Y TAGS COMPARTIDOS
+   (definidos en inicio.css para la home;
+   duplicados aquí para otras páginas)
+   ======================================== */
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(239, 184, 16, 0.15);
+  color: var(--accent-gold);
+  border: 1px solid rgba(239, 184, 16, 0.4);
+  border-radius: 50px;
+  padding: 0.45rem 1.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  backdrop-filter: blur(4px);
+}
+
+.section-tag {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(3, 82, 166, 0.08);
+  color: var(--primary-blue);
+  border-radius: 50px;
+  padding: 0.35rem 1rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+/* ========================================
+   MINI-HERO PÁGINAS INTERNAS
+   ======================================== */
+
+.page-hero-sm {
+  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-dark) 100%);
+  padding: 5.5rem 1.5rem 3.5rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.page-hero-sm::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at top right, rgba(239,184,16,0.12) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.page-hero-title {
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-weight: 800;
+  color: #ffffff;
+  font-family: "Montserrat", sans-serif;
+  margin-bottom: 0.5rem;
+  position: relative;
+}
+
+.page-hero-subtitle {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 1rem;
+  max-width: 540px;
+  margin: 0.5rem auto 0;
+  line-height: 1.7;
+  position: relative;
+}
+
+/* ========================================
+   TARJETA DE INFORMACIÓN (password reset, activation)
+   ======================================== */
+
+.info-card {
+  background: var(--bg-clean);
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  border-radius: 20px;
+  box-shadow: var(--shadow-soft);
+  padding: 3rem 2.5rem;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.info-card-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  display: block;
+  line-height: 1;
+}
+
+.info-card h2 {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.3rem, 2.5vw, 1.8rem);
+  color: var(--primary-blue);
+  margin-bottom: 1rem;
+}
+
+.info-card p {
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin-bottom: 0;
+}
+
+/* ========================================
+   SECCIÓN DE CONTACTO
+   ======================================== */
+
+.contact-info-card {
+  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-dark) 100%);
+  border-radius: 20px;
+  padding: 2.5rem 2rem;
+  height: 100%;
+  color: #fff;
+}
+
+.contact-info-card .section-tag {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  margin-bottom: 1.5rem !important;
+}
+
+.contact-info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.contact-info-item:last-child {
+  margin-bottom: 0;
+}
+
+.contact-info-icon {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: var(--accent-gold);
+}
+
+.contact-info-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 0.15rem;
+}
+
+.contact-info-value {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.92);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.contact-form-card {
+  background: var(--bg-clean);
+  border-radius: 20px;
+  padding: 2.5rem 2rem;
+  box-shadow: var(--shadow-soft);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.contact-form-card h5 {
+  color: var(--primary-blue);
+  font-family: "Montserrat", sans-serif;
+}
+
+/* ========================================
+   POLÍTICA DE PRIVACIDAD
+   ======================================== */
+
+.privacy-heading {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--primary-blue);
+  margin-top: 1.75rem;
+  margin-bottom: 0.5rem;
+  font-family: "Montserrat", sans-serif;
+}

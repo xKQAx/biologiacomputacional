@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Cuenta activada{% endblock %}
+
+{% block content %}
+<div class="container text-center py-5">
+  <img src="{% static 'images/logo-color.png' %}" class="mb-4" width="90" height="75"
+    alt="Logo Biología Computacional">
+
+  <div class="info-card">
+    <i class="info-card-icon fa-solid fa-user-check text-success" aria-hidden="true"></i>
+    <h2>¡Cuenta activada!</h2>
+    <p>Tu cuenta ha sido activada con éxito. Ya puedes empezar a utilizar BioCOM.</p>
+    <p class="mb-4">No olvides completar tu información de perfil
+      <a href="{% url 'perfil' %}">aquí</a>.
+    </p>
+    <a class="btn btn-primary-custom" href="{% url 'signin' %}">
+      <i class="fa-solid fa-arrow-right-to-bracket me-2" aria-hidden="true"></i>
+      Iniciar sesión
+    </a>
+  </div>
+</div>
+{% endblock %}

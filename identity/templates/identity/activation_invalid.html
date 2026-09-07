@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Enlace de activación inválido{% endblock %}
+
+{% block content %}
+<div class="container text-center py-5">
+  <img src="{% static 'images/logo-color.png' %}" class="mb-4" width="90" height="75"
+    alt="Logo Biología Computacional">
+
+  <div class="info-card">
+    <i class="info-card-icon fa-solid fa-circle-xmark text-danger" aria-hidden="true"></i>
+    <h2>Enlace de activación inválido</h2>
+    <p class="mb-4">El enlace de activación es inválido o ha expirado. Por favor,
+      intenta registrarte de nuevo o contacta con el soporte si necesitas ayuda.</p>
+    <div class="d-flex gap-3 justify-content-center flex-wrap">
+      <a class="btn btn-primary-custom" href="{% url 'register' %}">
+        <i class="fa-solid fa-user-plus me-2" aria-hidden="true"></i>
+        Registrarse de nuevo
+      </a>
+      <a class="btn btn-outline-secondary" href="{% url 'contactos' %}">Contactar soporte</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

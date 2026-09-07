@@ -1,0 +1,84 @@
+/* ========================================
+   SERVICIOS — DETALLE
+   Variables en tokens.css — no se definen aquí
+   ======================================== */
+
+/* Imagen de herramienta — responsive (reemplaza style hardcodeado) */
+.servicio-img-responsive {
+  max-width: 100%;
+  height: auto;
+  max-height: 380px;
+  border-radius: 12px;
+  box-shadow: var(--shadow-soft);
+  object-fit: contain;
+}
+
+/* Tarjeta principal de detalle */
+.servicio-detalle-card {
+  background: var(--bg-clean);
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  border-radius: 16px;
+  box-shadow: var(--shadow-soft);
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Bloque de descarga/tutorial */
+.servicio-action-block {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+  padding: 1.75rem;
+  background: var(--bg-subtle);
+  border-radius: 12px;
+  margin-top: 1.5rem;
+}
+
+.servicio-action-block > div {
+  text-align: center;
+}
+
+.servicio-action-block p {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+/* Bloque de créditos */
+.servicio-creditos {
+  background: var(--bg-subtle);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+/* Lista de otros servicios */
+.servicio-otros-card {
+  background: var(--bg-clean);
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  border-radius: 16px;
+  box-shadow: var(--shadow-soft);
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.servicio-otros-card h5 {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 700;
+  color: var(--primary-blue);
+  margin-bottom: 1.25rem;
+}
+
+@media (max-width: 576px) {
+  .servicio-img-responsive {
+    max-height: 240px;
+  }
+
+  .servicio-action-block {
+    gap: 1rem;
+  }
+}

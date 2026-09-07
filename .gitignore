@@ -1,0 +1,9 @@
+db.sqlite3
+venv
+__pycache__
+.mcp.json
+.claude
+docs
+MODERNIZACIÓN_UI_UX_RESUMEN.md
+PLAN_MEJORA_UI.md
+TRANSFORMACION_TARJETAS_FOOTER_RESUMEN.md
