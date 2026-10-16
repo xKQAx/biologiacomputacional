@@ -240,8 +240,10 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                <a href="{% url 'ascender_administrador' pk=usuarios.pk %}" type="button"
-                    class="btn btn-primary">Ascender</a>
+                <form method="post" action="{% url 'ascender_administrador' pk=usuarios.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary">Ascender</button>
+                </form>
             </div>
         </div>
     </div>
@@ -261,8 +263,10 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                <a href="{% url 'descender_administrador' pk=usuarios.pk %}" type="button"
-                    class="btn btn-primary">Descender</a>
+                <form method="post" action="{% url 'descender_administrador' pk=usuarios.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary">Descender</button>
+                </form>
             </div>
         </div>
     </div>
@@ -282,8 +286,10 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                <a href="{% url 'desactivar_usuario' pk=usuarios.pk %}" type="button"
-                    class="btn btn-danger">Desactivar</a>
+                <form method="post" action="{% url 'desactivar_usuario' pk=usuarios.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Desactivar</button>
+                </form>
             </div>
         </div>
     </div>
@@ -303,7 +309,10 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                <a href="{% url 'activar_usuario' pk=usuarios.pk %}" type="button" class="btn btn-success">Activar</a>
+                <form method="post" action="{% url 'activar_usuario' pk=usuarios.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success">Activar</button>
+                </form>
             </div>
         </div>
     </div>
@@ -323,8 +332,10 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cerrar</button>
-                <a href="{% url 'eliminar_usuario' pk=usuarios.pk %}" type="button"
-                    class="btn btn-secondary">Eliminar</a>
+                <form method="post" action="{% url 'eliminar_usuario' pk=usuarios.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-secondary">Eliminar</button>
+                </form>
             </div>
         </div>
     </div>

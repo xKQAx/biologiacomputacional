@@ -25,8 +25,10 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_str, force_bytes
 from django.contrib.sites.shortcuts import get_current_site
 from django.template.loader import render_to_string
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
+from django.views.decorators.http import require_POST
+from BiologiaComputacional.permissions import staff_required, superuser_required
 
 # Create your views here.
 
@@ -326,35 +328,27 @@ class PasswordResetInvalidView(TemplateView):
     template_name = "identity/password_reset_invalid.html"
 
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator(staff_required, name='dispatch')
 class ManageUsersView(TemplateView):
 
     template_name = "identity/manage_users.html"
 
 
-# Metodos para admin o staff
-def is_superuser(user):
-
-    return user.is_superuser
-
-
-def is_staff(user):
-
-    return user.is_staff
+# Campos que el listado de gestión puede ver. Nunca el hash de la contraseña.
+USER_LIST_FIELDS = (
+    'id', 'username', 'first_name', 'last_name', 'email',
+    'is_staff', 'is_superuser', 'is_active', 'last_login', 'date_joined',
+)
 
 
-def is_staff_or_superuser(user):
-    return user.is_staff or user.is_superuser
-
-
-@user_passes_test(is_staff_or_superuser)
+@staff_required
 def info_usuarios(request):
-    info_users = list(User.objects.values())
+    info_users = list(User.objects.values(*USER_LIST_FIELDS))
     data = {'info_users': info_users}
     return JsonResponse(data, safe=False)
 
 
-@user_passes_test(is_staff_or_superuser)
+@staff_required
 def detalle_usuarios(request, pk):
     usuarios = get_object_or_404(User, pk=pk)
     usuarios_adicional_info = get_object_or_404(
@@ -362,7 +356,10 @@ def detalle_usuarios(request, pk):
     return render(request, 'identity/detalle_usuarios.html', {'usuarios': usuarios, 'usuarios_adicional_info': usuarios_adicional_info})
 
 
-@user_passes_test(is_superuser)
+# Ascender, descender y eliminar siguen siendo de superusuario: la ficha solo
+# muestra esos botones a quien ya es superusuario. El resto del personal no puede.
+@superuser_required
+@require_POST
 def ascender_administrador(request, pk):
     usuario = get_object_or_404(User, pk=pk)
     usuario.is_staff = True
@@ -374,7 +371,8 @@ def ascender_administrador(request, pk):
     return redirect('detalle_usuarios', pk=pk)
 
 
-@user_passes_test(is_superuser)
+@superuser_required
+@require_POST
 def descender_administrador(request, pk):
     usuario = get_object_or_404(User, pk=pk)
     usuario.is_staff = False
@@ -386,7 +384,8 @@ def descender_administrador(request, pk):
     return redirect('detalle_usuarios', pk=pk)
 
 
-@user_passes_test(is_staff_or_superuser)
+@staff_required
+@require_POST
 def desactivar_usuario(request, pk):
     usuario = get_object_or_404(User, pk=pk)
     if request.user.is_superuser or (request.user.is_staff and not usuario.is_staff):
@@ -400,7 +399,8 @@ def desactivar_usuario(request, pk):
     return redirect('detalle_usuarios', pk=pk)
 
 
-@user_passes_test(is_staff_or_superuser)
+@staff_required
+@require_POST
 def activar_usuario(request, pk):
     usuario = get_object_or_404(User, pk=pk)
     usuario.is_active = True
@@ -412,7 +412,8 @@ def activar_usuario(request, pk):
     return redirect('detalle_usuarios', pk=pk)
 
 
-@user_passes_test(is_superuser)
+@superuser_required
+@require_POST
 def eliminar_usuario(request, pk):
     usuario = get_object_or_404(User, pk=pk)
     usuario.delete()

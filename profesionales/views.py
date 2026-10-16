@@ -12,8 +12,8 @@ from django.shortcuts import render, get_object_or_404
 from django.contrib import messages
 from django.views.generic import UpdateView, DeleteView
 from django.urls import reverse_lazy
-from django.contrib.auth.decorators import login_required, user_passes_test
 from django.utils.decorators import method_decorator
+from BiologiaComputacional.permissions import staff_required, superuser_required
 from django.forms.models import modelformset_factory
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
@@ -36,25 +36,7 @@ class busquedaInformacion(TemplateView):
         return context
 
 
-# Metodos para admin o staff
-
-
-def is_superuser(user):
-
-    return user.is_superuser
-
-
-def is_staff(user):
-
-    return user.is_staff
-
-
-def is_staff_or_superuser(user):
-    return user.is_staff or user.is_superuser
-
-
-@login_required
-@user_passes_test(is_staff_or_superuser)
+@staff_required
 def agregar_profesional(request):
     campos = ['campo0', 'campo1', 'campo2',
               'campo3', 'campo4', 'campo5', 'campo6']
@@ -105,10 +87,17 @@ def agregar_profesional(request):
     })
 
 
+@staff_required
 def info_profesional(request):
-    info_pro = list(InformacionProfesional.objects.values())
-    data = {'info_pro': info_pro}
-    return JsonResponse(data, safe=False)
+    # El listado público se renderiza en el servidor. Este JSON ya no es público.
+    info_pro = list(
+        InformacionProfesional.objects.values(
+            'id', 'nombre', 'apellido', 'titulo_universitario', 'universidad',
+            'facultad', 'grupo_investigacion', 'campus',
+            'campo0', 'campo1', 'campo2', 'campo3', 'campo4', 'campo5', 'campo6',
+        )
+    )
+    return JsonResponse({'info_pro': info_pro}, safe=False)
 
 
 def detalle_profesional(request, pk):
@@ -131,8 +120,7 @@ def detalle_profesional(request, pk):
     })
 
 
-@method_decorator(login_required, name='dispatch')
-@method_decorator(user_passes_test(is_superuser), name='dispatch')
+@method_decorator(superuser_required, name='dispatch')
 class editar_profesional_view(UpdateView):
     model = InformacionProfesional
     form_class = ProfileFormProfessional
@@ -199,8 +187,7 @@ class editar_profesional_view(UpdateView):
         return context
 
 
-@method_decorator(login_required, name='dispatch')
-@method_decorator(user_passes_test(is_superuser), name='dispatch')
+@method_decorator(superuser_required, name='dispatch')
 class eliminar_profesional_view(DeleteView):
     model = InformacionProfesional
     template_name = 'profesionales/eliminar_profesional.html'

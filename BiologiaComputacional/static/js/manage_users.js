@@ -18,7 +18,7 @@ const dataTableOptions = {
 const infoUsers = async () => {
     try {
 
-        const response = await fetch("http://127.0.0.1:8000/identity/info_usuarios/");
+        const response = await fetch("/identity/info_usuarios/");
         const data = await response.json();
 
         let content = ``;

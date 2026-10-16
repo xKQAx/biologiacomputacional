@@ -7,25 +7,9 @@ from BiologiaComputacional.forms import ServicioForm
 import os
 from django.contrib import messages
 from django.utils.decorators import method_decorator
-from django.contrib.auth.decorators import login_required, user_passes_test
-
-# Create your views here.
-
-# Definir permisos
-
-
-def is_superuser(user):
-
-    return user.is_superuser
-
-
-def is_staff(user):
-
-    return user.is_staff
-
-
-def is_staff_or_superuser(user):
-    return user.is_staff or user.is_superuser
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
+from BiologiaComputacional.permissions import is_staff_or_superuser, staff_required
 
 # Vista para mostrar todas las herramientas
 
@@ -119,18 +103,18 @@ class servicios_detalle_view(TemplateView):
         return context
     
     def post(self, request, nombre):
+        # El GET sigue pidiendo solo login. Borrar exige staff, igual que editar.
+        if not is_staff_or_superuser(request.user):
+            raise PermissionDenied
+
         servicio = get_object_or_404(Servicio, nombre=nombre)
-        
         servicio.delete()
-        
         messages.success(request, 'Servicio eliminado correctamente')
-        
         return redirect('servicios')
 
 # Vista para editar la informacion de las herramientas o bases de datos
 
-@method_decorator(login_required, name='dispatch')
-@method_decorator(user_passes_test(is_staff_or_superuser), name='dispatch')
+@method_decorator(staff_required, name='dispatch')
 class servicio_edit_view(TemplateView):
     template_name = "servicios/servicio_edit.html"
     
@@ -175,8 +159,7 @@ class servicio_edit_view(TemplateView):
 # Vista para agregar una herramienta o base de datos
 
 
-@method_decorator(login_required, name='dispatch')
-@method_decorator(user_passes_test(is_staff_or_superuser), name='dispatch')
+@method_decorator(staff_required, name='dispatch')
 class nuevo_servicio_view(TemplateView):
     template_name = "servicios/nuevo_servicio.html"
 

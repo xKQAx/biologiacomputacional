@@ -253,9 +253,12 @@
                             <li>
                                 <hr class="dropdown-divider">
                             </li>
-                            <li><a class="dropdown-item text-danger"
-                                    href="{% url 'investigacion_eliminar' investigacion.nombre %}">Eliminar
-                                    {{ investigacion.nombre }}</a>
+                            <li>
+                                <form method="post" action="{% url 'investigacion_eliminar' investigacion.nombre %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="dropdown-item text-danger">Eliminar
+                                        {{ investigacion.nombre }}</button>
+                                </form>
                             </li>
                         </ul>
                     </div>
@@ -612,9 +615,12 @@
                             <li>
                                 <hr class="dropdown-divider">
                             </li>
-                            <li><a class="dropdown-item text-danger"
-                                    href="{% url 'investigacion_eliminar' investigacion.nombre %}">Eliminar
-                                    {{ investigacion.nombre }}</a>
+                            <li>
+                                <form method="post" action="{% url 'investigacion_eliminar' investigacion.nombre %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="dropdown-item text-danger">Eliminar
+                                        {{ investigacion.nombre }}</button>
+                                </form>
                             </li>
                         </ul>
                     </div>
@@ -832,9 +838,12 @@
                             <li>
                                 <hr class="dropdown-divider">
                             </li>
-                            <li><a class="dropdown-item text-danger"
-                                    href="{% url 'investigacion_eliminar' investigacion.nombre %}">Eliminar
-                                    {{ investigacion.nombre }}</a>
+                            <li>
+                                <form method="post" action="{% url 'investigacion_eliminar' investigacion.nombre %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="dropdown-item text-danger">Eliminar
+                                        {{ investigacion.nombre }}</button>
+                                </form>
                             </li>
                         </ul>
                     </div>

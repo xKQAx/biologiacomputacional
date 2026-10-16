@@ -1,20 +1,11 @@
-from typing import Any
-from django.shortcuts import render
 from django.views.generic import TemplateView
 from investigacion.models import CategoriaI, Investigacion, Carrusel
 from django.utils.decorators import method_decorator
-from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render, get_object_or_404, redirect
 from BiologiaComputacional.forms import InvestigacionForm, CarruselForm
+from BiologiaComputacional.permissions import staff_required
 from django.contrib import messages
-from django.urls import reverse_lazy
-
-
-# Create your views here.
-
-
-def is_staff_or_superuser(user):
-    return user.is_staff or user.is_superuser
+from django.views import View
 
 # Vista para ver informacion de las investigaciones
 
@@ -31,8 +22,7 @@ class investigacion_view(TemplateView):
 
 # Vista para editar texto y carrusel de fotos
 
-@method_decorator(login_required, name='dispatch')
-@method_decorator(user_passes_test(is_staff_or_superuser), name='dispatch')
+@method_decorator(staff_required, name='dispatch')
 class InvestigacionCarruselEditView(TemplateView):
     template_name = "investigacion/investigacion_edit_carrusel.html"
 
@@ -67,8 +57,7 @@ class InvestigacionCarruselEditView(TemplateView):
 # Vista para editar informacion de las investigaciones
 
 
-@method_decorator(login_required, name='dispatch')
-@method_decorator(user_passes_test(is_staff_or_superuser), name='dispatch')
+@method_decorator(staff_required, name='dispatch')
 class InvestigacionEditView(TemplateView):
     template_name = "investigacion/investigacion_edit.html"
 
@@ -139,10 +128,9 @@ class InvestigacionEditView(TemplateView):
 # Vista para eliminar una investigacion
 
 
-@method_decorator(login_required, name='dispatch')
-@method_decorator(user_passes_test(is_staff_or_superuser), name='dispatch')
-class InvestigacionEliminarView(TemplateView):
-    def get(self, request, nombre):
+@method_decorator(staff_required, name='dispatch')
+class InvestigacionEliminarView(View):
+    def post(self, request, nombre):
         investigacion = get_object_or_404(Investigacion, nombre=nombre)
         investigacion.delete()
         messages.success(
@@ -152,8 +140,7 @@ class InvestigacionEliminarView(TemplateView):
 # Vista para agregar una nueva investigacion
 
 
-@method_decorator(login_required, name='dispatch')
-@method_decorator(user_passes_test(is_staff_or_superuser), name='dispatch')
+@method_decorator(staff_required, name='dispatch')
 class InvestigacionCreateView(TemplateView):
     template_name = "investigacion/investigacion_create.html"
 
