@@ -10,10 +10,16 @@
   <div class="info-card">
     <i class="info-card-icon fa-solid fa-envelope-open-text text-primary" aria-hidden="true"></i>
     <h2>Verifica tu correo electrónico</h2>
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-danger" role="alert">{{ message }}</div>
+    {% endfor %}
+    {% else %}
     <p>¡Gracias por registrarte! Hemos enviado un correo a la dirección que proporcionaste.</p>
     <p class="mb-0">Por favor, revisa tu bandeja de entrada y haz clic en el enlace de
       verificación para activar tu cuenta. Si no lo encuentras, verifica la carpeta de
       <strong>spam</strong>.</p>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

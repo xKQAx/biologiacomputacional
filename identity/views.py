@@ -16,12 +16,11 @@ from django.urls import reverse_lazy
 from PIL import Image
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
-from django.utils.http import urlsafe_base64_decode
 from django.contrib.auth.forms import SetPasswordForm
 from django.views.generic import TemplateView
 from django.http.response import JsonResponse
-from django.core.mail import send_mail
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from BiologiaComputacional.mail import send_project_mail
 from django.utils.encoding import force_str, force_bytes
 from django.contrib.sites.shortcuts import get_current_site
 from django.template.loader import render_to_string
@@ -141,14 +140,11 @@ def register(request):
                 'token': token,
             })
 
-            # Enviar correo de verificación
-            send_mail(
-                mail_subject,
-                message,
-                'sinfoniadefragancias@gmail.com',
-                [user.email],
-                fail_silently=False,
-            )
+            if not send_project_mail(mail_subject, message, [user.email]):
+                messages.error(
+                    request,
+                    'La cuenta quedó pendiente, pero no se pudo enviar el correo de activación. Revisa la configuración de correo.',
+                )
 
             return render(request, 'identity/look_email.html')
         else:
