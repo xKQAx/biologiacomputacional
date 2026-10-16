@@ -28,6 +28,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
 from BiologiaComputacional.permissions import staff_required, superuser_required
+from identity.signals import ensure_user_profile
 
 # Create your views here.
 
@@ -41,14 +42,7 @@ class ProfileView(View):
 
     def get(self, request, *args, **kwargs):
         user = request.user
-
-        # Intenta obtener la información adicional del usuario
-        try:
-            additional_info = ProfileAdditionalInfo.objects.get(user=user)
-        except ProfileAdditionalInfo.DoesNotExist:
-            # Si no existe, crea una nueva instancia
-            additional_info = ProfileAdditionalInfo(user=user)
-            additional_info.save()
+        additional_info, _created = ensure_user_profile(user)
 
         usuario_form = UsuarioForm(instance=user)
         additional_info_form = AdditionalUserInfoForm(instance=additional_info)
@@ -56,14 +50,7 @@ class ProfileView(View):
 
     def post(self, request, *args, **kwargs):
         user = request.user
-
-        # Intenta obtener la información adicional del usuario
-        try:
-            additional_info = ProfileAdditionalInfo.objects.get(user=user)
-        except ProfileAdditionalInfo.DoesNotExist:
-            # Si no existe, crea una nueva instancia
-            additional_info = ProfileAdditionalInfo(user=user)
-            additional_info.save()
+        additional_info, _created = ensure_user_profile(user)
 
         usuario_form = UsuarioForm(request.POST, instance=user)
         additional_info_form = AdditionalUserInfoForm(
@@ -122,8 +109,13 @@ def register(request):
             user.is_active = False
             user.save()
 
-            profile = profile_form.save(commit=False)
-            profile.user = user
+            # La señal ya creó la fila; aquí solo se copian los datos del formulario.
+            profile, _created = ensure_user_profile(user)
+            profile.phone_number = profile_form.cleaned_data.get('phone_number') or ''
+            profile.gender = profile_form.cleaned_data.get('gender') or ''
+            image = profile_form.cleaned_data.get('image')
+            if image:
+                profile.image = image
             profile.save()
 
             # Generar token de verificación

@@ -1,21 +1,18 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
-from identity.models import ProfileAdditionalInfo
 
+from identity.signals import ensure_user_profile
 
 
 class Command(BaseCommand):
-    help = 'Creates profiles for existing users that do not have one'
+    help = 'Crea ProfileAdditionalInfo para usuarios que aún no tienen uno'
 
     def handle(self, *args, **options):
-        
-        # Obtén todos los usuarios
-        users = User.objects.all()
-
-        # Para cada usuario
-        for user in users:
-            # Si el usuario no tiene un perfil
-            if not ProfileAdditionalInfo.objects.filter(user=user).exists():
-                # Crea un perfil para el usuario
-                ProfileAdditionalInfo.objects.create(user=user)
-                self.stdout.write(self.style.SUCCESS('Successfully created profiles for existing users'))
+        created_count = 0
+        for user in User.objects.all():
+            _profile, created = ensure_user_profile(user)
+            if created:
+                created_count += 1
+        self.stdout.write(self.style.SUCCESS(
+            f'Perfiles creados: {created_count}'
+        ))
