@@ -12,12 +12,12 @@
 <div class="container">
   <div class="row d-flex justify-content-center align-items-center">
 
-    <div class="col-12 col-md-9 col-lg-6 col-xl-5">
+    <div class="col-12 col-md-9 col-lg-6 col-xl-5 order-2 order-lg-1">
       <img src="{% static 'identity/images/login.png' %}" class="img-fluid"
         alt="Ilustración de registro">
     </div>
 
-    <div class="col-12 col-md-8 col-lg-6 col-xl-4 offset-xl-1 mb-4">
+    <div class="col-12 col-md-8 col-lg-6 col-xl-4 offset-xl-1 mb-4 order-1 order-lg-2">
 
       <div class="text-center mb-4 mt-4">
         <h4 class="fw-bold" style="color: var(--primary-blue);">Crear cuenta</h4>
@@ -85,6 +85,8 @@
             <label for="floatingInputGroupPassword1">Contraseña</label>
             <button type="button" id="togglePassword1"
               class="btn btn-default position-absolute top-50 end-0 translate-middle-y"
+              data-toggle-password="floatingInputGroupPassword1"
+              aria-pressed="false"
               aria-label="Mostrar contraseña">
               <i id="togglePasswordIcon1" class="fa fa-eye" aria-hidden="true"></i>
             </button>
@@ -101,6 +103,10 @@
             <label for="floatingInputGroupPassword2">Repetir contraseña</label>
             <button type="button" id="togglePassword2"
               class="btn btn-default position-absolute top-50 end-0 translate-middle-y"
+              data-toggle-password="floatingInputGroupPassword2"
+              data-label-show="Mostrar confirmación de contraseña"
+              data-label-hide="Ocultar confirmación de contraseña"
+              aria-pressed="false"
               aria-label="Mostrar confirmación de contraseña">
               <i id="togglePasswordIcon2" class="fa fa-eye" aria-hidden="true"></i>
             </button>
@@ -125,5 +131,6 @@
   </div>
 </div>
 
+<script src="{% static 'js/password_toggle.js' %}"></script>
 <script src="{% static 'js/register.js' %}"></script>
 {% endblock %}

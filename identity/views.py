@@ -1,4 +1,6 @@
 from typing import Any
+from urllib.parse import urlparse
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.contrib.auth.forms import AuthenticationForm
@@ -10,7 +12,7 @@ from BiologiaComputacional.forms import UsuarioForm, RegisterCustomForm, Profile
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django import forms
-from django.contrib.auth.views import PasswordChangeView
+from django.contrib.auth.views import PasswordChangeView, PasswordResetDoneView
 from django.contrib.auth import update_session_auth_hash
 from django.urls import reverse, reverse_lazy
 from PIL import Image
@@ -19,7 +21,11 @@ from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.forms import SetPasswordForm
 from django.views.generic import TemplateView
 from django.http.response import JsonResponse
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.http import (
+    url_has_allowed_host_and_scheme,
+    urlsafe_base64_encode,
+    urlsafe_base64_decode,
+)
 from BiologiaComputacional.mail import send_project_mail
 from django.utils.encoding import force_str, force_bytes
 from django.template.loader import render_to_string
@@ -29,7 +35,7 @@ from django.views.decorators.http import require_POST
 from BiologiaComputacional.permissions import staff_required, superuser_required
 from identity.accounts import (
     ACTIVATION_RESEND_SESSION_KEY,
-    user_for_login,
+    login_candidates,
     username_taken,
     email_taken,
 )
@@ -208,13 +214,18 @@ class CustomAuthenticationForm(AuthenticationForm):
         self.offer_resend = False
 
         if identifier is not None and password:
-            account, code = user_for_login(identifier)
-            if code == 'ambiguous':
-                raise forms.ValidationError(
-                    self.error_messages['ambiguous'],
-                    code='ambiguous',
-                )
+            matches = login_candidates(identifier)
+            # Varias cuentas y clave mala: el aviso genérico. Decir que el
+            # correo está repetido confirmaría que existe sin demostrar la clave.
+            if len(matches) > 1:
+                if any(account.check_password(password) for account in matches):
+                    raise forms.ValidationError(
+                        self.error_messages['ambiguous'],
+                        code='ambiguous',
+                    )
+                raise self.get_invalid_login_error()
 
+            account = matches[0] if matches else None
             username = account.username if account is not None else identifier
             self.user_cache = authenticate(
                 self.request, username=username, password=password
@@ -236,12 +247,32 @@ class CustomAuthenticationForm(AuthenticationForm):
 
         return self.cleaned_data
 
+
+def safe_next_url(request):
+    """Ruta interna a la que volver tras entrar.
+
+    Ignora destinos de otro sitio y la propia pantalla de login, para no
+    abrir un enlace externo ni entrar en un bucle.
+    """
+    candidate = (request.POST.get("next") or request.GET.get("next") or "").strip()
+    allowed = url_has_allowed_host_and_scheme(
+        url=candidate,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    )
+    if not allowed:
+        return ""
+    if urlparse(candidate).path.rstrip("/") == reverse("signin").rstrip("/"):
+        return ""
+    return candidate
+
 # Logica formulario login
 
 
 def signin(request):
+    next_url = safe_next_url(request)
     if request.user.is_authenticated:
-        return redirect('inicio')
+        return redirect(next_url or reverse('inicio'))
 
     if request.method == 'POST':
         form = CustomAuthenticationForm(request, request.POST)
@@ -254,14 +285,20 @@ def signin(request):
             else:
                 request.session.set_expiry(0)
 
-            return redirect('inicio')
+            return redirect(next_url or reverse('inicio'))
 
         request.session.pop(ACTIVATION_RESEND_SESSION_KEY, None)
         if getattr(form, 'offer_resend', False):
             request.session[ACTIVATION_RESEND_SESSION_KEY] = form.resend_user_id
-        return render(request, 'identity/signin.html', {'form': form})
+        return render(request, 'identity/signin.html', {
+            'form': form,
+            'next_url': next_url,
+        })
 
-    return render(request, 'identity/signin.html', {'form': CustomAuthenticationForm()})
+    return render(request, 'identity/signin.html', {
+        'form': CustomAuthenticationForm(),
+        'next_url': next_url,
+    })
 
 
 @require_POST
@@ -300,6 +337,8 @@ class ProfilePasswordChangeView(PasswordChangeView):
     success_url = reverse_lazy('cambio_contrasena')
 
     def get_context_data(self, **kwargs):
+        # Sin ficha, la plantilla rompía y no se podía cambiar la clave.
+        ensure_user_profile(self.request.user)
         context = super().get_context_data(**kwargs)
         context['password_changed'] = self.request.session.get(
             'password_changed', False)
@@ -310,10 +349,6 @@ class ProfilePasswordChangeView(PasswordChangeView):
         update_session_auth_hash(self.request, form.user)
         self.request.session['password_changed'] = True
         return super().form_valid(form)
-
-    def form_invalid(self, form):
-        messages.error(self.request, 'No se pudo cambiar la contraseña')
-        return super().form_invalid(form)
 
 
 # Cambiar contraseña de usuario sin sesion iniciada
@@ -347,6 +382,20 @@ def password_reset_confirm(request, uidb64, token):
 class PasswordResetInvalidView(TemplateView):
 
     template_name = "identity/password_reset_invalid.html"
+
+
+class PasswordResetSentView(PasswordResetDoneView):
+    """La pantalla de «revisa el correo», con el aviso de consola en local."""
+
+    template_name = "identity/password_reset_sent.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["console_email"] = settings.EMAIL_BACKEND.endswith(
+            "console.EmailBackend"
+        )
+        context["reset_minutes"] = max(settings.PASSWORD_RESET_TIMEOUT // 60, 1)
+        return context
 
 
 @method_decorator(staff_required, name='dispatch')
@@ -447,16 +496,31 @@ def eliminar_usuario(request, pk):
 # Activacion de cuentas por correo
 
 
-def activate(request, uidb64, token):
+def _user_from_uid(uidb64):
     try:
         uid = force_str(urlsafe_base64_decode(uidb64))
-        user = get_user_model().objects.get(pk=uid)
-        if default_token_generator.check_token(user, token):
-            user.is_active = True
-            user.save()
-            login(request, user)
-            return render(request, 'identity/activation_success.html')
-        else:
-            return render(request, 'identity/activation_invalid.html')
+        return get_user_model().objects.get(pk=uid)
     except (TypeError, ValueError, OverflowError, get_user_model().DoesNotExist):
-        return render(request, 'identity/activation_invalid.html')
+        return None
+
+
+def activate(request, uidb64, token):
+    user = _user_from_uid(uidb64)
+    if user is not None and default_token_generator.check_token(user, token):
+        if not user.is_active:
+            user.is_active = True
+            user.save(update_fields=["is_active"])
+        # Entrar aquí invalida el token (cambia last_login). La pantalla de
+        # éxito vive en otra URL para que recargar no parezca un enlace roto.
+        login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+        return redirect("activation_success")
+    if user is not None and user.is_active:
+        return render(
+            request, "identity/activation_success.html", {"already_active": True}
+        )
+    return render(request, "identity/activation_invalid.html")
+
+
+@login_required
+def activation_success(request):
+    return render(request, "identity/activation_success.html")

@@ -55,13 +55,6 @@
     password1.addEventListener('input', syncPasswords);
     password2.addEventListener('input', syncPasswords);
 
-    document.getElementById('togglePassword1').addEventListener('click', function () {
-        togglePassword(password1, document.getElementById('togglePasswordIcon1'));
-    });
-    document.getElementById('togglePassword2').addEventListener('click', function () {
-        togglePassword(password2, document.getElementById('togglePasswordIcon2'));
-    });
-
     function bindTakenCheck(input, param, feedback, message, linkHref, linkText) {
         var requestId = 0;
 
@@ -137,12 +130,5 @@
         feedback.hidden = true;
         feedback.textContent = '';
         delete feedback.dataset.client;
-    }
-
-    function togglePassword(input, icon) {
-        var visible = input.type === 'password';
-        input.type = visible ? 'text' : 'password';
-        icon.classList.toggle('fa-eye', !visible);
-        icon.classList.toggle('fa-eye-slash', visible);
     }
 })();

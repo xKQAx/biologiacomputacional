@@ -33,29 +33,40 @@ def email_taken(email):
     return User.objects.filter(email__iexact=email).exists()
 
 
-def user_for_login(identifier):
-    """Resuelve con qué cuenta entrar.
+# Tope bajo: basta para detectar un correo repetido sin recorrer toda la tabla.
+_LOGIN_MATCH_LIMIT = 5
 
-    Devuelve (usuario, código). El código es «ambiguous» cuando el correo
-    pertenece a más de una cuenta. Si no hay coincidencia, el usuario es
-    None y el login muestra el mismo mensaje que una contraseña incorrecta.
+
+def login_candidates(identifier):
+    """Cuentas que podrían corresponder al texto escrito en el login.
+
+    Primero el nombre de usuario, también si parece un correo. El correo
+    solo se usa cuando ninguna cuenta se llama así.
     """
     identifier = normalize_username(identifier)
     if not identifier:
-        return None, None
+        return []
 
-    by_name = list(User.objects.filter(username__iexact=identifier)[:2])
-    if len(by_name) == 1:
-        return by_name[0], None
-    if len(by_name) > 1:
-        return None, "ambiguous"
-
+    by_name = list(
+        User.objects.filter(username__iexact=identifier)[:_LOGIN_MATCH_LIMIT]
+    )
+    if by_name:
+        return by_name
     if "@" not in identifier:
-        return None, None
+        return []
+    return list(User.objects.filter(email__iexact=identifier)[:_LOGIN_MATCH_LIMIT])
 
-    by_email = list(User.objects.filter(email__iexact=identifier)[:2])
-    if len(by_email) == 1:
-        return by_email[0], None
-    if len(by_email) > 1:
+
+def user_for_login(identifier):
+    """Resuelve con qué cuenta entrar.
+
+    Devuelve (usuario, código). El código es «ambiguous» cuando hay más de
+    una coincidencia. Si no hay ninguna, el usuario es None y el login muestra
+    el mismo mensaje que una contraseña incorrecta.
+    """
+    matches = login_candidates(identifier)
+    if len(matches) == 1:
+        return matches[0], None
+    if len(matches) > 1:
         return None, "ambiguous"
     return None, None
