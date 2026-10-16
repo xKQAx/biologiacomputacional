@@ -80,9 +80,8 @@
 .profile-tabs {
   border-bottom: 2px solid rgba(0, 0, 0, 0.06);
   margin-bottom: 0;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  flex-wrap: wrap;
+  overflow: visible;
 }
 
 .profile-tabs .nav-link {
@@ -113,17 +112,25 @@
   border-bottom-color: var(--primary-blue);
 }
 
-/* Responsive: sidebar stacks on mobile */
+@media (min-width: 768px) {
+  .profile-tabs {
+    flex-wrap: nowrap;
+  }
+}
+
+/* Responsive: sidebar stacks on mobile. El padding !important gana al de .nav-link global. */
 @media (max-width: 767px) {
   .profile-card {
     margin-bottom: 1.5rem;
   }
 
-  .profile-tabs {
-    scrollbar-width: none;
+  .profile-form-card {
+    padding: 1.25rem 1rem;
   }
 
-  .profile-tabs::-webkit-scrollbar {
-    display: none;
+  .profile-tabs .nav-link {
+    white-space: normal;
+    padding: 0.65rem 0.75rem !important;
+    font-size: 0.8rem;
   }
 }

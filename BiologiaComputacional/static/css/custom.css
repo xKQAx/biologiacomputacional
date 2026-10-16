@@ -92,29 +92,3 @@
   box-shadow: var(--shadow-soft);
 }
 
-/* ========================================
-   TARJETA DE PROFESIONAL
-   ======================================== */
-
-.tarjetaprofesional {
-  background-color: var(--bg-clean);
-  min-height: 200px;
-  width: 200px;
-  min-width: 160px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--shadow-hover);
-  border-radius: 2.5rem;
-  padding: 1rem;
-}
-
-@media (max-width: 768px) {
-  .tarjetaprofesional {
-    width: 100%;
-    max-width: 280px;
-    min-height: auto;
-    padding: 1.5rem;
-  }
-}

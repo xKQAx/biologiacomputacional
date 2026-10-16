@@ -9,9 +9,25 @@ const dataTableOptions = {
     ],
     pageLength: 5,
     destroy: true,
-    "lengthMenu": [[5, 25, 50, -1], [5, 25, 50, "Todos"]],
-    "language": {
-        "url": "//cdn.datatables.net/plug-ins/1.10.16/i18n/Spanish.json"
+    autoWidth: false,
+    lengthMenu: [[5, 25, 50, -1], [5, 25, 50, "Todos"]],
+    language: {
+        decimal: ",",
+        emptyTable: "No hay datos disponibles",
+        info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
+        infoEmpty: "Mostrando 0 a 0 de 0 registros",
+        infoFiltered: "(filtrado de _MAX_ registros)",
+        lengthMenu: "Mostrar _MENU_ registros",
+        loadingRecords: "Cargando...",
+        processing: "Procesando...",
+        search: "Buscar:",
+        zeroRecords: "No se encontraron resultados",
+        paginate: {
+            first: "Primero",
+            last: "Último",
+            next: "Siguiente",
+            previous: "Anterior"
+        }
     }
 };
 
@@ -26,14 +42,14 @@ const infoUsers = async () => {
         data.info_users.forEach((info) => {
             content += `
                 <tr>
-                    <td>${info.username}</td>
-                    <td>${info.first_name + " " + info.last_name}</td>
-                    <td>
+                    <td data-label="Usuario">${info.username}</td>
+                    <td data-label="Nombre">${info.first_name + " " + info.last_name}</td>
+                    <td data-label="Permisos">
                         ${info.is_superuser ? '<span class="badge rounded-1 text-bg-success">Super usuario</span>' : ''}
                         ${info.is_staff ? '<span class="badge rounded-1 text-bg-primary">Administrador</span>' : ''}
                         ${!info.is_superuser && !info.is_staff ? '<span class="badge rounded-1 text-bg-secondary">Estudiante</span>' : ''}
                     </td>
-                    <td>
+                    <td data-label="Ver detalles">
                         <button class = 'btn btn-sm view-button' style = 'color: #38B7E0' data-id='${info.id}'><i class = 'fa-solid fa-arrow-right'></i></button>
                     </td>
                 </tr>

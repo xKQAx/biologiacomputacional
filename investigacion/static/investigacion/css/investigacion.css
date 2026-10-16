@@ -21,23 +21,60 @@ html {
     scroll-behavior: smooth;
 }
 
+.carousel-item .image-container,
+.carousel-item .image-container img {
+    height: clamp(280px, 60vh, 640px);
+    min-height: 280px;
+}
+
 .carousel-item img {
-    height: 60vh;
-    min-height: 300px;
+    width: 100%;
     object-fit: cover;
+    object-position: center;
+}
+
+.carousel-caption {
+    left: 1rem;
+    right: 1rem;
+    bottom: 1.25rem;
+    padding-bottom: 1.25rem;
+}
+
+.carousel-caption h2 {
+    font-size: clamp(1.2rem, 3.5vw, 2.4rem);
+    line-height: 1.2;
+    margin-bottom: 0.4rem;
+}
+
+.carousel-caption p {
+    font-size: clamp(0.85rem, 2.2vw, 1.15rem);
+    line-height: 1.45;
+    margin-bottom: 0.5rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .custom-photo {
-    height: 100%;
+    height: auto;
     width: 100%;
-    max-width: 500px;
+    max-width: min(500px, 100%);
     margin: 0 auto;
 }
 
 @media (max-width: 576px) {
-    .carousel-item img {
-        height: 40vh;
-        min-height: 200px;
+    .carousel-item .image-container,
+    .carousel-item .image-container img {
+        height: clamp(260px, 52vh, 420px);
+        min-height: 260px;
+    }
+
+    .carousel-caption {
+        left: 0.75rem;
+        right: 0.75rem;
+        bottom: 1.75rem;
+        padding-bottom: 0.25rem;
     }
 }
 

@@ -245,6 +245,13 @@ footer .navbar-brand:hover {
     font-size: 0.85rem;
   }
 
+  footer .col-12:hover,
+  footer .col-md-2:hover,
+  footer .col-md-3:hover,
+  footer .col-md-4:hover {
+    transform: none;
+  }
+
   footer .col-sm-12 {
     margin-bottom: 2rem;
     text-align: center;

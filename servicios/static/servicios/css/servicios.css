@@ -82,3 +82,44 @@
     gap: 1rem;
   }
 }
+
+/* Listado: título y buscador. En móvil se apilan para que el botón
+   no se encoja ni recorte el texto dentro de la fila flex. */
+.servicios-toolbar .container-fluid {
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+}
+
+.servicios-busqueda {
+  width: 100%;
+  max-width: 100%;
+}
+
+.servicios-busqueda .form-control {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.servicios-busqueda .btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+@media (max-width: 575.98px) {
+  .servicios-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .servicios-toolbar > .col {
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .servicios-busqueda .form-control {
+    width: auto;
+    max-width: 100%;
+  }
+}

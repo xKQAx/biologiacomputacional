@@ -111,13 +111,13 @@ td {
 @media (max-width: 768px) {
     .profesionales-intro-img {
         width: 100%;
-        max-width: 340px;
+        max-width: 100%;
     }
 
     .profesionales-grid {
         flex-direction: column;
-        align-items: center;
-        padding: 1.5rem;
+        align-items: stretch;
+        padding: 1rem;
     }
 }
 
@@ -136,6 +136,9 @@ td {
   flex-direction: column;
   align-items: center;
   text-align: center;
+  flex: 1 1 220px;
+  width: auto;
+  max-width: 280px;
 }
 
 .tarjetaprofesional:hover {
@@ -200,7 +203,8 @@ td {
 
 @media (max-width: 767px) {
   .tarjetaprofesional {
+    flex: 1 1 auto;
     width: 100%;
-    max-width: 260px;
+    max-width: none;
   }
 }

@@ -3,6 +3,10 @@
 
 {% block title %} Bases de datos {% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/servicios.css' %}" />
+{% endblock %}
+
 {% block content %}
 
 <!-- Contenido -->
@@ -45,7 +49,7 @@
         </div>
 
         <div class="col-12 col-md-8">
-            <div class="row mb-4 mt-3">
+            <div class="row mb-4 mt-3 servicios-toolbar">
                 <div class="col d-flex align-items-center">
                     <h5 class="">Bases de datos disponibles</h5>
                 </div>
@@ -53,7 +57,7 @@
                 <div class="col d-flex">
                     <!-- Formulario de búsqueda -->
                     <div class="container-fluid">
-                        <form class="d-flex" action="" method="GET">
+                        <form class="d-flex servicios-busqueda" action="" method="GET">
                             <input class="form-control me-2" type="search" placeholder="Buscar" aria-label="Search"
                                 name="q">
                             <button class="btn btn-secondary" type="submit">Buscar</button>
