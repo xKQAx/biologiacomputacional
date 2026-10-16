@@ -3,6 +3,10 @@
 
 {% block title %} Gestionar usuarios {% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'identity/css/profile.css' %}" />
+{% endblock %}
+
 {% block content %}
 
 <div class="container my-3">
@@ -34,8 +38,7 @@
                     <!-- Pills navs -->
                     <ul class="nav nav-justified mt-4 mb-2">
                         <li class="nav-item">
-                            <a class="nav-link rounded text-bg-danger" href="{% url 'logout' %}"><i
-                                    class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar sesión</a>
+                            {% include "identity/includes/logout_form.html" with button_class="nav-link rounded text-bg-danger w-100 border-0" %}
                         </li>
                     </ul>
                     <!-- Pills navs -->
@@ -47,7 +50,7 @@
         <div class="col-md-8">
 
             <!-- Tabs -->
-            <ul class="nav nav-tabs">
+            <ul class="nav nav-tabs profile-tabs">
                 <li class="nav-item">
                     <a class="nav-link text-black" href="{% url 'perfil' %}"><i
                             class="fa-solid fa-circle-info text-secondary me-1"></i>
@@ -74,7 +77,7 @@
 
                     <!-- DataTable -->
                     <div class="table-responsive">
-                        <table id="info" class="table">
+                        <table id="info" class="table users-table">
                             <caption>
                                 Información correspondiente
                             </caption>

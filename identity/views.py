@@ -1,3 +1,4 @@
+from datetime import timedelta
 from typing import Any
 from urllib.parse import urlparse
 
@@ -12,7 +13,11 @@ from BiologiaComputacional.forms import UsuarioForm, RegisterCustomForm, Profile
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django import forms
-from django.contrib.auth.views import PasswordChangeView, PasswordResetDoneView
+from django.contrib.auth.views import (
+    PasswordChangeView,
+    PasswordResetDoneView,
+    PasswordResetView,
+)
 from django.contrib.auth import update_session_auth_hash
 from django.urls import reverse, reverse_lazy
 from PIL import Image
@@ -35,9 +40,21 @@ from django.views.decorators.http import require_POST
 from BiologiaComputacional.permissions import staff_required, superuser_required
 from identity.accounts import (
     ACTIVATION_RESEND_SESSION_KEY,
+    PASSWORD_RESET_TOKEN_SESSION_KEY,
+    PASSWORD_RESET_UID_SESSION_KEY,
+    account_for_email,
+    accounts_for_email,
     login_candidates,
     username_taken,
     email_taken,
+)
+from identity.throttle import (
+    LOCKOUT_MESSAGE,
+    LOGIN_FAILURE_LIMIT,
+    clear_failures,
+    client_ip,
+    is_locked,
+    register_failure,
 )
 from identity.signals import ensure_user_profile
 
@@ -98,10 +115,14 @@ class ProfileView(View):
                 additional_info_form.save()
                 messages.success(request, 'Información actualizada con éxito.')
         else:
-            print("Errores de usuario_form:", usuario_form.errors)
-            print("Errores de additional_info_form:",
-                  additional_info_form.errors)
-            messages.error(request, 'Error al actualizar la información.')
+            email_errors = usuario_form.errors.get("email")
+            if email_errors:
+                messages.error(request, email_errors[0])
+            else:
+                print("Errores de usuario_form:", usuario_form.errors)
+                print("Errores de additional_info_form:",
+                      additional_info_form.errors)
+                messages.error(request, 'Error al actualizar la información.')
 
         return redirect('perfil')
 
@@ -179,10 +200,9 @@ def account_availability(request):
 # Logica para cerrar sesion
 
 
+@require_POST
 def user_logout(request):
-
     logout(request)
-
     return redirect('inicio')
 
 # Validaciones para el formulario Login
@@ -205,7 +225,6 @@ class CustomAuthenticationForm(AuthenticationForm):
             'Tu cuenta todavía no está activada. Revisa el correo de verificación, '
             'incluida la carpeta de spam.'
         ),
-        'ambiguous': 'Hay varias cuentas con este correo. Entra con tu nombre de usuario.',
     }
 
     def clean(self):
@@ -213,18 +232,12 @@ class CustomAuthenticationForm(AuthenticationForm):
         password = self.cleaned_data.get('password')
         self.offer_resend = False
 
-        if identifier is not None and password:
-            matches = login_candidates(identifier)
-            # Varias cuentas y clave mala: el aviso genérico. Decir que el
-            # correo está repetido confirmaría que existe sin demostrar la clave.
-            if len(matches) > 1:
-                if any(account.check_password(password) for account in matches):
-                    raise forms.ValidationError(
-                        self.error_messages['ambiguous'],
-                        code='ambiguous',
-                    )
-                raise self.get_invalid_login_error()
+        if identifier and password:
+            ip = client_ip(self.request)
+            if is_locked(identifier, ip):
+                raise forms.ValidationError(LOCKOUT_MESSAGE, code='locked')
 
+            matches = login_candidates(identifier)
             account = matches[0] if matches else None
             username = account.username if account is not None else identifier
             self.user_cache = authenticate(
@@ -242,7 +255,10 @@ class CustomAuthenticationForm(AuthenticationForm):
                         self.error_messages['inactive'],
                         code='inactive',
                     )
+                if register_failure(identifier, ip) >= LOGIN_FAILURE_LIMIT:
+                    raise forms.ValidationError(LOCKOUT_MESSAGE, code='locked')
                 raise self.get_invalid_login_error()
+            clear_failures(identifier, ip)
             self.confirm_login_allowed(self.user_cache)
 
         return self.cleaned_data
@@ -280,8 +296,10 @@ def signin(request):
         if form.is_valid():
             request.session.pop(ACTIVATION_RESEND_SESSION_KEY, None)
             login(request, form.get_user())
-            if 'remember_me' in request.POST:
-                request.session.set_expiry(1209600)
+            # Un entero se volvería a contar en cada guardado de la sesión.
+            # La fecha fija dura dos semanas desde este login y no se alarga.
+            if request.POST.get('remember_me'):
+                request.session.set_expiry(timedelta(seconds=settings.SESSION_COOKIE_AGE))
             else:
                 request.session.set_expiry(0)
 
@@ -318,10 +336,9 @@ def resend_activation(request):
             )
 
     email = (request.POST.get('email') or '').strip()
-    if email:
-        pending = User.objects.filter(email__iexact=email, is_active=False)[:5]
-        for user in pending:
-            send_activation_mail(request, user)
+    account = account_for_email(email)
+    if account is not None and not account.is_active:
+        send_activation_mail(request, account)
     return render(
         request,
         'identity/look_email.html',
@@ -351,32 +368,67 @@ class ProfilePasswordChangeView(PasswordChangeView):
         return super().form_valid(form)
 
 
-# Cambiar contraseña de usuario sin sesion iniciada
-UserModel = get_user_model()
+class AccountPasswordResetView(PasswordResetView):
+    """Activa de nuevo una cuenta pendiente sin decir si el correo existe."""
+
+    template_name = "identity/password_reset.html"
+
+    def form_valid(self, form):
+        matches = accounts_for_email(form.cleaned_data.get("email"))
+        if len(matches) > 1:
+            return redirect(self.get_success_url())
+        if len(matches) == 1 and not matches[0].is_active:
+            send_activation_mail(self.request, matches[0])
+            return redirect(self.get_success_url())
+        return super().form_valid(form)
+
+
+def _clear_password_reset_session(request):
+    request.session.pop(PASSWORD_RESET_UID_SESSION_KEY, None)
+    request.session.pop(PASSWORD_RESET_TOKEN_SESSION_KEY, None)
+
+
+def _user_from_reset_session(request):
+    uidb64 = request.session.get(PASSWORD_RESET_UID_SESSION_KEY)
+    token = request.session.get(PASSWORD_RESET_TOKEN_SESSION_KEY)
+    if not uidb64 or not token:
+        return None
+    user = _user_from_uid(uidb64)
+    if user is None or not default_token_generator.check_token(user, token):
+        return None
+    return user
 
 
 def password_reset_confirm(request, uidb64, token):
-    # Decodificar el uid y verificar si es válido
-    try:
-        uid = urlsafe_base64_decode(uidb64).decode()
-        user = UserModel._default_manager.get(pk=uid)
-    except (TypeError, ValueError, OverflowError, UserModel.DoesNotExist):
-        user = None
+    """Guarda el enlace y sale de la barra de direcciones.
 
-    # Verificar si el token es válido
+    El correo tiene que llevar el token. Aquí deja de viajar en la URL,
+    así un Referer posterior no lo copia.
+    """
+    user = _user_from_uid(uidb64)
     if user is not None and default_token_generator.check_token(user, token):
-        # Si el usuario y el token son válidos, procesar el formulario
-        if request.method == 'POST':
-            form = SetPasswordForm(user, request.POST)
-            if form.is_valid():
-                form.save()
-                return redirect('password_reset_complete')
-        else:
-            form = SetPasswordForm(user)
-        return render(request, 'identity/password_reset_confirm.html', {'form': form})
+        request.session.cycle_key()
+        request.session[PASSWORD_RESET_UID_SESSION_KEY] = uidb64
+        request.session[PASSWORD_RESET_TOKEN_SESSION_KEY] = token
+        return redirect("password_reset_set")
+    _clear_password_reset_session(request)
+    return redirect("password_reset_invalid")
+
+
+def password_reset_set(request):
+    user = _user_from_reset_session(request)
+    if user is None:
+        _clear_password_reset_session(request)
+        return redirect("password_reset_invalid")
+    if request.method == "POST":
+        form = SetPasswordForm(user, request.POST)
+        if form.is_valid():
+            form.save()
+            _clear_password_reset_session(request)
+            return redirect("password_reset_complete")
     else:
-        # Si el usuario o el token no son válidos, redireccionar a una página de error o mostrar un mensaje
-        return redirect('password_reset_invalid')
+        form = SetPasswordForm(user)
+    return render(request, "identity/password_reset_confirm.html", {"form": form})
 
 
 class PasswordResetInvalidView(TemplateView):

@@ -63,7 +63,7 @@ class RegisterCustomForm(UserCreationForm):
         email = normalize_email(self.cleaned_data.get("email"))
         if email_taken(email):
             raise forms.ValidationError(
-                "Ya existe una cuenta con este correo. Inicia sesión o recupera tu contraseña.",
+                "Ya existe una cuenta con este correo. Inicia sesión o, si no puedes entrar, usa «¿Olvidaste tu contraseña?».",
                 code="unique",
             )
         return email
@@ -86,6 +86,15 @@ class UsuarioForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ['first_name', 'last_name', 'email']
+
+    def clean_email(self):
+        email = normalize_email(self.cleaned_data.get("email"))
+        if email_taken(email, exclude_pk=getattr(self.instance, "pk", None)):
+            raise forms.ValidationError(
+                "Ya existe una cuenta con este correo.",
+                code="unique",
+            )
+        return email
 
 # Formulario para crear un nuevo profesional
 

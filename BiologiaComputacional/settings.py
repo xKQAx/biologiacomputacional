@@ -204,3 +204,7 @@ else:
 
 CSRF_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_SAMESITE = 'Lax'
+# Sin «Recuérdame» la cookie muere al cerrar el navegador.
+# Con la casilla, el login guarda una fecha fija de estas dos semanas.
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_AGE = 1209600

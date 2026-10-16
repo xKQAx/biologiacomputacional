@@ -9,6 +9,8 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 ACTIVATION_RESEND_SESSION_KEY = "activation_resend_user_id"
+PASSWORD_RESET_UID_SESSION_KEY = "password_reset_uid"
+PASSWORD_RESET_TOKEN_SESSION_KEY = "password_reset_token"
 
 
 def normalize_username(value):
@@ -26,15 +28,35 @@ def username_taken(username):
     return User.objects.filter(username__iexact=username).exists()
 
 
-def email_taken(email):
+def email_taken(email, exclude_pk=None):
+    """True si otra cuenta ya usa ese correo, sin distinguir mayúsculas."""
     email = normalize_email(email)
     if not email:
         return False
-    return User.objects.filter(email__iexact=email).exists()
+    matches = User.objects.filter(email__iexact=email)
+    if exclude_pk:
+        matches = matches.exclude(pk=exclude_pk)
+    return matches.exists()
 
 
-# Tope bajo: basta para detectar un correo repetido sin recorrer toda la tabla.
-_LOGIN_MATCH_LIMIT = 5
+def accounts_for_email(email, limit=2):
+    """Como mucho `limit` cuentas con ese correo.
+
+    El índice único impide duplicados nuevos. El tope evita recorrer la
+    tabla si quedara algún dato viejo.
+    """
+    email = normalize_email(email)
+    if not email:
+        return []
+    return list(User.objects.filter(email__iexact=email).order_by("id")[:limit])
+
+
+def account_for_email(email):
+    """La única cuenta de ese correo, o None si no hay una sola."""
+    matches = accounts_for_email(email)
+    if len(matches) != 1:
+        return None
+    return matches[0]
 
 
 def login_candidates(identifier):
@@ -47,26 +69,23 @@ def login_candidates(identifier):
     if not identifier:
         return []
 
-    by_name = list(
-        User.objects.filter(username__iexact=identifier)[:_LOGIN_MATCH_LIMIT]
-    )
-    if by_name:
-        return by_name
+    by_name = User.objects.filter(username__iexact=identifier).first()
+    if by_name is not None:
+        return [by_name]
     if "@" not in identifier:
         return []
-    return list(User.objects.filter(email__iexact=identifier)[:_LOGIN_MATCH_LIMIT])
+    # Si hubiera dos cuentas viejas con el mismo correo, no elegimos una.
+    account = account_for_email(identifier)
+    return [account] if account is not None else []
 
 
 def user_for_login(identifier):
     """Resuelve con qué cuenta entrar.
 
-    Devuelve (usuario, código). El código es «ambiguous» cuando hay más de
-    una coincidencia. Si no hay ninguna, el usuario es None y el login muestra
-    el mismo mensaje que una contraseña incorrecta.
+    Devuelve (usuario, None). Si no hay una sola coincidencia, el usuario es
+    None y el login muestra el mismo mensaje que una contraseña incorrecta.
     """
     matches = login_candidates(identifier)
     if len(matches) == 1:
         return matches[0], None
-    if len(matches) > 1:
-        return None, "ambiguous"
     return None, None

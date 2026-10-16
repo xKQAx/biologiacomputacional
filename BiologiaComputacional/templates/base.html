@@ -64,12 +64,18 @@
 
   <body>
     <!-- Navbar -->
+    {% url 'inicio' as nav_inicio %}
+    {% url 'buscarProfesional' as nav_profesionales %}
+    {% url 'investigacion' as nav_investigacion %}
+    {% url 'servicios' as nav_servicios %}
+    {% url 'contactos' as nav_contacto %}
     <nav
       class="navbar-custom navbar navbar-expand-lg"
       id="navbar"
+      data-bs-theme="light"
       aria-label="Navegación principal"
     >
-      <div class="container">
+      <div class="navbar-inner">
         <a
           href="{% url 'inicio' %}"
           class="navbar-brand"
@@ -96,51 +102,51 @@
         >
           <span class="navbar-toggler-icon"></span>
         </button>
-        <div class="collapse navbar-collapse mr-auto" id="menu-desplegable">
+        <div class="collapse navbar-collapse" id="menu-desplegable">
           <ul class="navbar-nav ms-auto">
             <li class="nav-item">
               <a
-                class="nav-link {% if request.path == inicio_url %}active{% endif %}"
-                href="{% url 'inicio' %}"
+                class="nav-link{% if request.path == nav_inicio %} active{% endif %}"
+                href="{{ nav_inicio }}"
                 >Inicio</a
               >
             </li>
             <li class="nav-item">
               <a
-                class="nav-link {% if request.path == buscarProfesional_url %}active{% endif %}"
-                href="{% url 'buscarProfesional' %}"
+                class="nav-link{% if nav_profesionales in request.path %} active{% endif %}"
+                href="{{ nav_profesionales }}"
                 >Profesionales</a
               >
             </li>
             <li class="nav-item">
               <a
-                class="nav-link {% if request.path == investigacion_url %}active{% endif %}"
-                href="{% url 'investigacion' %}"
+                class="nav-link{% if nav_investigacion in request.path %} active{% endif %}"
+                href="{{ nav_investigacion }}"
                 >Investigación</a
               >
             </li>
             <li class="nav-item">
               <a
-                class="nav-link {% if request.path == servicios_url %}active{% endif %}"
-                href="{% url 'servicios' %}"
+                class="nav-link{% if nav_servicios in request.path %} active{% endif %}"
+                href="{{ nav_servicios }}"
                 >Servicios</a
               >
             </li>
             <li class="nav-item">
               <a
-                class="nav-link {% if request.path == contactos_url %}active{% endif %}"
-                href="{% url 'contactos' %}"
+                class="nav-link{% if nav_contacto in request.path %} active{% endif %}"
+                href="{{ nav_contacto }}"
                 >Contacto</a
               >
             </li>
 
             {% if user.is_authenticated %}
-            <div class="btn-group">
+            <li class="nav-item dropdown user-menu">
               <button
                 class="btn btn-white text-capitalize"
                 type="button"
                 data-bs-toggle="dropdown"
-                data-bd-display="static"
+                data-bs-display="static"
                 data-bs-auto-close="outside"
                 aria-expanded="false"
                 aria-label="Menú de usuario: {{ user.first_name }}"
@@ -152,7 +158,7 @@
                   alt="Foto de perfil de {{ user.first_name }}"
                 />
               </button>
-              <ul class="dropdown-menu dropdown-menu-lg-end shadow">
+              <ul class="dropdown-menu dropdown-menu-end shadow">
                 <li>
                   <div
                     class="col-sm-12 px-2 d-flex flex-column justify-content-center"
@@ -202,20 +208,12 @@
                 </li>
                 {% endif %}
                 <li>
-                  <a
-                    class="dropdown-item px-4 text-danger"
-                    href="{% url 'logout' %}"
-                    ><i
-                      class="fa-solid fa-arrow-right-from-bracket px-2"
-                      aria-hidden="true"
-                    ></i>
-                    Cerrar sesión</a
-                  >
+                  {% include "identity/includes/logout_form.html" with form_class="w-100" button_class="dropdown-item px-4 text-danger" icon_class="px-2" %}
                 </li>
               </ul>
-            </div>
+            </li>
             {% else %}
-            <li class="nav-item">
+            <li class="nav-item nav-auth">
               <a
                 class="btn btn-white rounded-pill"
                 href="{% url 'register' %}"
@@ -251,7 +249,7 @@
     <!-- Footer -->
     <footer class="mt-5 pt-5 pb-4">
       <div class="container text-center text-md-start">
-        <div class="row align-items-start col-12 gy-4">
+        <div class="row align-items-start gy-4">
           <!-- BC - Logo y Redes -->
           <div class="col-12 col-md-4 fade-in-left">
             <a

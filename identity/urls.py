@@ -1,6 +1,6 @@
 from django.urls import path
 from identity import views
-from identity.views import ProfileView, ProfilePasswordChangeView, password_reset_confirm, PasswordResetInvalidView, PasswordResetSentView, ManageUsersView, info_usuarios, detalle_usuarios, ascender_administrador
+from identity.views import ProfileView, ProfilePasswordChangeView, password_reset_confirm, password_reset_set, PasswordResetInvalidView, PasswordResetSentView, ManageUsersView, info_usuarios, detalle_usuarios, ascender_administrador, AccountPasswordResetView
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
@@ -27,9 +27,10 @@ urlpatterns = [
     path('cuenta-activada/', views.activation_success, name='activation_success'),
     
     # Cambio de contraseña con correo
-    path('reset_password/', auth_views.PasswordResetView.as_view(template_name="identity/password_reset.html"), name="reset_password"),
+    path('reset_password/', AccountPasswordResetView.as_view(), name="reset_password"),
     path('reset_password_sent/', PasswordResetSentView.as_view(), name="password_reset_done"),
     path('reset/<uidb64>/<token>/', password_reset_confirm, name="password_reset_confirm"),
+    path('reset/clave/', password_reset_set, name="password_reset_set"),
     path('reset_password_complete/', auth_views.PasswordResetCompleteView.as_view(template_name="identity/password_reset_complete.html"),name="password_reset_complete"),
     path('reset/invalid/', PasswordResetInvalidView.as_view(), name='password_reset_invalid'),
 ]
