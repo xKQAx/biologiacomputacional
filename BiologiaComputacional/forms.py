@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
+from identity.accounts import email_taken, normalize_email, username_taken
 from identity.models import ProfileAdditionalInfo
 from profesionales.models import InformacionProfesional, Articulos
 from servicios.models import Categoria, Servicio
@@ -34,6 +35,9 @@ class FormularioContacto(forms.Form):
 
 
 class RegisterCustomForm(UserCreationForm):
+    error_messages = {
+        "password_mismatch": "Las contraseñas no coinciden.",
+    }
     first_name = forms.CharField(
         max_length=30, required=False, help_text='Ingresa tu nombre.')
     last_name = forms.CharField(
@@ -45,6 +49,24 @@ class RegisterCustomForm(UserCreationForm):
         model = User
         fields = ('username', 'first_name', 'last_name',
                   'email', 'password1', 'password2', )
+
+    def clean_username(self):
+        username = (self.cleaned_data.get("username") or "").strip()
+        if username and username_taken(username):
+            raise forms.ValidationError(
+                "Este nombre de usuario ya está registrado. Inicia sesión o elige otro.",
+                code="unique",
+            )
+        return username
+
+    def clean_email(self):
+        email = normalize_email(self.cleaned_data.get("email"))
+        if email_taken(email):
+            raise forms.ValidationError(
+                "Ya existe una cuenta con este correo. Inicia sesión o recupera tu contraseña.",
+                code="unique",
+            )
+        return email
 
 # Formulario para un Usuario nuevo
 

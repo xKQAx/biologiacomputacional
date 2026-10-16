@@ -9,17 +9,35 @@
 
   <div class="info-card">
     <i class="info-card-icon fa-solid fa-envelope-open-text text-primary" aria-hidden="true"></i>
-    <h2>Verifica tu correo electrónico</h2>
-    {% if messages %}
-    {% for message in messages %}
-    <div class="alert alert-danger" role="alert">{{ message }}</div>
-    {% endfor %}
-    {% else %}
-    <p>¡Gracias por registrarte! Hemos enviado un correo a la dirección que proporcionaste.</p>
-    <p class="mb-0">Por favor, revisa tu bandeja de entrada y haz clic en el enlace de
-      verificación para activar tu cuenta. Si no lo encuentras, verifica la carpeta de
-      <strong>spam</strong>.</p>
+    <h2>Revisa tu correo</h2>
+
+    {% if mail_failed %}
+    <div class="alert alert-danger text-start" role="alert">
+      La cuenta quedó pendiente, pero no se pudo enviar el correo de activación.
+    </div>
     {% endif %}
+
+    {% if generic_resend %}
+    <p>Si hay una cuenta pendiente de activación{% if email %} para <strong>{{ email }}</strong>{% endif %},
+      enviamos un enlace nuevo.</p>
+    {% elif resent %}
+    <p>Enviamos de nuevo el enlace de activación{% if email %} a <strong>{{ email }}</strong>{% endif %}.</p>
+    {% else %}
+    <p>Creamos la cuenta{% if email %} para <strong>{{ email }}</strong>{% endif %}
+      y enviamos el enlace para activarla.</p>
+    {% endif %}
+
+    <p class="mb-0">Ábrelo desde tu bandeja de entrada. Si no aparece, mira la carpeta de
+      <strong>spam</strong>.</p>
+
+    {% if console_email %}
+    <p class="mt-3 mb-0">En este equipo el correo no llega a la bandeja: el enlace se imprime
+      en la terminal donde está corriendo el servidor. Ábrelo en el mismo puerto de esta página.</p>
+    {% endif %}
+
+    <p class="mt-4 mb-0 fw-light" style="font-size: 0.9rem;">
+      <a href="{% url 'signin' %}" class="text-link-custom fw-semibold">Ir a iniciar sesión</a>
+    </p>
   </div>
 </div>
 {% endblock %}

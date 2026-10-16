@@ -8,6 +8,8 @@ from django.contrib.auth import views as auth_views
 urlpatterns = [
     path('', views.signin, name="signin"),
     path('register/', views.register, name="register"),
+    path('disponibilidad/', views.account_availability, name="account_availability"),
+    path('reenviar-activacion/', views.resend_activation, name="reenviar_activacion"),
     path('logout/', views.user_logout, name="logout"),
     path('perfil/', ProfileView.as_view(), name='perfil'),
     path('cambio_contrasena/', ProfilePasswordChangeView.as_view(), name='cambio_contrasena'),

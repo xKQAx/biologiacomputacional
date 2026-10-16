@@ -24,77 +24,95 @@
         <p class="text-muted fw-light">Únete a la comunidad BioCOM</p>
       </div>
 
-      <!-- Errores del formulario -->
-      {% if messages %}
+      {% if profile_form.errors %}
       <div class="alert alert-warning" role="alert">
-        <strong>Por favor, corrige los siguientes errores:</strong>
-        <ul class="mb-0 mt-1">
-          {% for message in messages %}
-          <li>{{ message }}</li>
+        <ul class="mb-0">
+          {% for field, errors in profile_form.errors.items %}
+          {% for error in errors %}
+          <li>{{ error }}</li>
+          {% endfor %}
           {% endfor %}
         </ul>
       </div>
       {% endif %}
 
-      <form method="POST">
+      <form method="POST" id="registerForm" class="needs-validation" novalidate
+        data-availability-url="{% url 'account_availability' %}"
+        data-signin-url="{% url 'signin' %}"
+        data-reset-url="{% url 'reset_password' %}">
         {% csrf_token %}
 
-        <!-- Usuario -->
         <div class="col-md">
           <div class="input-group mb-3">
             <span class="input-group-text"><i class="fa-solid fa-circle-user" aria-hidden="true"></i></span>
             <div class="form-floating">
               <input type="text" class="form-control" name="username"
                 id="validationCustomUsername" placeholder="" required
-                autocomplete="username">
+                autocomplete="username" aria-describedby="usernameFeedback"
+                value="{{ form.username.value|default_if_none:'' }}">
               <label for="validationCustomUsername">Nombre de usuario</label>
             </div>
           </div>
+          <p class="auth-field-feedback" id="usernameFeedback"
+            {% if not form.username.errors %}hidden{% endif %}>
+            {{ form.username.errors.0 }}
+          </p>
         </div>
 
-        <!-- Correo -->
         <div class="col-md">
           <div class="input-group mb-3">
             <span class="input-group-text"><i class="fa-solid fa-envelope" aria-hidden="true"></i></span>
             <div class="form-floating">
               <input type="email" class="form-control" name="email"
                 id="floatingInputGroupEmail" placeholder="email" required
-                autocomplete="email">
+                autocomplete="email" aria-describedby="emailFeedback"
+                value="{{ form.email.value|default_if_none:'' }}">
               <label for="floatingInputGroupEmail">Correo electrónico</label>
             </div>
           </div>
+          <p class="auth-field-feedback" id="emailFeedback"
+            {% if not form.email.errors %}hidden{% endif %}>
+            {{ form.email.errors.0 }}
+          </p>
         </div>
 
-        <!-- Contraseña 1 -->
         <div class="input-group mb-3">
           <span class="input-group-text"><i class="fa-solid fa-lock" aria-hidden="true"></i></span>
           <div class="form-floating">
             <input type="password" class="form-control" name="password1"
-              id="floatingInputGroupPassword1" placeholder="Password" required>
+              id="floatingInputGroupPassword1" placeholder="Password" required
+              autocomplete="new-password" minlength="8">
             <label for="floatingInputGroupPassword1">Contraseña</label>
             <button type="button" id="togglePassword1"
-              class="btn btn-default position-absolute top-50 end-0 translate-middle-y">
+              class="btn btn-default position-absolute top-50 end-0 translate-middle-y"
+              aria-label="Mostrar contraseña">
               <i id="togglePasswordIcon1" class="fa fa-eye" aria-hidden="true"></i>
             </button>
           </div>
         </div>
+        <p class="auth-hint">Mínimo 8 caracteres. No uses solo números ni una contraseña muy común.</p>
 
-        <!-- Contraseña 2 -->
         <div class="input-group mb-3">
           <span class="input-group-text"><i class="fa-solid fa-lock" aria-hidden="true"></i></span>
           <div class="form-floating">
             <input type="password" class="form-control" name="password2"
-              id="floatingInputGroupPassword2" placeholder="Password" required>
+              id="floatingInputGroupPassword2" placeholder="Password" required
+              autocomplete="new-password" aria-describedby="passwordFeedback">
             <label for="floatingInputGroupPassword2">Repetir contraseña</label>
             <button type="button" id="togglePassword2"
-              class="btn btn-default position-absolute top-50 end-0 translate-middle-y">
+              class="btn btn-default position-absolute top-50 end-0 translate-middle-y"
+              aria-label="Mostrar confirmación de contraseña">
               <i id="togglePasswordIcon2" class="fa fa-eye" aria-hidden="true"></i>
             </button>
           </div>
         </div>
+        <p class="auth-field-feedback" id="passwordFeedback"
+          {% if not form.password2.errors %}hidden{% endif %}>
+          {{ form.password2.errors.0 }}
+        </p>
 
         <div class="d-grid gap-2 mt-4 mb-3">
-          <button class="btn btn-primary-custom">Crear cuenta</button>
+          <button class="btn btn-primary-custom" type="submit">Crear cuenta</button>
         </div>
 
         <p class="text-center fw-light" style="font-size: 0.9rem;">
@@ -106,45 +124,6 @@
     </div>
   </div>
 </div>
-
-<!-- Toasts de error/éxito -->
-{% for message in messages %}
-{% if message.tags == 'error' %}
-<div class="toast align-items-center bg-danger text-white border-0"
-  role="alert" id="errorToast"
-  style="position: fixed; top: 80px; right: 10px; z-index: 1050;">
-  <div class="d-flex">
-    <div class="toast-body">
-      <i class="fa-solid fa-circle-info" aria-hidden="true"></i> {{ message }}
-    </div>
-    <button type="button" class="btn-close me-2 m-auto"
-      data-bs-dismiss="toast" aria-label="Cerrar"></button>
-  </div>
-</div>
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    new bootstrap.Toast(document.getElementById('errorToast')).show();
-  });
-</script>
-{% elif message.tags == 'success' %}
-<div class="toast align-items-center bg-success text-white border-0"
-  role="alert" id="successToast"
-  style="position: fixed; top: 80px; right: 10px; z-index: 1050;">
-  <div class="d-flex">
-    <div class="toast-body">
-      <i class="fa-solid fa-check" aria-hidden="true"></i> {{ message }}
-    </div>
-    <button type="button" class="btn-close me-2 m-auto"
-      data-bs-dismiss="toast" aria-label="Cerrar"></button>
-  </div>
-</div>
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    new bootstrap.Toast(document.getElementById('successToast')).show();
-  });
-</script>
-{% endif %}
-{% endfor %}
 
 <script src="{% static 'js/register.js' %}"></script>
 {% endblock %}

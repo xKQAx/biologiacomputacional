@@ -24,46 +24,54 @@
         <p class="text-muted fw-light">Inicia sesión para continuar</p>
       </div>
 
+      {% if form.non_field_errors %}
+      <div class="alert alert-danger" role="alert">
+        {% for error in form.non_field_errors %}
+        <div>{{ error }}</div>
+        {% endfor %}
+        {% if form.offer_resend %}
+        <form method="post" action="{% url 'reenviar_activacion' %}" class="mt-2 mb-0">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-sm btn-outline-dark">
+            Reenviar correo de activación
+          </button>
+        </form>
+        {% endif %}
+      </div>
+      {% endif %}
+
       <form class="needs-validation" novalidate method="POST">
         {% csrf_token %}
 
-        {% if form.non_field_errors %}
-        <div class="alert alert-danger" role="alert">
-          {% for error in form.non_field_errors %}
-          <div>{{ error }}</div>
-          {% endfor %}
-        </div>
-        {% endif %}
-
-        <!-- Usuario -->
         <div class="input-group has-validation mb-3">
           <span class="input-group-text"><i class="fa-solid fa-circle-user" aria-hidden="true"></i></span>
-          <div class="form-floating is-invalid">
+          <div class="form-floating">
             <input type="text" class="form-control" name="username"
               id="validationCustomUsername" placeholder="" required
-              autocomplete="username">
-            <label for="validationCustomUsername">Usuario</label>
+              autocomplete="username"
+              value="{{ form.username.value|default_if_none:'' }}">
+            <label for="validationCustomUsername">Usuario o correo</label>
           </div>
           {% for error in form.username.errors %}
-          <div class="invalid-feedback">{{ error }}</div>
+          <div class="invalid-feedback d-block">{{ error }}</div>
           {% endfor %}
         </div>
 
-        <!-- Contraseña -->
         <div class="input-group has-validation mb-2">
           <span class="input-group-text"><i class="fa-solid fa-lock" aria-hidden="true"></i></span>
-          <div class="form-floating is-invalid position-relative">
+          <div class="form-floating position-relative">
             <input type="password" class="form-control" name="password"
               id="validationCustomPassword" placeholder="" required
               autocomplete="current-password">
             <label for="validationCustomPassword">Contraseña</label>
             <button type="button" id="togglePassword"
-              class="btn btn-default position-absolute top-50 end-0 translate-middle-y">
+              class="btn btn-default position-absolute top-50 end-0 translate-middle-y"
+              aria-label="Mostrar contraseña">
               <i id="togglePasswordIcon" class="fa fa-eye" aria-hidden="true"></i>
             </button>
           </div>
           {% for error in form.password.errors %}
-          <div class="invalid-feedback">{{ error }}</div>
+          <div class="invalid-feedback d-block">{{ error }}</div>
           {% endfor %}
         </div>
 

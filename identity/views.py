@@ -3,16 +3,16 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login, logout, authenticate
+from django.conf import settings
 from django.contrib import messages
 from identity.models import AdditionalUserInfoForm
 from BiologiaComputacional.forms import UsuarioForm, RegisterCustomForm, ProfileForm, ProfileAdditionalInfo
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django import forms
-import re
 from django.contrib.auth.views import PasswordChangeView
 from django.contrib.auth import update_session_auth_hash
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from PIL import Image
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
@@ -22,12 +22,17 @@ from django.http.response import JsonResponse
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from BiologiaComputacional.mail import send_project_mail
 from django.utils.encoding import force_str, force_bytes
-from django.contrib.sites.shortcuts import get_current_site
 from django.template.loader import render_to_string
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
 from BiologiaComputacional.permissions import staff_required, superuser_required
+from identity.accounts import (
+    ACTIVATION_RESEND_SESSION_KEY,
+    user_for_login,
+    username_taken,
+    email_taken,
+)
 from identity.signals import ensure_user_profile
 
 # Create your views here.
@@ -95,7 +100,27 @@ class ProfileView(View):
         return redirect('perfil')
 
 
-# Logica para registrar un usuario
+def activation_page_context(request, email, **extra):
+    """Datos comunes de la pantalla «revisa tu correo»."""
+    extra["email"] = email
+    extra["console_email"] = settings.EMAIL_BACKEND.endswith("console.EmailBackend")
+    return extra
+
+
+def send_activation_mail(request, user):
+    """Arma el enlace con el mismo host de esta petición y lo envía."""
+    token = default_token_generator.make_token(user)
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    activation_url = request.build_absolute_uri(
+        reverse("activate", kwargs={"uidb64": uid, "token": token})
+    )
+    message = render_to_string("identity/acc_active_email.html", {
+        "user": user,
+        "activation_url": activation_url,
+    })
+    return send_project_mail("Activa tu cuenta", message, [user.email])
+
+
 def register(request):
     if request.user.is_authenticated:
         return redirect('inicio')
@@ -118,37 +143,12 @@ def register(request):
                 profile.image = image
             profile.save()
 
-            # Generar token de verificación
-            token = default_token_generator.make_token(user)
-            uid = urlsafe_base64_encode(force_bytes(user.pk))
-
-            # Crear enlace de verificación
-            current_site = get_current_site(request)
-            mail_subject = 'Activa tu cuenta'
-            message = render_to_string('identity/acc_active_email.html', {
-                'user': user,
-                'domain': current_site.domain,
-                'uid': uid,
-                'token': token,
-            })
-
-            if not send_project_mail(mail_subject, message, [user.email]):
-                messages.error(
-                    request,
-                    'La cuenta quedó pendiente, pero no se pudo enviar el correo de activación. Revisa la configuración de correo.',
-                )
-
-            return render(request, 'identity/look_email.html')
-        else:
-            # Mostrar mensajes de error
-            for field, errors in user_form.errors.items():
-                for error in errors:
-                    messages.error(request, f"{error}")
-
-            for field, errors in profile_form.errors.items():
-                for error in errors:
-                    messages.error(request, f"{error}")
-
+            mail_ok = send_activation_mail(request, user)
+            return render(
+                request,
+                'identity/look_email.html',
+                activation_page_context(request, user.email, mail_failed=not mail_ok),
+            )
     else:
         user_form = RegisterCustomForm()
         profile_form = ProfileForm()
@@ -156,8 +156,19 @@ def register(request):
     return render(request, 'identity/register.html', {
         'form': user_form,
         'profile_form': profile_form,
-        'messages': messages.get_messages(request),
     })
+
+
+def account_availability(request):
+    """Avisa si el usuario o el correo ya tienen cuenta, antes de enviar el formulario."""
+    username = request.GET.get("username", "")
+    email = request.GET.get("email", "")
+    data = {}
+    if username.strip():
+        data["username_taken"] = username_taken(username)
+    if email.strip():
+        data["email_taken"] = email_taken(email)
+    return JsonResponse(data)
 
 # Logica para cerrar sesion
 
@@ -175,36 +186,47 @@ User = get_user_model()
 
 
 class CustomAuthenticationForm(AuthenticationForm):
-    """No revela si el usuario existe. La cuenta inactiva sigue siendo un caso aparte."""
+    """No revela si la cuenta existe cuando falla la clave.
+
+    La cuenta inactiva sí se explica, porque quien escribió la contraseña
+    correcta ya demostró que es el dueño.
+    """
 
     error_messages = {
         **AuthenticationForm.error_messages,
-        'invalid_login': '• Nombre de usuario o contraseña incorrectos.',
-        'inactive': '• Usuario en problemas, comuníquese con nosotros.',
+        'invalid_login': 'Nombre de usuario o contraseña incorrectos.',
+        'inactive': (
+            'Tu cuenta todavía no está activada. Revisa el correo de verificación, '
+            'incluida la carpeta de spam.'
+        ),
+        'ambiguous': 'Hay varias cuentas con este correo. Entra con tu nombre de usuario.',
     }
 
-    def clean_username(self):
-        username = self.cleaned_data.get('username')
-        if username and not re.match(r'^\w+$', username):
-            raise forms.ValidationError(
-                '• El nombre de usuario no debe contener caracteres especiales.')
-        return username
-
     def clean(self):
-        username = self.cleaned_data.get('username')
+        identifier = self.cleaned_data.get('username')
         password = self.cleaned_data.get('password')
+        self.offer_resend = False
 
-        if username is not None and password:
+        if identifier is not None and password:
+            account, code = user_for_login(identifier)
+            if code == 'ambiguous':
+                raise forms.ValidationError(
+                    self.error_messages['ambiguous'],
+                    code='ambiguous',
+                )
+
+            username = account.username if account is not None else identifier
             self.user_cache = authenticate(
                 self.request, username=username, password=password
             )
             if self.user_cache is None:
-                existing = User.objects.filter(username=username).first()
                 if (
-                    existing is not None
-                    and not existing.is_active
-                    and existing.check_password(password)
+                    account is not None
+                    and not account.is_active
+                    and account.check_password(password)
                 ):
+                    self.offer_resend = True
+                    self.resend_user_id = account.pk
                     raise forms.ValidationError(
                         self.error_messages['inactive'],
                         code='inactive',
@@ -225,6 +247,7 @@ def signin(request):
         form = CustomAuthenticationForm(request, request.POST)
 
         if form.is_valid():
+            request.session.pop(ACTIVATION_RESEND_SESSION_KEY, None)
             login(request, form.get_user())
             if 'remember_me' in request.POST:
                 request.session.set_expiry(1209600)
@@ -233,9 +256,40 @@ def signin(request):
 
             return redirect('inicio')
 
+        request.session.pop(ACTIVATION_RESEND_SESSION_KEY, None)
+        if getattr(form, 'offer_resend', False):
+            request.session[ACTIVATION_RESEND_SESSION_KEY] = form.resend_user_id
         return render(request, 'identity/signin.html', {'form': form})
 
     return render(request, 'identity/signin.html', {'form': CustomAuthenticationForm()})
+
+
+@require_POST
+def resend_activation(request):
+    """Reenvía el enlace si ya se comprobó la contraseña, o si indican el correo."""
+    user_id = request.session.pop(ACTIVATION_RESEND_SESSION_KEY, None)
+    if user_id:
+        user = User.objects.filter(pk=user_id, is_active=False).first()
+        if user is not None:
+            mail_ok = send_activation_mail(request, user)
+            return render(
+                request,
+                'identity/look_email.html',
+                activation_page_context(
+                    request, user.email, mail_failed=not mail_ok, resent=True
+                ),
+            )
+
+    email = (request.POST.get('email') or '').strip()
+    if email:
+        pending = User.objects.filter(email__iexact=email, is_active=False)[:5]
+        for user in pending:
+            send_activation_mail(request, user)
+    return render(
+        request,
+        'identity/look_email.html',
+        activation_page_context(request, email, generic_resend=True),
+    )
 
 # Cambiar contraseña de usuario con sesion iniciada
 

@@ -82,3 +82,87 @@ class LoginNoRevelaUsuarioTests(TestCase):
             'password': 'PASSWORD1',
         })
         self.assertEqual(response.status_code, 302)
+
+    def test_entra_con_el_correo_si_solo_hay_una_cuenta(self):
+        response = self.client.post('/identity/', {
+            'username': 'existe@example.com',
+            'password': 'ClaveSegura1',
+        })
+        self.assertEqual(response.status_code, 302)
+
+    def test_acepta_un_usuario_con_arroba(self):
+        User.objects.create_user('ana@lab.test', 'ana.otra@example.com', 'ClaveSegura1')
+        response = self.client.post('/identity/', {
+            'username': 'ana@lab.test',
+            'password': 'ClaveSegura1',
+        })
+        self.assertEqual(response.status_code, 302)
+
+    def test_correo_compartido_pide_el_usuario(self):
+        User.objects.create_user('cuenta_a', 'mismo@example.com', 'ClaveSegura1')
+        User.objects.create_user('cuenta_b', 'mismo@example.com', 'ClaveSegura1')
+        response = self.client.post('/identity/', {
+            'username': 'mismo@example.com',
+            'password': 'ClaveSegura1',
+        })
+        self.assertContains(response, 'Hay varias cuentas con este correo')
+
+    def test_cuenta_inactiva_explica_como_activarla(self):
+        pendiente = User.objects.create_user(
+            'pendiente', 'pendiente@example.com', 'ClaveSegura1'
+        )
+        pendiente.is_active = False
+        pendiente.save(update_fields=['is_active'])
+        response = self.client.post('/identity/', {
+            'username': 'pendiente',
+            'password': 'ClaveSegura1',
+        })
+        self.assertContains(response, 'todavía no está activada')
+        self.assertContains(response, 'Reenviar correo de activación')
+        self.assertNotContains(response, 'problemas')
+        reenvio = self.client.post('/identity/reenviar-activacion/')
+        self.assertContains(reenvio, 'Enviamos de nuevo el enlace')
+        self.assertContains(reenvio, 'pendiente@example.com')
+
+
+class RegistroCuentaExistenteTests(TestCase):
+    def setUp(self):
+        User.objects.create_user('existe', 'existe@example.com', 'ClaveSegura1')
+
+    def test_correo_repetido_no_crea_otra_cuenta(self):
+        antes = User.objects.count()
+        response = self.client.post('/identity/register/', {
+            'username': 'otro_nombre',
+            'email': 'Existe@example.com',
+            'password1': 'ClaveSegura1',
+            'password2': 'ClaveSegura1',
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Ya existe una cuenta con este correo')
+        self.assertContains(response, 'otro_nombre')
+        self.assertEqual(User.objects.count(), antes)
+
+    def test_usuario_repetido_conserva_lo_escrito(self):
+        response = self.client.post('/identity/register/', {
+            'username': 'Existe',
+            'email': 'nuevo@example.com',
+            'password1': 'ClaveSegura1',
+            'password2': 'ClaveSegura1',
+        })
+        self.assertContains(response, 'Este nombre de usuario ya está registrado')
+        self.assertContains(response, 'nuevo@example.com')
+        self.assertFalse(User.objects.filter(username__iexact='existe').count() > 1)
+
+    def test_disponibilidad_avisa_antes_de_enviar(self):
+        ocupado = self.client.get('/identity/disponibilidad/', {
+            'username': 'existe',
+            'email': 'existe@example.com',
+        })
+        libre = self.client.get('/identity/disponibilidad/', {
+            'username': 'libre_ok',
+            'email': 'libre@example.com',
+        })
+        self.assertEqual(ocupado.json()['username_taken'], True)
+        self.assertEqual(ocupado.json()['email_taken'], True)
+        self.assertEqual(libre.json()['username_taken'], False)
+        self.assertEqual(libre.json()['email_taken'], False)

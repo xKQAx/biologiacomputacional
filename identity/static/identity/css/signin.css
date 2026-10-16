@@ -17,3 +17,15 @@
 .text-link-custom{
     color: #2D7EE8;
 }
+
+.auth-field-feedback {
+    color: #b42318;
+    font-size: 0.875rem;
+    margin: -0.35rem 0 0.85rem;
+}
+
+.auth-hint {
+    color: #667085;
+    font-size: 0.8rem;
+    margin: -0.35rem 0 0.85rem;
+}
