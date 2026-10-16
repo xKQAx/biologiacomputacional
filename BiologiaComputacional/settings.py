@@ -13,20 +13,57 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 from pathlib import Path
 import os
 
+import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
+from django.core.management.utils import get_random_secret_key
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# No pisa variables ya exportadas en el proceso.
+try:
+    from dotenv import load_dotenv
+    load_dotenv(BASE_DIR / '.env', override=False)
+except ImportError:
+    pass
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-c7h#k*1i$zvy^+-o91o!es4kp=eyne_4h)(lk@rpr^0wi&*y%h'
+def env_bool(name, default=False):
+    raw = os.environ.get(name)
+    if raw is None or raw.strip() == '':
+        return default
+    return raw.strip().lower() in ('1', 'true', 'yes', 'on')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
-ALLOWED_HOSTS = []
+def env_int(name, default):
+    raw = os.environ.get(name, '').strip()
+    if not raw:
+        return default
+    try:
+        return int(raw)
+    except ValueError as exc:
+        raise ImproperlyConfigured(f'{name} debe ser un número entero.') from exc
+
+
+# DEBUG true solo por defecto en local. En producción hay que exportar DEBUG=false.
+DEBUG = env_bool('DEBUG', default=True)
+
+# Sin la clave que estaba en el repositorio. En local, si falta, es efímera.
+SECRET_KEY = os.environ.get('SECRET_KEY', '').strip()
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = get_random_secret_key()
+    else:
+        raise ImproperlyConfigured(
+            'SECRET_KEY es obligatoria cuando DEBUG es false.'
+        )
+
+_allowed_hosts = os.environ.get('ALLOWED_HOSTS', '')
+ALLOWED_HOSTS = [host.strip() for host in _allowed_hosts.split(',') if host.strip()]
+if not DEBUG and not ALLOWED_HOSTS:
+    raise ImproperlyConfigured(
+        'ALLOWED_HOSTS es obligatorio cuando DEBUG es false.'
+    )
 
 
 # Application definition
@@ -77,14 +114,25 @@ WSGI_APPLICATION = 'BiologiaComputacional.wsgi.application'
 
 
 # Database
-# https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# Sin DATABASE_URL se usa SQLite (db.sqlite3). Con DATABASE_URL, dj-database-url
+# acepta Postgres/Supabase; sslmode=require en la URI o DATABASE_SSL_REQUIRE=true.
+_database_url = os.environ.get('DATABASE_URL', '').strip()
+if _database_url:
+    _ssl_require = env_bool('DATABASE_SSL_REQUIRE', default=False)
+    DATABASES = {
+        'default': dj_database_url.parse(
+            _database_url,
+            conn_max_age=600,
+            ssl_require=_ssl_require,
+        )
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 # Login url
 LOGIN_URL = 'signin'
@@ -139,14 +187,20 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'BiologiaComputacional/static'), os.p
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_USE_TLS = True
-EMAIL_PORT = 587
-EMAIL_HOST_USER = "sinfoniadefragancias@gmail.com"
-EMAIL_HOST_PASSWORD = "noofjobkgusfjjoh"
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = env_int('EMAIL_PORT', 587)
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '').strip()
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS = env_bool('EMAIL_USE_TLS', default=True)
+# Destino del formulario de contacto. La página pública muestra este mismo buzón.
+CONTACT_EMAIL = os.environ.get('CONTACT_EMAIL', 'biocomp@udes.edu.co').strip() or 'biocomp@udes.edu.co'
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER or 'webmaster@localhost'
 
-#Contraseña smtp envio de correos gmail: noof jobk gusf jjoh
+# En local, sin usuario SMTP, el correo sale por consola y el arranque no falla.
+if DEBUG and not EMAIL_HOST_USER:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
 CSRF_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_SAMESITE = 'Lax'
