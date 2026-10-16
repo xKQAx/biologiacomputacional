@@ -8,7 +8,8 @@ class InformacionProfesional(models.Model):
     foto = models.ImageField(upload_to='', blank=True, null=True)
     nombre = models.CharField(max_length = 30)
     apellido = models.CharField(max_length = 30)
-    titulo_universitario = models.CharField(max_length = 30)
+    # 30 caracteres no alcanzan para un título real (p. ej. maestría o especialización).
+    titulo_universitario = models.CharField(max_length=120)
     universidad = models.CharField(max_length = 50, null=False, default='Unknown')
     email = models.EmailField()
     telefono = models.CharField(max_length = 10)

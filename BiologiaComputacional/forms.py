@@ -75,7 +75,7 @@ class ProfileFormProfessional(forms.ModelForm):
     apellido = forms.CharField(
         max_length=30, help_text='Introduce tu apellido')
     titulo_universitario = forms.CharField(
-        max_length=50, help_text='Introduce tu título universitario')
+        max_length=120, help_text='Introduce tu título universitario')
     universidad = forms.CharField(
         max_length=50, help_text='Introduce el nombre de tu universidad')
     email = forms.EmailField(
