@@ -175,51 +175,44 @@ User = get_user_model()
 
 
 class CustomAuthenticationForm(AuthenticationForm):
+    """No revela si el usuario existe. La cuenta inactiva sigue siendo un caso aparte."""
+
+    error_messages = {
+        **AuthenticationForm.error_messages,
+        'invalid_login': '• Nombre de usuario o contraseña incorrectos.',
+        'inactive': '• Usuario en problemas, comuníquese con nosotros.',
+    }
 
     def clean_username(self):
         username = self.cleaned_data.get('username')
-        errors = []
-
-        if not re.match(r'^\w+$', username):
-            errors.append(
+        if username and not re.match(r'^\w+$', username):
+            raise forms.ValidationError(
                 '• El nombre de usuario no debe contener caracteres especiales.')
-
-        try:
-            user = User.objects.get(username=username)
-            if not user.is_active:
-                errors.append(
-                    '• Usuario en problemas, comuníquese con nosotros.')
-
-        except User.DoesNotExist:
-            errors.append('• El nombre de usuario no existe.')
-
-        if errors:
-            raise forms.ValidationError(errors)
-
         return username
 
-    def clean_password(self):
-        password = self.cleaned_data.get('password')
+    def clean(self):
         username = self.cleaned_data.get('username')
-        errors = []
+        password = self.cleaned_data.get('password')
 
-        if len(password) < 8:
-            errors.append('• La contraseña debe tener al menos 8 caracteres.')
+        if username is not None and password:
+            self.user_cache = authenticate(
+                self.request, username=username, password=password
+            )
+            if self.user_cache is None:
+                existing = User.objects.filter(username=username).first()
+                if (
+                    existing is not None
+                    and not existing.is_active
+                    and existing.check_password(password)
+                ):
+                    raise forms.ValidationError(
+                        self.error_messages['inactive'],
+                        code='inactive',
+                    )
+                raise self.get_invalid_login_error()
+            self.confirm_login_allowed(self.user_cache)
 
-        if not re.search(r'[a-z]', password):
-            errors.append(
-                '• La contraseña debe contener al menos una letra minúscula.')
-
-        try:
-            user = User.objects.get(username=username)
-        except User.DoesNotExist:
-            return password  # Evitamos verificar la contraseña si el usuario no existe
-
-        if user.check_password(password):
-            return password
-        else:
-            errors.append('• La contraseña no coincide con el usuario.')
-            raise forms.ValidationError(errors)
+        return self.cleaned_data
 
 # Logica formulario login
 
@@ -228,35 +221,21 @@ def signin(request):
     if request.user.is_authenticated:
         return redirect('inicio')
 
-    messages_list = []
     if request.method == 'POST':
         form = CustomAuthenticationForm(request, request.POST)
 
         if form.is_valid():
-            username = form.cleaned_data['username']
-            password = form.cleaned_data['password']
-
-            user = authenticate(request, username=username, password=password)
-
-            if user is not None:
-                login(request, user)
-                if 'remember_me' in request.POST:
-                    request.session.set_expiry(1209600)
-                else:
-                    request.session.set_expiry(0)
-
-                return redirect('inicio')
-
+            login(request, form.get_user())
+            if 'remember_me' in request.POST:
+                request.session.set_expiry(1209600)
             else:
-                messages_list.append(
-                    "Nombre de usuario o contraseña incorrectos.")
-        else:
-            messages_list.append(
-                "Por favor, corrija los errores en el formulario.")
+                request.session.set_expiry(0)
 
-        return render(request, 'identity/signin.html', {'form': form, 'messages': messages_list})
-    else:
-        return render(request, 'identity/signin.html', {'form': CustomAuthenticationForm()})
+            return redirect('inicio')
+
+        return render(request, 'identity/signin.html', {'form': form})
+
+    return render(request, 'identity/signin.html', {'form': CustomAuthenticationForm()})
 
 # Cambiar contraseña de usuario con sesion iniciada
 
