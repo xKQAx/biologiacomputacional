@@ -195,7 +195,7 @@ class ServicioForm(forms.ModelForm):
 
 class CategoriaInvestigacionForm(forms.ModelForm):
     class Meta:
-        models = CategoriaI
+        model = CategoriaI
         fields = ['nombre_categoria']
 
 

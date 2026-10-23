@@ -1,4 +1,6 @@
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 
 from servicios.models import Categoria, Servicio
@@ -39,3 +41,28 @@ class EliminarServicioTests(TestCase):
         response = self.client.post(self.url)
         self.assertEqual(response.status_code, 302)
         self.assertFalse(Servicio.objects.filter(pk=self.servicio.pk).exists())
+
+
+class ArchivoServicioTests(TestCase):
+    def setUp(self):
+        categoria = Categoria.objects.create(nombre_categoria='Herramienta')
+        self.servicio = Servicio.objects.create(
+            categoria=categoria,
+            nombre='ServicioArchivo',
+            descrip='Descripción',
+            desarrollador='Laboratorio',
+            nombre_licencia='MIT',
+        )
+
+    def test_rechaza_un_html(self):
+        self.servicio.archivo = SimpleUploadedFile(
+            'malo.html', b'<p>x</p>', content_type='text/html'
+        )
+        with self.assertRaises(ValidationError):
+            self.servicio.full_clean()
+
+    def test_acepta_un_zip(self):
+        self.servicio.archivo = SimpleUploadedFile(
+            'paquete.zip', b'PK', content_type='application/zip'
+        )
+        self.servicio.full_clean()

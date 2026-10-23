@@ -1,3 +1,4 @@
+from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.core import mail
@@ -7,7 +8,7 @@ from django.test import TestCase, override_settings
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
-from identity.models import ProfileAdditionalInfo
+from identity.models import AdditionalUserInfo, ProfileAdditionalInfo
 
 
 class InfoUsuariosTests(TestCase):
@@ -446,6 +447,25 @@ class CorreoUnicoTests(TestCase):
         self.assertContains(response, 'Información actualizada con éxito')
         propio.refresh_from_db()
         self.assertEqual(propio.email, 'propio@example.com')
+
+    def test_el_perfil_guarda_un_telefono_de_16_digitos(self):
+        propio = User.objects.create_user('propio16', 'propio16@example.com', 'ClaveSegura1')
+        self.client.force_login(propio)
+        response = self.client.post('/identity/perfil/', {
+            'first_name': 'Ana',
+            'last_name': 'Perez',
+            'email': 'propio16@example.com',
+            'phone_number': '3001234567890123',
+        }, follow=True)
+        self.assertContains(response, 'Información actualizada con éxito')
+        perfil = ProfileAdditionalInfo.objects.get(user=propio)
+        self.assertEqual(perfil.phone_number, '3001234567890123')
+
+
+class PerfilAdminTests(TestCase):
+    def test_el_admin_solo_registra_el_perfil_vigente(self):
+        self.assertIn(ProfileAdditionalInfo, admin.site._registry)
+        self.assertNotIn(AdditionalUserInfo, admin.site._registry)
 
 
 class LogoutPostTests(TestCase):

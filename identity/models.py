@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 # Create your models here.
 
 class AdditionalUserInfo(models.Model):
+    """Perfil anterior. La web lee y escribe ProfileAdditionalInfo."""
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     image = models.ImageField(default='default.jpg', upload_to='profile_pics', blank=True, null=True)
@@ -30,6 +31,8 @@ class ProfileAdditionalInfo(models.Model):
         return 'Informacion adicional del usuario %s' % (self.user)
     
 class AdditionalUserInfoForm(forms.ModelForm):
+    # El nombre sigue igual porque la vista ya lo importa. Valida el perfil vigente:
+    # el modelo legado limita el teléfono a 15 y no es el que guarda la pantalla.
     class Meta:
-        model = AdditionalUserInfo
+        model = ProfileAdditionalInfo
         fields = ['phone_number', 'image']

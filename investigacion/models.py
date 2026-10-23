@@ -1,4 +1,11 @@
+from django.core.validators import FileExtensionValidator
 from django.db import models
+
+# El formulario público ya limita estos campos a PDF. El admin usa el mismo modelo.
+_PDF = FileExtensionValidator(
+    allowed_extensions=['pdf'],
+    message='Solo se permiten archivos PDF.',
+)
 
 # Create your models here.
 
@@ -26,12 +33,20 @@ class Investigacion(models.Model):
     descrip = models.TextField(blank=False)
     imagen_investigacion = models.ImageField(upload_to='investigacion-imagenes/', blank=False)
     imagen_tif = models.ImageField(upload_to='investigacion-tif/', blank=True)
-    pdf = models.FileField(upload_to='investigacion-pdf/', blank=True)
-    mejores_pdf = models.FileField(upload_to='investigacion-mejores/', blank=True)
+    pdf = models.FileField(upload_to='investigacion-pdf/', blank=True, validators=[_PDF])
+    mejores_pdf = models.FileField(upload_to='investigacion-mejores/', blank=True, validators=[_PDF])
     imagen_extra_1 = models.ImageField(upload_to='investigacion-imagenes-extras1/', blank=True)
     imagen_extra_2 = models.ImageField(upload_to='investigacion-imagenes-extras2/', blank=True)
     imagen_extra_3 = models.ImageField(upload_to='investigacion-imagenes-extras3/', blank=True)
-    
+
+    def imagenes_extra(self):
+        # Una sola serie: la plantilla no repite el mismo bloque tres veces.
+        return (
+            (1, self.imagen_extra_1),
+            (2, self.imagen_extra_2),
+            (3, self.imagen_extra_3),
+        )
+
     def __str__(self):
         if self.categoria.nombre_categoria == 'Alpha':
             return 'PROYECTO ALPHA-SINUCLEINA %s' % self.nombre
