@@ -38,9 +38,18 @@ python manage.py create_profiles
 
 ## Variables de entorno
 
-Están documentadas en `.env.example`. `python-dotenv` carga `.env` sin pisar variables ya exportadas. Sin `DATABASE_URL` se usa `db.sqlite3`. Más adelante `DATABASE_URL` puede ser la URI de Supabase/Postgres (`?sslmode=require`).
+Están documentadas en `.env.example`. `python-dotenv` carga `.env` al arrancar y no pisa variables ya exportadas. Sin `DATABASE_URL` se usa `db.sqlite3`. Más adelante `DATABASE_URL` puede ser la URI de Supabase/Postgres (`?sslmode=require`).
 
-Sin `EMAIL_HOST_USER` y con `DEBUG=true`, el correo se imprime en la consola. El formulario de contacto envía a `CONTACT_EMAIL` (por defecto `biocomp@udes.edu.co`).
+Correo de activación (registro) y de contacto:
+
+1. Copia `.env.example` a `.env` (el arranque ya lo hace). `.env` está en `.gitignore` y no se sube. Sin ese archivo, con `DEBUG=true` y sin `EMAIL_HOST_USER`, Django imprime el correo en la terminal del `runserver` (`From: webmaster@localhost`) y la bandeja queda vacía. El aviso de revisar el correo puede aparecer igual.
+2. Para que llegue a Gmail: `EMAIL_HOST=smtp.gmail.com`, `EMAIL_PORT=587`, `EMAIL_USE_TLS=true`. `EMAIL_HOST_USER` es la cuenta remitente. `EMAIL_HOST_PASSWORD` no es la contraseña de inicio de sesión.
+3. En esa cuenta, activa la verificación en dos pasos ([enlace](https://myaccount.google.com/signinoptions/two-step-verification)) y crea una contraseña de aplicación de 16 caracteres en [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords). Pégala sin espacios.
+4. Guarda `.env` y reinicia `runserver`. Django solo lee `.env` al arrancar.
+5. Si Google no ofrece contraseñas de aplicación (Workspace, menor de edad o 2FA avanzado), usa un SMTP transaccional como Brevo o Resend.
+6. Para probar solo en local: deja `EMAIL_HOST_USER` vacío, reinicia y copia el enlace de activación que sale en la terminal.
+
+El formulario de contacto envía a `CONTACT_EMAIL` (por defecto `biocomp@udes.edu.co`).
 
 ## Notas
 
