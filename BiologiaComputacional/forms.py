@@ -7,7 +7,7 @@ from profesionales.models import InformacionProfesional, Articulos
 from servicios.models import Categoria, Servicio
 from django.contrib.auth.forms import UserChangeForm
 import re
-from investigacion.models import CategoriaI, Investigacion, Carrusel
+from investigacion.models import CategoriaI, Investigacion
 
 # Formulario de contacto
 
@@ -205,9 +205,3 @@ class InvestigacionForm(forms.ModelForm):
         fields = ['categoria', 'nombre', 'descrip', 'imagen_investigacion',
                   'imagen_tif', 'pdf', 'mejores_pdf', 'imagen_extra_1', 'imagen_extra_2', 'imagen_extra_3']
 
-
-class CarruselForm(forms.ModelForm):
-    class Meta:
-        model = Carrusel
-        fields = ['titulo', 'texto1', 'texto2',
-                  'texto3', 'imagen1', 'imagen2', 'imagen3']

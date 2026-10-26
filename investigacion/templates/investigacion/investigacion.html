@@ -1,13 +1,37 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Investigaciones realizadas{% endblock %}
+{% block title %}{% if es_vista_previa %}Vista previa del carrusel{% else %}Investigaciones realizadas{% endif %}{% endblock %}
+
+{% block extra_head %}
+{% if es_vista_previa %}
+<meta name="robots" content="noindex, nofollow">
+{% endif %}
+{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/investigacion.css' %}" />
 {% endblock %}
 
 {% block content %}
+
+{% if es_vista_previa %}
+<div class="alert alert-warning border-0 rounded-0 mb-0" role="status">
+    <div class="container d-flex flex-wrap align-items-center gap-2 py-1">
+        <strong>Borrador.</strong>
+        <span>Vista previa del carrusel. El resto de la página sigue publicado. Los visitantes todavía no ven estos cambios.</span>
+        <a class="btn btn-sm btn-outline-dark" href="{% url 'investigacion_editar_carrusel' %}">Volver a editar</a>
+        <form method="post" action="{% url 'investigacion_carrusel_publicar' %}" class="d-inline">
+            {% csrf_token %}
+            <button class="btn btn-sm btn-success" type="submit">Publicar</button>
+        </form>
+        <form method="post" action="{% url 'investigacion_carrusel_descartar' %}" class="d-inline">
+            {% csrf_token %}
+            <button class="btn btn-sm btn-outline-danger" type="submit">Descartar</button>
+        </form>
+    </div>
+</div>
+{% endif %}
 
 {% if diapositivas %}
 <div id="carouselExampleFade" class="carousel slide carousel-fade"{% if diapositivas|length > 1 %} data-bs-ride="carousel" data-bs-interval="4000"{% endif %}>
@@ -71,6 +95,11 @@
                         de investigación titulado Docking molecular en la búsqueda de inhibidores potenciales de la
                         oligomerización de α-sinucleina en la enfermedad de Parkinson y otras investigaciones.</p>
                     <a class="btn btn-outline-primary mt-2 shadow" href="#seccion1" role="button">Ver más</a>
+                    {% if not diapositivas %}
+                    {% if user.is_superuser or user.is_staff %}
+                    <a class="btn btn-outline-secondary mt-2 ms-2 shadow" href="{% url 'investigacion_editar_carrusel' %}">Editar carrusel</a>
+                    {% endif %}
+                    {% endif %}
                 </div>
             </div>
             <!-- Fin Seccion de texto-->

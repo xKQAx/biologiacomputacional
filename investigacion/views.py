@@ -1,48 +1,22 @@
 from django.views.generic import TemplateView
-from investigacion.models import CategoriaI, Investigacion, Carrusel
+from investigacion.models import CategoriaI, Investigacion
+from investigacion.carrusel import (
+    borrador_actual,
+    descartar_borrador,
+    diapositivas_publicas,
+    guardar_borrador,
+    publicar_borrador,
+    publicado_actual,
+    url_imagen,
+    CAMPOS_IMAGEN,
+)
+from investigacion.forms import CarruselBorradorForm, filas_del_formulario
 from django.utils.decorators import method_decorator
 from django.shortcuts import render, get_object_or_404, redirect
-from BiologiaComputacional.forms import InvestigacionForm, CarruselForm
+from BiologiaComputacional.forms import InvestigacionForm
 from BiologiaComputacional.permissions import staff_required
 from django.contrib import messages
 from django.views import View
-
-
-def _imagen_disponible(campo):
-    """True solo si el archivo está guardado y sigue en disco."""
-    nombre = getattr(campo, "name", "") or ""
-    if not nombre:
-        return False
-    try:
-        return campo.storage.exists(nombre)
-    except (OSError, ValueError):
-        return False
-
-
-def diapositivas_publicas(carrusel):
-    """Diapositivas que un visitante puede ver. Sin archivo, no se publican."""
-    if carrusel is None:
-        return []
-
-    pares = (
-        (carrusel.imagen1, carrusel.texto1),
-        (carrusel.imagen2, carrusel.texto2),
-        (carrusel.imagen3, carrusel.texto3),
-    )
-    diapositivas = []
-    for imagen, texto in pares:
-        if not _imagen_disponible(imagen):
-            continue
-        texto = (texto or "").strip()
-        diapositivas.append({
-            "url": imagen.url,
-            "texto": texto,
-            "alt": texto or "Imagen de investigación del laboratorio",
-        })
-
-    if diapositivas:
-        diapositivas[0]["titulo"] = (carrusel.titulo or "").strip()
-    return diapositivas
 
 
 class investigacion_view(TemplateView):
@@ -50,45 +24,161 @@ class investigacion_view(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        carrusel = Carrusel.objects.first()
+        # Solo el carrusel publicado. El borrador no entra en esta página.
+        carrusel = publicado_actual()
         context['categorias'] = CategoriaI.objects.all()
         context['carrusel'] = carrusel
         context['diapositivas'] = diapositivas_publicas(carrusel)
         return context
 
 
-# Vista para editar texto y carrusel de fotos
+def _contexto_borrador(form, borrador, publicado):
+    urls = {
+        campo: url_imagen(borrador, publicado, campo)
+        for campo in CAMPOS_IMAGEN
+    }
+    return {
+        'form': form,
+        'filas': filas_del_formulario(form, urls),
+        'hay_borrador': borrador is not None,
+    }
+
+
+def _responder_publicar(request):
+    borrador = borrador_actual()
+    if borrador is None:
+        messages.error(request, 'No hay un borrador para publicar.')
+        return redirect('investigacion_editar_carrusel')
+    try:
+        publicar_borrador(borrador)
+    except ValueError:
+        messages.error(
+            request,
+            'No se pudo publicar: el borrador no tiene todas las imágenes.',
+        )
+        return redirect('investigacion_editar_carrusel')
+    messages.success(
+        request,
+        'Carrusel publicado. Los visitantes ya ven estos cambios.',
+    )
+    return redirect('investigacion')
+
+
+def _formulario_inicial(borrador, publicado):
+    fuente = borrador or publicado
+    initial = {}
+    if fuente is not None:
+        initial = {
+            'titulo': fuente.titulo,
+            'texto1': fuente.texto1,
+            'texto2': fuente.texto2,
+            'texto3': fuente.texto3,
+        }
+    return CarruselBorradorForm(
+        initial=initial,
+        borrador=borrador,
+        publicado=publicado,
+    )
+
+
+# El staff edita un borrador. Publicar es otro paso.
 
 @method_decorator(staff_required, name='dispatch')
-class InvestigacionCarruselEditView(TemplateView):
+class InvestigacionCarruselEditView(View):
     template_name = "investigacion/investigacion_edit_carrusel.html"
 
-    def get(self, request, *args, **kwargs):
-        carrusel = Carrusel.objects.first()
-        form = CarruselForm(instance=carrusel)
+    def get(self, request):
+        borrador = borrador_actual()
+        publicado = publicado_actual()
+        form = _formulario_inicial(borrador, publicado)
+        return render(
+            request,
+            self.template_name,
+            _contexto_borrador(form, borrador, publicado),
+        )
 
-        context = {
-            'carrusel': carrusel,
-            'form': form,
-        }
+    def post(self, request):
+        borrador = borrador_actual()
+        publicado = publicado_actual()
+        form = CarruselBorradorForm(
+            request.POST,
+            request.FILES,
+            borrador=borrador,
+            publicado=publicado,
+        )
+        if not form.is_valid():
+            return render(
+                request,
+                self.template_name,
+                _contexto_borrador(form, borrador, publicado),
+            )
 
-        return render(request, self.template_name, context)
+        try:
+            borrador = guardar_borrador(form.cleaned_data, borrador, publicado)
+        except ValueError:
+            form.add_error(None, 'Falta una imagen. Sube las tres diapositivas.')
+            return render(
+                request,
+                self.template_name,
+                _contexto_borrador(form, borrador_actual(), publicado),
+            )
 
-    def post(self, request, *args, **kwargs):
-        carrusel = Carrusel.objects.first()
-        form = CarruselForm(request.POST, request.FILES, instance=carrusel)
+        accion = request.POST.get('accion')
+        if accion == 'previsualizar':
+            return redirect('investigacion_carrusel_vista_previa')
+        if accion == 'publicar':
+            return _responder_publicar(request)
 
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Carrusel actualizado correctamente.')
-            return redirect('investigacion')
+        messages.success(
+            request,
+            'Borrador guardado. Los visitantes todavía ven la versión publicada.',
+        )
+        return redirect('investigacion_editar_carrusel')
+
+
+@method_decorator(staff_required, name='dispatch')
+class CarruselVistaPreviaView(View):
+    """La misma plantilla pública, con el borrador en el carrusel."""
+
+    def get(self, request):
+        borrador = borrador_actual()
+        if borrador is None:
+            messages.info(request, 'No hay un borrador para previsualizar.')
+            return redirect('investigacion_editar_carrusel')
+
+        response = render(request, 'investigacion/investigacion.html', {
+            'categorias': CategoriaI.objects.all(),
+            'diapositivas': diapositivas_publicas(borrador),
+            'es_vista_previa': True,
+        })
+        response['X-Robots-Tag'] = 'noindex, nofollow'
+        response['Cache-Control'] = 'private, no-store'
+        return response
+
+
+@method_decorator(staff_required, name='dispatch')
+class CarruselPublicarView(View):
+    http_method_names = ['post']
+
+    def post(self, request):
+        return _responder_publicar(request)
+
+
+@method_decorator(staff_required, name='dispatch')
+class CarruselDescartarView(View):
+    http_method_names = ['post']
+
+    def post(self, request):
+        borrador = borrador_actual()
+        if borrador is None:
+            messages.info(request, 'No había un borrador que descartar.')
         else:
-            context = {
-                'carrusel': carrusel,
-                'form': form,
-                'form_errors': form.errors
-            }
-            return render(request, self.template_name, context)
+            descartar_borrador(borrador)
+            messages.success(
+                request,
+                'Borrador descartado. Lo publicado no cambió.',
+            )
+        return redirect('investigacion_editar_carrusel')
 
 
 # Vista para editar informacion de las investigaciones

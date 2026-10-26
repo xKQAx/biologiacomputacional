@@ -1,138 +1,110 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %} Editar carrusel {{ investigacion.nombre }} {% endblock %}
+{% block title %}Borrador del carrusel{% endblock %}
 
 {% block content %}
 
-<!-- Contenido -->
 <div class="container my-5">
 
     <nav style="--bs-breadcrumb-divider: url(&#34;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Cpath d='M2.5 0L1 1.5 3.5 4 1 6.5 2.5 8l4-4-4-4z' fill='%236c757d'/%3E%3C/svg%3E&#34;);"
         aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{% url 'investigacion' %}" class="custom-color">Investigación</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Editar carrusel</li>
+            <li class="breadcrumb-item active" aria-current="page">Borrador del carrusel</li>
         </ol>
     </nav>
 
     <div class="border border-2 rounded-4 py-4 px-4 bg-light">
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+            <h4 class="mb-0">Borrador del carrusel</h4>
+            {% if hay_borrador %}
+            <span class="badge text-bg-warning">Borrador</span>
+            {% endif %}
+        </div>
+        <p class="mb-0">Los visitantes siguen viendo el carrusel publicado. Previsualizar muestra estos cambios en la misma página, sin publicarlos. Descartar borra el borrador y deja lo publicado igual.</p>
 
-        <h4 class="text-center"> Editar carrusel</h4>
-        <form
-            class="row g-3 needs-validation border border-2 rounded-4 py-3 px-4 mt-3 bg-white d-flex justify-content-center"
-            method="post" enctype="multipart/form-data" novalidate> {% csrf_token %}
+        {% for message in messages %}
+        <div class="alert mt-3 mb-0 {% if 'error' in message.tags %}alert-danger{% elif 'warning' in message.tags %}alert-warning{% elif 'success' in message.tags %}alert-success{% else %}alert-info{% endif %}" role="status">
+            {{ message }}
+        </div>
+        {% endfor %}
 
-            {% if form_errors %}
+        <form class="row g-3 border border-2 rounded-4 py-3 px-4 mt-3 bg-white" method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
             <div class="alert alert-danger" role="alert">
-                <strong>Error:</strong> Por favor, corrija los siguientes errores:
-                <ul>
-                    {% for field, errors in form_errors.items %}
-                    {% for error in errors %}
-                    <li>{{ field|title }}: {{ error }}</li>
-                    {% endfor %}
-                    {% endfor %}
-                </ul>
+                {% for error in form.non_field_errors %}
+                <div>{{ error }}</div>
+                {% endfor %}
             </div>
             {% endif %}
 
-            <!-- Entrada de titulo -->
-            <div class="col-md-12 py-3 px-3 border border-2 rounded-4 bg-light">
-                <label for="entradaTitulo" class="form-label">Título</label>
-                <input type="text" class="form-control" id="entradaTitulo" name="titulo" value="{{ carrusel.titulo }}">
-                <div class="invalid-feedback">
-                    Campo requerido
-                </div>
+            <div class="col-12">
+                <label for="{{ form.titulo.id_for_label }}" class="form-label">Título</label>
+                <input type="text" class="form-control{% if form.titulo.errors %} is-invalid{% endif %}"
+                    id="{{ form.titulo.id_for_label }}" name="{{ form.titulo.html_name }}"
+                    maxlength="{{ form.titulo.field.max_length }}"
+                    value="{{ form.titulo.value|default_if_none:'' }}"
+                    {% if form.titulo.errors %}aria-invalid="true" aria-describedby="error-titulo"{% endif %}>
+                {% for error in form.titulo.errors %}
+                <div class="invalid-feedback" id="error-titulo">{{ error }}</div>
+                {% endfor %}
+                <div class="form-text">Aparece sobre la primera diapositiva. Puedes dejarlo vacío.</div>
             </div>
 
-            <!-- Entrada para texto e imagen 1 -->
-            <div class="col-md-12 row justify-content-center py-4 px-3 mt-5 border border-2 rounded-4 bg-light">
-                <h5 class="col-md-12 text-center mb-4">Sección 1</h5>
+            {% for fila in filas %}
+            <div class="col-12 row justify-content-center py-4 px-3 mt-3 border border-2 rounded-4 bg-light mx-0">
+                <h5 class="col-12 text-center mb-4">Diapositiva {{ fila.numero }}</h5>
 
-                <div class="col-md-6 text-center row justify-content-center">
-                    <img src="{{ carrusel.imagen1.url }}" alt="" class="border border-2 rounded-4 py-1 px-1 mb-4"
-                        style="max-width: 50%; height: auto;">
-                    <label for="entradaImagen1" class="form-label">Insertar nueva imagen</label>
-                    <input class="form-control" type="file" name="imagen1" id="entradaImagen1" accept="image/*">
+                <div class="col-md-6 text-center">
+                    {% if fila.url %}
+                    <img src="{{ fila.url }}" alt="Imagen actual de la diapositiva {{ fila.numero }}"
+                        class="border border-2 rounded-4 py-1 px-1 mb-4" style="max-width: 50%; height: auto;">
+                    {% else %}
+                    <p class="text-muted">Todavía no hay imagen para esta diapositiva.</p>
+                    {% endif %}
+                    <label for="{{ fila.imagen.id_for_label }}" class="form-label">Imagen</label>
+                    <input class="form-control{% if fila.imagen.errors %} is-invalid{% endif %}" type="file"
+                        name="{{ fila.imagen.html_name }}" id="{{ fila.imagen.id_for_label }}" accept="image/*"
+                        {% if fila.imagen.errors %}aria-invalid="true"{% endif %}>
+                    {% for error in fila.imagen.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                    <div class="form-text">Si no eliges un archivo, se conserva la imagen del borrador o la publicada.</div>
                 </div>
 
                 <div class="col-md-6">
-                    <label for="entradaTexto1" class="form-label">Texto</label>
-                    <input type="text" class="form-control" id="entradaTexto1" name="texto1"
-                        value="{{ carrusel.texto1 }}" required>
-                    <div class="invalid-feedback">
-                        Campo requerido
-                    </div>
+                    <label for="{{ fila.texto.id_for_label }}" class="form-label">Texto</label>
+                    <input type="text" class="form-control{% if fila.texto.errors %} is-invalid{% endif %}"
+                        id="{{ fila.texto.id_for_label }}" name="{{ fila.texto.html_name }}"
+                        maxlength="{{ fila.texto.field.max_length }}"
+                        value="{{ fila.texto.value|default_if_none:'' }}"
+                        {% if fila.texto.errors %}aria-invalid="true"{% endif %}>
+                    {% for error in fila.texto.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
                 </div>
             </div>
+            {% endfor %}
 
-            <!-- Entrada para texto e imagen 2 -->
-            <div class="col-md-12 row justify-content-center py-4 px-3 mt-5 border border-2 rounded-4 bg-light">
-                <h5 class="col-md-12 text-center mb-4">Sección 2</h5>
-
-                <div class="col-md-6 text-center row justify-content-center">
-                    <img src="{{ carrusel.imagen2.url }}" alt="" class="border border-2 rounded-4 py-1 px-1 mb-4"
-                        style="max-width: 50%; height: auto;">
-                    <label for="entradaImagen2" class="form-label">Insertar nueva imagen</label>
-                    <input class="form-control" type="file" name="imagen2" id="entradaImagen2" accept="image/*">
-                </div>
-
-                <div class="col-md-6">
-                    <label for="entradaTexto2" class="form-label">Texto</label>
-                    <input type="text" class="form-control" id="entradaTexto2" name="texto2"
-                        value="{{ carrusel.texto2 }}" required>
-                    <div class="invalid-feedback">
-                        Campo requerido
-                    </div>
-                </div>
+            <div class="col-12 d-flex flex-wrap justify-content-center gap-2 mt-4 mb-2">
+                <button class="btn btn-outline-primary" type="submit" name="accion" value="guardar">Guardar borrador</button>
+                <button class="btn btn-primary" type="submit" name="accion" value="previsualizar">Previsualizar</button>
+                <button class="btn btn-success" type="submit" name="accion" value="publicar">Publicar</button>
             </div>
-
-            <!-- Entrada para texto e imagen 3 -->
-            <div class="col-md-12 row justify-content-center py-4 px-3 mt-5 border border-2 rounded-4 bg-light">
-                <h5 class="col-md-12 text-center mb-4">Sección 3</h5>
-
-                <div class="col-md-6 text-center row justify-content-center">
-                    <img src="{{ carrusel.imagen3.url }}" alt="" class="border border-2 rounded-4 py-1 px-1 mb-4"
-                        style="max-width: 50%; height: auto;">
-                    <label for="entradaImagen3" class="form-label">Insertar nueva imagen</label>
-                    <input class="form-control" type="file" name="imagen3" id="entradaImagen3" accept="image/*">
-                </div>
-
-                <div class="col-md-6">
-                    <label for="entradaTexto3" class="form-label">Texto</label>
-                    <input type="text" class="form-control" id="entradaTexto3" name="texto3"
-                        value="{{ carrusel.texto3 }}" required>
-                    <div class="invalid-feedback">
-                        Campo requerido
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-12 text-center mb-2 mt-4">
-                <button class="btn btn-success" type="submit">Editar información</button>
-            </div>
+            <p class="col-12 text-center text-muted mb-0">Publicar usa lo que está escrito en este formulario. Descartar usa el último borrador guardado.</p>
         </form>
+
+        {% if hay_borrador %}
+        <form method="post" action="{% url 'investigacion_carrusel_descartar' %}" class="text-center mt-3">
+            {% csrf_token %}
+            <button class="btn btn-outline-danger" type="submit">Descartar</button>
+        </form>
+        {% endif %}
     </div>
 
 </div>
-
-<script>
-    // Selecciona todos los formularios que queremos validar
-    var forms = document.querySelectorAll('.needs-validation')
-
-    // Recorre cada formulario y previene el envío si hay campos inválidos
-    Array.prototype.slice.call(forms)
-        .forEach(function (form) {
-            form.addEventListener('submit', function (event) {
-                if (!form.checkValidity()) {
-                    event.preventDefault()
-                    event.stopPropagation()
-                }
-
-                form.classList.add('was-validated')
-            }, false)
-        })
-
-</script>
 
 {% endblock %}

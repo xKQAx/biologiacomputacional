@@ -21,6 +21,30 @@ class Carrusel(models.Model):
     def __str__(self):
         return 'Datos carrusel de fotos'
 
+
+class CarruselBorrador(models.Model):
+    """Copia editable del carrusel. La portada no lee este modelo.
+
+    El siguiente paso del panel es crear secciones nuevas; este borrador
+    solo cubre el carrusel que ya existe.
+    """
+
+    titulo = models.CharField(max_length=50, blank=True)
+    texto1 = models.CharField(max_length=100)
+    texto2 = models.CharField(max_length=100)
+    texto3 = models.CharField(max_length=100)
+    imagen1 = models.ImageField(upload_to='imagen-carrusel-borrador-1/', blank=True)
+    imagen2 = models.ImageField(upload_to='imagen-carrusel-borrador-2/', blank=True)
+    imagen3 = models.ImageField(upload_to='imagen-carrusel-borrador-3/', blank=True)
+
+    class Meta:
+        verbose_name = 'Borrador del carrusel'
+        verbose_name_plural = 'Borrador del carrusel'
+
+    def __str__(self):
+        return 'Borrador del carrusel de investigación'
+
+
 class CategoriaI(models.Model):
     nombre_categoria = models.CharField(max_length=20, blank=False)
     

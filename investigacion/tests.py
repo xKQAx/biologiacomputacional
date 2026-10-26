@@ -9,7 +9,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from PIL import Image
 
-from investigacion.models import CategoriaI, Carrusel, Investigacion
+from investigacion.models import CategoriaI, Carrusel, CarruselBorrador, Investigacion
 
 
 def _png():
@@ -150,6 +150,15 @@ class InvestigacionPublicaTests(_MediaAislada, TestCase):
         self.assertContains(response, 'INVESTIGACIÓN')
         self.assertNotContains(response, 'Editar carrusel')
 
+    def test_staff_sin_carrusel_puede_abrir_el_editor(self):
+        staff = User.objects.create_user(
+            'gestor_sin_carrusel', 'sincarrusel@example.com', 'ClaveSegura1', is_staff=True
+        )
+        self.client.force_login(staff)
+        response = self.client.get('/investigacion/')
+        self.assertContains(response, 'Editar carrusel')
+        self.assertNotContains(response, 'id="carouselExampleFade"')
+
     def test_muestra_solo_las_imagenes_que_existen(self):
         carrusel = self._carrusel()
         os.remove(carrusel.imagen2.path)
@@ -182,3 +191,118 @@ class InvestigacionPublicaTests(_MediaAislada, TestCase):
         self.client.force_login(staff)
         response = self.client.get('/investigacion/')
         self.assertContains(response, 'Editar carrusel')
+
+
+class CarruselBorradorTests(_MediaAislada, TestCase):
+    """El borrador del carrusel no se publica hasta que el staff lo confirma."""
+
+    edit_url = '/investigacion/editar-carrusel'
+    preview_url = '/investigacion/carrusel/vista-previa/'
+    publish_url = '/investigacion/carrusel/publicar/'
+    discard_url = '/investigacion/carrusel/descartar/'
+
+    def setUp(self):
+        self.staff = User.objects.create_user(
+            'editor_carrusel', 'editor-carrusel@example.com', 'ClaveSegura1',
+            is_staff=True,
+        )
+        self.carrusel = Carrusel.objects.create(
+            titulo='Título publicado',
+            texto1='Texto publicado visible',
+            texto2='Segunda publicada',
+            texto3='Tercera publicada',
+            imagen1=_png(),
+            imagen2=_png(),
+            imagen3=_png(),
+        )
+
+    def _datos(self, texto1):
+        return {
+            'accion': 'guardar',
+            'titulo': 'Título del borrador',
+            'texto1': texto1,
+            'texto2': 'Segunda del borrador',
+            'texto3': 'Tercera del borrador',
+        }
+
+    def _guardar(self, texto1='Texto secreto del borrador'):
+        self.client.force_login(self.staff)
+        response = self.client.post(self.edit_url, self._datos(texto1))
+        self.assertEqual(response.status_code, 302)
+        return response
+
+    def test_anonimo_no_ve_el_borrador(self):
+        self._guardar()
+        self.client.logout()
+
+        portada = self.client.get('/investigacion/')
+        self.assertContains(portada, 'Texto publicado visible')
+        self.assertNotContains(portada, 'Texto secreto del borrador')
+        self.assertNotContains(portada, 'noindex')
+
+        for url in (self.preview_url, self.edit_url):
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 302)
+            self.assertNotContains(response, 'Texto secreto del borrador', status_code=302)
+
+    def test_staff_previsualiza_sin_publicar(self):
+        self._guardar()
+        response = self.client.get(self.preview_url)
+
+        self.assertContains(response, 'Texto secreto del borrador')
+        self.assertContains(response, 'INVESTIGACIÓN')
+        self.assertContains(response, 'Vista previa del carrusel')
+        self.assertContains(response, 'name="robots" content="noindex, nofollow"')
+        self.assertEqual(response.headers['X-Robots-Tag'], 'noindex, nofollow')
+        self.assertNotContains(response, 'Texto publicado visible')
+
+        portada = self.client.get('/investigacion/')
+        self.assertContains(portada, 'Texto publicado visible')
+        self.assertNotContains(portada, 'Texto secreto del borrador')
+        self.assertNotContains(portada, 'noindex')
+
+    def test_publicar_actualiza_lo_publico(self):
+        self._guardar()
+        response = self.client.post(self.publish_url)
+
+        self.assertRedirects(response, '/investigacion/')
+        portada = self.client.get('/investigacion/')
+        self.assertContains(portada, 'Texto secreto del borrador')
+        self.assertNotContains(portada, 'Texto publicado visible')
+        self.assertFalse(CarruselBorrador.objects.exists())
+
+        publicado = Carrusel.objects.get(pk=self.carrusel.pk)
+        self.assertTrue(os.path.exists(publicado.imagen1.path))
+
+    def test_descartar_no_cambia_lo_publicado(self):
+        ruta = self.carrusel.imagen1.path
+        self._guardar()
+        response = self.client.post(self.discard_url)
+
+        self.assertRedirects(response, self.edit_url)
+        self.assertFalse(CarruselBorrador.objects.exists())
+        self.carrusel.refresh_from_db()
+        self.assertEqual(self.carrusel.texto1, 'Texto publicado visible')
+        self.assertTrue(os.path.exists(ruta))
+
+        portada = self.client.get('/investigacion/')
+        self.assertContains(portada, 'Texto publicado visible')
+        self.assertNotContains(portada, 'Texto secreto del borrador')
+
+        preview = self.client.get(self.preview_url)
+        self.assertEqual(preview.status_code, 302)
+        self.assertNotContains(preview, 'Texto secreto del borrador', status_code=302)
+
+    def test_validacion_conserva_el_texto_y_no_crea_borrador(self):
+        self.client.force_login(self.staff)
+        datos = self._datos('no se guarda')
+        datos['texto1'] = ''
+        datos['texto2'] = 'Texto que no debo perder'
+        response = self.client.post(self.edit_url, datos)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Texto que no debo perder')
+        self.assertContains(response, 'Escribe el texto de la diapositiva 1.')
+        self.assertFalse(CarruselBorrador.objects.exists())
+        self.carrusel.refresh_from_db()
+        self.assertEqual(self.carrusel.texto1, 'Texto publicado visible')
