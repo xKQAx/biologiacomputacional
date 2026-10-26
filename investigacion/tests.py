@@ -1,4 +1,5 @@
 import io
+import os
 import shutil
 import tempfile
 
@@ -8,7 +9,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from PIL import Image
 
-from investigacion.models import CategoriaI, Investigacion
+from investigacion.models import CategoriaI, Carrusel, Investigacion
 
 
 def _png():
@@ -17,11 +18,12 @@ def _png():
     return SimpleUploadedFile('foto.png', buffer.getvalue(), content_type='image/png')
 
 
-class EliminarInvestigacionTests(TestCase):
+class _MediaAislada:
+    """Carpeta temporal de media para que ImageField no escriba en el proyecto."""
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        # El ImageField no debe escribir en profesionales/media del proyecto.
         cls.media_root = tempfile.mkdtemp()
         cls.media_override = override_settings(MEDIA_ROOT=cls.media_root)
         cls.media_override.enable()
@@ -32,6 +34,8 @@ class EliminarInvestigacionTests(TestCase):
         shutil.rmtree(cls.media_root, ignore_errors=True)
         super().tearDownClass()
 
+
+class EliminarInvestigacionTests(_MediaAislada, TestCase):
     def setUp(self):
         categoria = CategoriaI.objects.create(nombre_categoria='Otros')
         self.investigacion = Investigacion.objects.create(
@@ -85,20 +89,7 @@ class EliminarInvestigacionTests(TestCase):
         self.investigacion.full_clean()
 
 
-class PaginaInvestigacionTests(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.media_root = tempfile.mkdtemp()
-        cls.media_override = override_settings(MEDIA_ROOT=cls.media_root)
-        cls.media_override.enable()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.media_override.disable()
-        shutil.rmtree(cls.media_root, ignore_errors=True)
-        super().tearDownClass()
-
+class PaginaInvestigacionTests(_MediaAislada, TestCase):
     def _investigacion(self, categoria, nombre):
         return Investigacion.objects.create(
             categoria=categoria,
@@ -133,3 +124,61 @@ class PaginaInvestigacionTests(TestCase):
         response = self.client.get('/investigacion/')
 
         self.assertContains(response, 'Editar investigación')
+
+
+class InvestigacionPublicaTests(_MediaAislada, TestCase):
+    """La portada pública no debe mostrar un carrusel sin fotos."""
+
+    def _carrusel(self, **textos):
+        datos = {
+            'titulo': 'Carrusel de prueba',
+            'texto1': 'Texto de la primera diapositiva',
+            'texto2': 'Texto de la segunda diapositiva',
+            'texto3': 'Texto de la tercera diapositiva',
+            'imagen1': _png(),
+            'imagen2': _png(),
+            'imagen3': _png(),
+        }
+        datos.update(textos)
+        return Carrusel.objects.create(**datos)
+
+    def test_sin_carrusel_no_pinta_imagenes_vacias(self):
+        response = self.client.get('/investigacion/')
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'id="carouselExampleFade"')
+        self.assertNotContains(response, 'src=""')
+        self.assertContains(response, 'INVESTIGACIÓN')
+        self.assertNotContains(response, 'Editar carrusel')
+
+    def test_muestra_solo_las_imagenes_que_existen(self):
+        carrusel = self._carrusel()
+        os.remove(carrusel.imagen2.path)
+        os.remove(carrusel.imagen3.path)
+
+        response = self.client.get('/investigacion/')
+        self.assertContains(response, carrusel.imagen1.url)
+        self.assertContains(response, 'Carrusel de prueba')
+        self.assertContains(response, 'Texto de la primera diapositiva')
+        self.assertNotContains(response, carrusel.imagen2.url)
+        self.assertNotContains(response, 'Diapositiva siguiente')
+
+    def test_varias_imagenes_tienen_controles_en_espanol(self):
+        carrusel = self._carrusel()
+        response = self.client.get('/investigacion/')
+        self.assertContains(response, carrusel.imagen1.url)
+        self.assertContains(response, carrusel.imagen2.url)
+        self.assertContains(response, carrusel.imagen3.url)
+        self.assertContains(response, 'Diapositiva anterior')
+        self.assertContains(response, 'Diapositiva siguiente')
+        self.assertNotContains(response, '>Previous<')
+        self.assertNotContains(response, '>Next<')
+        self.assertNotContains(response, 'Editar carrusel')
+
+    def test_staff_ve_editar_cuando_hay_carrusel(self):
+        self._carrusel()
+        staff = User.objects.create_user(
+            'gestor_carrusel', 'carrusel@example.com', 'ClaveSegura1', is_staff=True
+        )
+        self.client.force_login(staff)
+        response = self.client.get('/investigacion/')
+        self.assertContains(response, 'Editar carrusel')
