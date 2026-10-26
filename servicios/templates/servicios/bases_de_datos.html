@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %} Bases de datos {% endblock %}
+{% block title %}Bases de datos{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/servicios.css' %}" />
@@ -35,7 +35,7 @@
                         apoyar tus investigaciones en biología computacional.</p>
                 </a>
 
-                <a href="{% url 'database' %}" class="list-group-item list-group-item-secondary list-group-item-action">
+                <div class="list-group-item list-group-item-secondary" aria-current="page">
                     <div class="d-flex w-100 justify-content-between">
                         <h6 class="mb-1">Bases de datos</h6>
                         <span class="badge strong-bg-custom rounded-pill" data-bs-toggle="tooltip"
@@ -43,7 +43,7 @@
                     </div>
                     <p class="mb-1">Disponemos de una amplia variedad de bases de datos para respaldar tus
                         investigaciones en biología computacional.</p>
-                </a>
+                </div>
             </div>
 
         </div>
@@ -58,8 +58,8 @@
                     <!-- Formulario de búsqueda -->
                     <div class="container-fluid">
                         <form class="d-flex servicios-busqueda" action="" method="GET">
-                            <input class="form-control me-2" type="search" placeholder="Buscar" aria-label="Search"
-                                name="q">
+                            <input class="form-control me-2" type="search" placeholder="Buscar"
+                                aria-label="Buscar bases de datos" name="q" value="{{ request.GET.q|default:'' }}">
                             <button class="btn btn-secondary" type="submit">Buscar</button>
                         </form>
                     </div>
@@ -83,7 +83,7 @@
                 </a>
             </div>
             {% empty %}
-            <p>No se encontraron Bases de Datos.</p>
+            <p>{% if form_submitted %}No se encontraron bases de datos para esta búsqueda.{% else %}Aún no hay bases de datos publicadas.{% endif %}</p>
             {% endfor %}
 
             <!-- Enlace para agregar nueva herramienta -->

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %} Herramientas de trabajo {% endblock %}
+{% block title %}Herramientas de trabajo{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/servicios.css' %}" />
@@ -26,7 +26,7 @@
     <div class="row">
         <div class="col-12 col-md-4">
             <div class="list-group">
-                <a href="#" class="list-group-item list-group-item-secondary list-group-item-action"
+                <div class="list-group-item list-group-item-secondary" aria-current="page"
                     style="z-index: 1;">
                     <div class="d-flex w-100 justify-content-between">
                         <h6 class="mb-1">Herramientas</h6>
@@ -36,7 +36,7 @@
                     </div>
                     <p class="mb-1">Disponemos una amplia variedad de herramientas para
                         apoyar tus investigaciones en biología computacional.</p>
-                </a>
+                </div>
 
                 <a href="{% url 'database' %}" class="list-group-item list-group-item-action">
                     <div class="d-flex w-100 justify-content-between">
@@ -61,8 +61,8 @@
                     <!-- Formulario de búsqueda -->
                     <div class="container-fluid">
                         <form class="d-flex servicios-busqueda" action="" method="GET">
-                            <input class="form-control me-2" type="search" placeholder="Buscar" aria-label="Search"
-                                name="q">
+                            <input class="form-control me-2" type="search" placeholder="Buscar"
+                                aria-label="Buscar herramientas" name="q" value="{{ request.GET.q|default:'' }}">
                             <button class="btn btn-secondary" type="submit">Buscar</button>
                         </form>
                     </div>
@@ -86,7 +86,7 @@
                 </a>
             </div>
             {% empty %}
-            <p>No se encontraron herramientas.</p>
+            <p>{% if form_submitted %}No se encontraron herramientas para esta búsqueda.{% else %}Aún no hay herramientas publicadas.{% endif %}</p>
             {% endfor %}
 
             <!-- Enlace para agregar nueva herramienta -->
