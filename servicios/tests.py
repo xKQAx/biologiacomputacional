@@ -66,3 +66,25 @@ class ArchivoServicioTests(TestCase):
             'paquete.zip', b'PK', content_type='application/zip'
         )
         self.servicio.full_clean()
+
+
+class CatalogoPublicoTests(TestCase):
+    def test_catalogo_vacio_explica_que_no_hay_publicaciones(self):
+        herramientas = self.client.get('/servicios/')
+        bases = self.client.get('/servicios/bases-de-datos/')
+
+        self.assertContains(herramientas, 'Aún no hay herramientas publicadas.')
+        self.assertNotContains(herramientas, 'No se encontraron herramientas.')
+        self.assertContains(bases, 'Aún no hay bases de datos publicadas.')
+        self.assertContains(herramientas, 'aria-current="page"')
+
+    def test_busqueda_sin_resultados_no_usa_el_mensaje_de_catalogo_vacio(self):
+        herramientas = self.client.get('/servicios/', {'q': 'no-existe'})
+        bases = self.client.get('/servicios/bases-de-datos/', {'q': 'no-existe'})
+
+        self.assertContains(herramientas, 'No se encontraron herramientas para esta búsqueda.')
+        self.assertContains(herramientas, 'value="no-existe"')
+        self.assertNotContains(herramientas, 'Aún no hay herramientas publicadas.')
+        self.assertContains(bases, 'No se encontraron bases de datos para esta búsqueda.')
+        self.assertContains(bases, 'value="no-existe"')
+        self.assertNotContains(bases, 'Aún no hay bases de datos publicadas.')
