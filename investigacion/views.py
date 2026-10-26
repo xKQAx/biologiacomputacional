@@ -7,7 +7,42 @@ from BiologiaComputacional.permissions import staff_required
 from django.contrib import messages
 from django.views import View
 
-# Vista para ver informacion de las investigaciones
+
+def _imagen_disponible(campo):
+    """True solo si el archivo está guardado y sigue en disco."""
+    nombre = getattr(campo, "name", "") or ""
+    if not nombre:
+        return False
+    try:
+        return campo.storage.exists(nombre)
+    except (OSError, ValueError):
+        return False
+
+
+def diapositivas_publicas(carrusel):
+    """Diapositivas que un visitante puede ver. Sin archivo, no se publican."""
+    if carrusel is None:
+        return []
+
+    pares = (
+        (carrusel.imagen1, carrusel.texto1),
+        (carrusel.imagen2, carrusel.texto2),
+        (carrusel.imagen3, carrusel.texto3),
+    )
+    diapositivas = []
+    for imagen, texto in pares:
+        if not _imagen_disponible(imagen):
+            continue
+        texto = (texto or "").strip()
+        diapositivas.append({
+            "url": imagen.url,
+            "texto": texto,
+            "alt": texto or "Imagen de investigación del laboratorio",
+        })
+
+    if diapositivas:
+        diapositivas[0]["titulo"] = (carrusel.titulo or "").strip()
+    return diapositivas
 
 
 class investigacion_view(TemplateView):
@@ -15,8 +50,10 @@ class investigacion_view(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        carrusel = Carrusel.objects.first()
         context['categorias'] = CategoriaI.objects.all()
-        context['carrusel'] = Carrusel.objects.first()
+        context['carrusel'] = carrusel
+        context['diapositivas'] = diapositivas_publicas(carrusel)
         return context
 
 

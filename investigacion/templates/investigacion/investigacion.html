@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %} Investigaciones realizadas {% endblock %}
+{% block title %}Investigaciones realizadas{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/investigacion.css' %}" />
@@ -9,56 +9,53 @@
 
 {% block content %}
 
-<div id="carouselExampleFade" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="4000">
+{% if diapositivas %}
+<div id="carouselExampleFade" class="carousel slide carousel-fade"{% if diapositivas|length > 1 %} data-bs-ride="carousel" data-bs-interval="4000"{% endif %}>
+    {% if diapositivas|length > 1 %}
     <div class="carousel-indicators">
-        <button type="button" data-bs-target="#carouselExampleFade" data-bs-slide-to="0" class="active"
-            aria-current="true" aria-label="Slide 1"></button>
-        <button type="button" data-bs-target="#carouselExampleFade" data-bs-slide-to="1" aria-label="Slide 2"></button>
-        <button type="button" data-bs-target="#carouselExampleFade" data-bs-slide-to="2" aria-label="Slide 3"></button>
+        {% for slide in diapositivas %}
+        <button type="button" data-bs-target="#carouselExampleFade" data-bs-slide-to="{{ forloop.counter0 }}"
+            {% if forloop.first %}class="active" aria-current="true"{% endif %}
+            aria-label="Diapositiva {{ forloop.counter }}"></button>
+        {% endfor %}
     </div>
+    {% endif %}
     <div class="carousel-inner">
-        <div class="carousel-item active">
+        {% for slide in diapositivas %}
+        <div class="carousel-item{% if forloop.first %} active{% endif %}">
             <div class="image-container">
-                <img src="{{ carrusel.imagen1.url }}" alt="Descripción de la imagen">
+                <img src="{{ slide.url }}" class="d-block w-100" alt="{{ slide.alt }}">
                 <div class="overlay"></div>
             </div>
             <div class="carousel-caption text-white">
-                <h2 class="text-uppercase fw-bold fs-1">{{ carrusel.titulo }}</h2>
-                <p class="font-monospace fs-5">{{ carrusel.texto1 }}</p>
+                {% if slide.titulo %}
+                <h2 class="text-uppercase fw-bold fs-1">{{ slide.titulo }}</h2>
+                {% endif %}
+                {% if slide.texto %}
+                <p class="font-monospace fs-5">{{ slide.texto }}</p>
+                {% endif %}
+                {% if forloop.first %}
                 {% if user.is_superuser or user.is_staff %}
                 <a class="btn btn-white text-white" href="{% url 'investigacion_editar_carrusel' %}" role="button">Editar carrusel</a>
                 {% endif %}
+                {% endif %}
             </div>
         </div>
-        <div class="carousel-item">
-            <div class="image-container">
-                <img src="{{ carrusel.imagen2.url }}" class="d-block w-100" alt="...">
-                <div class="overlay"></div>
-            </div>
-            <div class="carousel-caption text-white">
-                <p class="font-monospace fs-5">{{ carrusel.texto2 }}</p>
-            </div>
-        </div>
-        <div class="carousel-item">
-            <div class="image-container">
-                <img src="{{ carrusel.imagen3.url }}" class="d-block w-100" alt="...">
-                <div class="overlay"></div>
-            </div>
-            <div class="carousel-caption text-white">
-                <p class="font-monospace fs-5">{{ carrusel.texto3 }}</p>
-            </div>
-        </div>
+        {% endfor %}
     </div>
 
+    {% if diapositivas|length > 1 %}
     <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleFade" data-bs-slide="prev">
         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-        <span class="visually-hidden">Previous</span>
+        <span class="visually-hidden">Diapositiva anterior</span>
     </button>
     <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleFade" data-bs-slide="next">
         <span class="carousel-control-next-icon" aria-hidden="true"></span>
-        <span class="visually-hidden">Next</span>
+        <span class="visually-hidden">Diapositiva siguiente</span>
     </button>
+    {% endif %}
 </div>
+{% endif %}
 
 <section class="min-vh-100 py-5"
     style="background: linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 25%, rgba(238,238,238,1) 75%, rgba(222,222,222,1) 100%);">
