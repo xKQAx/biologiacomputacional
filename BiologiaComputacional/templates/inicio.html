@@ -1,6 +1,18 @@
-{% extends "base.html" %} {% load static %} {% block title %}Inicio{% endblock%}
+{% extends "base.html" %} {% load static paginas %} {% block title %}Inicio{% endblock%}
+{% block extra_head %}
+{% if modo_editor %}
+<script>document.documentElement.dataset.vista = "visitante";</script>
+<style>
+  html[data-vista="visitante"] [data-vista="sesion"],
+  html[data-vista="sesion"] [data-vista="visitante"] { display: none !important; }
+</style>
+{% endif %}
+{% endblock %}
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/inicio.css' %}" />
+{% if modo_editor %}
+<link rel="stylesheet" href="{% static 'paginas/lienzo.css' %}" />
+{% endif %}
 {% endblock %} {% block content %}
 
 <!-- ============================================
@@ -11,46 +23,51 @@
 >
   <div class="container text-center">
     <div class="mb-4">
-      <span class="hero-badge">
+      <span class="hero-badge" {% edit_attrs "hero_etiqueta" %}>
         <i class="fa-solid fa-dna me-2" aria-hidden="true"></i>
-        Laboratorio de Biología Computacional
+        <span data-edit-texto>{{ bloques.hero_etiqueta.contenido }}</span>
       </span>
     </div>
 
     <h1 class="hero-title fw-bold mb-3">
-      Ciencia e Innovación<br />
-      <span class="hero-title-accent">al alcance de todos</span>
+      <span {% edit_attrs "hero_titulo" %}>
+        <span data-edit-texto>{{ bloques.hero_titulo.contenido }}</span>
+      </span>
+      <br />
+      <span class="hero-title-accent" {% edit_attrs "hero_titulo_acento" %}>
+        <span data-edit-texto>{{ bloques.hero_titulo_acento.contenido }}</span>
+      </span>
     </h1>
 
-    {% if not user.is_authenticated %}
-    <p class="inicio-subtitle fw-light fs-5">
-      Descubra cómo nuestras
-      <strong class="text-warning fw-bold">herramientas</strong> y
-      <strong class="text-warning fw-bold">recursos</strong>
-      pueden impulsar su investigación en biología computacional.
+    {% if modo_editor or not user.is_authenticated %}
+    <p class="inicio-subtitle fw-light fs-5" {% edit_attrs "hero_subtitulo_visitante" %} {% vista_attrs "visitante" %}>
+      {{ bloques.hero_subtitulo_visitante.contenido }}
     </p>
-    <div class="hero-cta">
-      <a href="{% url 'register' %}" class="btn hero-btn-primary">
+    {% if modo_editor %}
+    <template id="rico-hero_subtitulo_visitante">{{ bloques.hero_subtitulo_visitante.html_rico }}</template>
+    {% endif %}
+    <div class="hero-cta" {% vista_attrs "visitante" %}>
+      <a href="{{ bloques.hero_cta_registro.enlace }}" class="btn hero-btn-primary" {% edit_attrs "hero_cta_registro" %}>
         <i class="fa-solid fa-user-plus me-2" aria-hidden="true"></i>
-        Regístrate gratis
+        <span data-edit-texto>{{ bloques.hero_cta_registro.contenido }}</span>
       </a>
-      <a href="{% url 'signin' %}" class="btn hero-btn-outline">
-        Iniciar sesión
+      <a href="{{ bloques.hero_cta_sesion.enlace }}" class="btn hero-btn-outline" {% edit_attrs "hero_cta_sesion" %}>
+        <span data-edit-texto>{{ bloques.hero_cta_sesion.contenido }}</span>
         <i class="fa-solid fa-arrow-right ms-2" aria-hidden="true"></i>
       </a>
     </div>
-    {% else %}
-    <p class="inicio-subtitle fw-light fs-5">
-      ¿Tienes alguna pregunta, comentario o sugerencia?<br />
-      Estamos siempre disponibles y listos para atenderte.
+    {% endif %}
+    {% if modo_editor or user.is_authenticated %}
+    <p class="inicio-subtitle fw-light fs-5" {% edit_attrs "hero_subtitulo_sesion" %} {% vista_attrs "sesion" %}>
+      {{ bloques.hero_subtitulo_sesion.contenido }}
     </p>
-    <div class="hero-cta">
-      <a href="{% url 'contactos' %}" class="btn hero-btn-primary">
+    <div class="hero-cta" {% vista_attrs "sesion" %}>
+      <a href="{{ bloques.hero_cta_contacto.enlace }}" class="btn hero-btn-primary" {% edit_attrs "hero_cta_contacto" %}>
         <i class="fa-solid fa-paper-plane me-2" aria-hidden="true"></i>
-        Contáctanos
+        <span data-edit-texto>{{ bloques.hero_cta_contacto.contenido }}</span>
       </a>
-      <a href="{% url 'buscarProfesional' %}" class="btn hero-btn-outline">
-        Ver profesionales
+      <a href="{{ bloques.hero_cta_profesionales.enlace }}" class="btn hero-btn-outline" {% edit_attrs "hero_cta_profesionales" %}>
+        <span data-edit-texto>{{ bloques.hero_cta_profesionales.contenido }}</span>
         <i class="fa-solid fa-arrow-right ms-2" aria-hidden="true"></i>
       </a>
     </div>
@@ -67,25 +84,27 @@
      ============================================ -->
 <section class="partners-section py-4">
   <div class="container">
-    <p class="text-center partners-label mb-4">Respaldado por</p>
+    <p class="text-center partners-label mb-4" {% edit_attrs "partners_etiqueta" %}>{{ bloques.partners_etiqueta.contenido }}</p>
     <div
       class="d-flex justify-content-center align-items-center flex-wrap gap-5"
     >
       <img
-        src="https://sigiip.udes.edu.co/Image/Grupo/6"
+        src="{{ bloques.partner_biocom.enlace }}"
         height="110"
         width="130"
-        alt="Logo Biología Computacional"
+        alt="{{ bloques.partner_biocom.texto }}"
         class="partner-logo"
         loading="lazy"
+        {% edit_attrs "partner_biocom" %}
       />
       <img
-        src="https://udes.edu.co/images/logo/udes-logo-principal.svg"
+        src="{{ bloques.partner_udes.enlace }}"
         height="110"
         width="130"
-        alt="Logo Universidad de Santander"
+        alt="{{ bloques.partner_udes.texto }}"
         class="partner-logo"
         loading="lazy"
+        {% edit_attrs "partner_udes" %}
       />
     </div>
   </div>
@@ -102,10 +121,8 @@
           <div class="highlight-icon mx-auto mb-3">
             <i class="fa-solid fa-users" aria-hidden="true"></i>
           </div>
-          <h6 class="highlight-title">Comunidad activa</h6>
-          <p class="highlight-text">
-            Investigadores, académicos y estudiantes colaborando.
-          </p>
+          <h6 class="highlight-title" {% edit_attrs "highlight_comunidad_titulo" %}>{{ bloques.highlight_comunidad_titulo.contenido }}</h6>
+          <p class="highlight-text" {% edit_attrs "highlight_comunidad_texto" %}>{{ bloques.highlight_comunidad_texto.contenido }}</p>
         </div>
       </div>
 
@@ -114,10 +131,8 @@
           <div class="highlight-icon mx-auto mb-3">
             <i class="fa-solid fa-microscope" aria-hidden="true"></i>
           </div>
-          <h6 class="highlight-title">Investigación de punta</h6>
-          <p class="highlight-text">
-            Publicaciones en genómica, proteómica y más.
-          </p>
+          <h6 class="highlight-title" {% edit_attrs "highlight_investigacion_titulo" %}>{{ bloques.highlight_investigacion_titulo.contenido }}</h6>
+          <p class="highlight-text" {% edit_attrs "highlight_investigacion_texto" %}>{{ bloques.highlight_investigacion_texto.contenido }}</p>
         </div>
       </div>
 
@@ -126,10 +141,8 @@
           <div class="highlight-icon mx-auto mb-3">
             <i class="fa-solid fa-database" aria-hidden="true"></i>
           </div>
-          <h6 class="highlight-title">Herramientas y datos</h6>
-          <p class="highlight-text">
-            Bases de datos y software para tu trabajo.
-          </p>
+          <h6 class="highlight-title" {% edit_attrs "highlight_datos_titulo" %}>{{ bloques.highlight_datos_titulo.contenido }}</h6>
+          <p class="highlight-text" {% edit_attrs "highlight_datos_texto" %}>{{ bloques.highlight_datos_texto.contenido }}</p>
         </div>
       </div>
 
@@ -138,10 +151,8 @@
           <div class="highlight-icon mx-auto mb-3">
             <i class="fa-solid fa-lock-open" aria-hidden="true"></i>
           </div>
-          <h6 class="highlight-title">Acceso libre</h6>
-          <p class="highlight-text">
-            Recursos disponibles para toda la comunidad.
-          </p>
+          <h6 class="highlight-title" {% edit_attrs "highlight_acceso_titulo" %}>{{ bloques.highlight_acceso_titulo.contenido }}</h6>
+          <p class="highlight-text" {% edit_attrs "highlight_acceso_texto" %}>{{ bloques.highlight_acceso_texto.contenido }}</p>
         </div>
       </div>
     </div>
@@ -154,10 +165,8 @@
 <section class="py-5">
   <div class="container">
     <div class="section-header text-center mb-5">
-      <h2 class="section-title">¿Qué puedo encontrar en BioCOM?</h2>
-      <p class="section-subtitle">
-        Todo lo que necesitas para tu investigación en un solo lugar
-      </p>
+      <h2 class="section-title" {% edit_attrs "encontrar_titulo" %}>{{ bloques.encontrar_titulo.contenido }}</h2>
+      <p class="section-subtitle" {% edit_attrs "encontrar_subtitulo" %}>{{ bloques.encontrar_subtitulo.contenido }}</p>
     </div>
 
     <div class="row g-4 justify-content-center">
@@ -165,21 +174,19 @@
         <div class="cardbox cardbox--delay-1 fade-in-up">
           <div class="card-image-container">
             <img
-              src="{% static 'images/profesional.jpg' %}"
+              src="{{ bloques.tarjeta_profesionales_imagen.enlace }}"
               class="card-img-fit"
-              alt="Profesionales"
+              alt="{{ bloques.tarjeta_profesionales_imagen.texto }}"
               loading="lazy"
               width="380"
               height="280"
+              {% edit_attrs "tarjeta_profesionales_imagen" %}
             />
           </div>
-          <a href="{% url 'buscarProfesional' %}">
-            <h5 class="mt-2 mb-3">Profesionales</h5>
+          <a href="{{ bloques.tarjeta_profesionales_titulo.enlace }}" {% edit_attrs "tarjeta_profesionales_titulo" %}>
+            <h5 class="mt-2 mb-3" data-edit-texto>{{ bloques.tarjeta_profesionales_titulo.contenido }}</h5>
           </a>
-          <p class="fw-light">
-            Investigadores, científicos e ingenieros unidos por la biología
-            computacional.
-          </p>
+          <p class="fw-light" {% edit_attrs "tarjeta_profesionales_texto" %}>{{ bloques.tarjeta_profesionales_texto.contenido }}</p>
         </div>
       </div>
 
@@ -187,21 +194,19 @@
         <div class="cardbox cardbox--delay-2 fade-in-up">
           <div class="card-image-container">
             <img
-              src="{% static 'images/investigacion.jpg' %}"
+              src="{{ bloques.tarjeta_investigacion_imagen.enlace }}"
               class="card-img-fit"
-              alt="Investigación"
+              alt="{{ bloques.tarjeta_investigacion_imagen.texto }}"
               loading="lazy"
               width="380"
               height="280"
+              {% edit_attrs "tarjeta_investigacion_imagen" %}
             />
           </div>
-          <a href="{% url 'investigacion' %}">
-            <h5 class="mt-2 mb-3">Investigación</h5>
+          <a href="{{ bloques.tarjeta_investigacion_titulo.enlace }}" {% edit_attrs "tarjeta_investigacion_titulo" %}>
+            <h5 class="mt-2 mb-3" data-edit-texto>{{ bloques.tarjeta_investigacion_titulo.contenido }}</h5>
           </a>
-          <p class="fw-light">
-            Resultados en genómica, proteómica y biología de sistemas
-            disponibles para todos.
-          </p>
+          <p class="fw-light" {% edit_attrs "tarjeta_investigacion_texto" %}>{{ bloques.tarjeta_investigacion_texto.contenido }}</p>
         </div>
       </div>
 
@@ -209,21 +214,19 @@
         <div class="cardbox cardbox--delay-3 fade-in-up">
           <div class="card-image-container">
             <img
-              src="{% static 'images/herramientas.jpg' %}"
+              src="{{ bloques.tarjeta_servicios_imagen.enlace }}"
               class="card-img-fit"
-              alt="Servicios"
+              alt="{{ bloques.tarjeta_servicios_imagen.texto }}"
               loading="lazy"
               width="380"
               height="280"
+              {% edit_attrs "tarjeta_servicios_imagen" %}
             />
           </div>
-          <a href="{% url 'servicios' %}">
-            <h5 class="mt-2 mb-3">Servicios</h5>
+          <a href="{{ bloques.tarjeta_servicios_titulo.enlace }}" {% edit_attrs "tarjeta_servicios_titulo" %}>
+            <h5 class="mt-2 mb-3" data-edit-texto>{{ bloques.tarjeta_servicios_titulo.contenido }}</h5>
           </a>
-          <p class="fw-light">
-            Herramientas y bases de datos especializadas para el análisis de
-            datos biológicos.
-          </p>
+          <p class="fw-light" {% edit_attrs "tarjeta_servicios_texto" %}>{{ bloques.tarjeta_servicios_texto.contenido }}</p>
         </div>
       </div>
     </div>
@@ -239,32 +242,22 @@
       class="longcardbox d-flex flex-column flex-md-row align-items-center gap-5 fade-in-up"
     >
       <div class="nosotros">
-        <div class="section-tag mb-3">
+        <div class="section-tag mb-3" {% edit_attrs "nosotros_etiqueta" %}>
           <i class="fa-solid fa-flask me-2" aria-hidden="true"></i>
-          Quiénes somos
+          <span data-edit-texto>{{ bloques.nosotros_etiqueta.contenido }}</span>
         </div>
-        <h2 class="nosotros-title mb-4">Conectando Ciencia e Innovación</h2>
-        <p class="fw-light">
-          En Biología Computacional, fomentamos la intersección entre la
-          biología y la informática. Nuestra plataforma nació para brindar un
-          espacio inclusivo donde profesionales, investigadores y entusiastas
-          pueden reunirse, colaborar y acceder a recursos especializados.
-        </p>
-        <p class="fw-light">
-          Con enfoque en la innovación científica, trabajamos para proporcionar
-          herramientas de vanguardia e investigaciones actualizadas.
-        </p>
-        {% if not user.is_authenticated %}
-        <a href="{% url 'register' %}" class="btn btn-primary-custom mt-3">
-          Únete a la comunidad
+        <h2 class="nosotros-title mb-4" {% edit_attrs "nosotros_titulo" %}>{{ bloques.nosotros_titulo.contenido }}</h2>
+        <p class="fw-light" {% edit_attrs "nosotros_parrafo_1" %}>{{ bloques.nosotros_parrafo_1.contenido }}</p>
+        <p class="fw-light" {% edit_attrs "nosotros_parrafo_2" %}>{{ bloques.nosotros_parrafo_2.contenido }}</p>
+        {% if modo_editor or not user.is_authenticated %}
+        <a href="{{ bloques.nosotros_cta_visitante.enlace }}" class="btn btn-primary-custom mt-3" {% edit_attrs "nosotros_cta_visitante" %} {% vista_attrs "visitante" %}>
+          <span data-edit-texto>{{ bloques.nosotros_cta_visitante.contenido }}</span>
           <i class="fa-solid fa-arrow-right ms-2" aria-hidden="true"></i>
         </a>
-        {% else %}
-        <a
-          href="{% url 'buscarProfesional' %}"
-          class="btn btn-primary-custom mt-3"
-        >
-          Conoce a los profesionales
+        {% endif %}
+        {% if modo_editor or user.is_authenticated %}
+        <a href="{{ bloques.nosotros_cta_sesion.enlace }}" class="btn btn-primary-custom mt-3" {% edit_attrs "nosotros_cta_sesion" %} {% vista_attrs "sesion" %}>
+          <span data-edit-texto>{{ bloques.nosotros_cta_sesion.contenido }}</span>
           <i class="fa-solid fa-arrow-right ms-2" aria-hidden="true"></i>
         </a>
         {% endif %}
@@ -289,22 +282,19 @@
   <div class="container">
     <div class="row align-items-center gy-5">
       <div class="col-12 col-md-6 fade-in-left">
-        <div class="section-tag mb-3">
+        <div class="section-tag mb-3" {% edit_attrs "beneficios_etiqueta" %}>
           <i class="fa-solid fa-star me-2" aria-hidden="true"></i>
-          Por qué elegirnos
+          <span data-edit-texto>{{ bloques.beneficios_etiqueta.contenido }}</span>
         </div>
-        <h2 class="section-title mb-4">Beneficios de Nuestra Plataforma</h2>
+        <h2 class="section-title mb-4" {% edit_attrs "beneficios_titulo" %}>{{ bloques.beneficios_titulo.contenido }}</h2>
 
         <div class="beneficio-card mb-3">
           <div class="beneficio-icon">
             <i class="fa-solid fa-database" aria-hidden="true"></i>
           </div>
           <div>
-            <h6 class="beneficio-title">Acceso centralizado</h6>
-            <p class="beneficio-text">
-              Recursos y herramientas especializadas disponibles en un solo
-              lugar.
-            </p>
+            <h6 class="beneficio-title" {% edit_attrs "beneficio_acceso_titulo" %}>{{ bloques.beneficio_acceso_titulo.contenido }}</h6>
+            <p class="beneficio-text" {% edit_attrs "beneficio_acceso_texto" %}>{{ bloques.beneficio_acceso_texto.contenido }}</p>
           </div>
         </div>
 
@@ -313,11 +303,8 @@
             <i class="fa-solid fa-users" aria-hidden="true"></i>
           </div>
           <div>
-            <h6 class="beneficio-title">Comunidad activa</h6>
-            <p class="beneficio-text">
-              Profesionales y expertos para colaboración y networking
-              científico.
-            </p>
+            <h6 class="beneficio-title" {% edit_attrs "beneficio_comunidad_titulo" %}>{{ bloques.beneficio_comunidad_titulo.contenido }}</h6>
+            <p class="beneficio-text" {% edit_attrs "beneficio_comunidad_texto" %}>{{ bloques.beneficio_comunidad_texto.contenido }}</p>
           </div>
         </div>
 
@@ -326,10 +313,8 @@
             <i class="fa-solid fa-microscope" aria-hidden="true"></i>
           </div>
           <div>
-            <h6 class="beneficio-title">Investigación actualizada</h6>
-            <p class="beneficio-text">
-              Acceso a las últimas investigaciones y desarrollos en el campo.
-            </p>
+            <h6 class="beneficio-title" {% edit_attrs "beneficio_investigacion_titulo" %}>{{ bloques.beneficio_investigacion_titulo.contenido }}</h6>
+            <p class="beneficio-text" {% edit_attrs "beneficio_investigacion_texto" %}>{{ bloques.beneficio_investigacion_texto.contenido }}</p>
           </div>
         </div>
 
@@ -338,10 +323,8 @@
             <i class="fa-solid fa-headset" aria-hidden="true"></i>
           </div>
           <div>
-            <h6 class="beneficio-title">Soporte personalizado</h6>
-            <p class="beneficio-text">
-              Servicios adaptados a las necesidades específicas de cada usuario.
-            </p>
+            <h6 class="beneficio-title" {% edit_attrs "beneficio_soporte_titulo" %}>{{ bloques.beneficio_soporte_titulo.contenido }}</h6>
+            <p class="beneficio-text" {% edit_attrs "beneficio_soporte_texto" %}>{{ bloques.beneficio_soporte_texto.contenido }}</p>
           </div>
         </div>
       </div>
@@ -363,20 +346,17 @@
 <!-- ============================================
      CTA FINAL
      ============================================ -->
-{% if not user.is_authenticated %}
-<section class="cta-section py-5">
+{% if modo_editor or not user.is_authenticated %}
+<section class="cta-section py-5" {% vista_attrs "visitante" %}>
   <div class="container text-center">
-    <h2 class="cta-title mb-3">¿Listo para comenzar?</h2>
-    <p class="cta-subtitle mb-4">
-      Únete a nuestra comunidad de investigadores y accede a todos los recursos
-      del laboratorio.
-    </p>
+    <h2 class="cta-title mb-3" {% edit_attrs "cta_titulo" %}>{{ bloques.cta_titulo.contenido }}</h2>
+    <p class="cta-subtitle mb-4" {% edit_attrs "cta_subtitulo" %}>{{ bloques.cta_subtitulo.contenido }}</p>
     <div class="d-flex gap-3 justify-content-center flex-wrap">
-      <a href="{% url 'register' %}" class="btn cta-btn-primary">
-        Crear cuenta gratuita
+      <a href="{{ bloques.cta_cuenta.enlace }}" class="btn cta-btn-primary" {% edit_attrs "cta_cuenta" %}>
+        <span data-edit-texto>{{ bloques.cta_cuenta.contenido }}</span>
       </a>
-      <a href="{% url 'contactos' %}" class="btn cta-btn-outline">
-        Contactar al equipo
+      <a href="{{ bloques.cta_contacto.enlace }}" class="btn cta-btn-outline" {% edit_attrs "cta_contacto" %}>
+        <span data-edit-texto>{{ bloques.cta_contacto.contenido }}</span>
       </a>
     </div>
   </div>
@@ -386,4 +366,7 @@
   src="https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.mjs"
   type="module"
 ></script>
+{% if modo_editor %}
+<script src="{% static 'paginas/lienzo.js' %}"></script>
+{% endif %}
 {% endblock %}

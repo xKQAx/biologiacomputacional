@@ -1,0 +1,124 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Editar página de inicio{% endblock %}
+{% block bodyclass %}{{ block.super }} editor-portada{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'paginas/editor.css' %}">
+{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<script src="{% static 'paginas/editor.js' %}" defer></script>
+{% endblock %}
+
+{% block nav-sidebar %}{% endblock %}
+{% block content_title %}{% endblock %}
+{% block content_subtitle %}{% endblock %}
+
+{% block content %}
+<form id="form-portada" method="post" action="{% url 'admin:pagina_inicio' %}"{% if pendiente %} data-pendiente="1"{% endif %}>
+  {% csrf_token %}
+  <div class="editor-app">
+    <div class="editor-barra">
+      <div class="editor-barra-texto">
+        <h1>Página de inicio</h1>
+        <p>
+          {% if hay_borrador %}
+            Hay un borrador. La portada pública sigue mostrando lo publicado.
+          {% else %}
+            No hay borrador. El lienzo parte de lo que ve el visitante.
+          {% endif %}
+        </p>
+        <p id="aviso-editor" aria-live="polite"></p>
+      </div>
+      <div class="editor-vistas" role="group" aria-label="Qué versión muestra el lienzo">
+        <button type="button" data-vista-btn="visitante" class="activa" aria-pressed="true">Visitante</button>
+        <button type="button" data-vista-btn="sesion" aria-pressed="false">Con sesión</button>
+      </div>
+      <div class="editor-acciones">
+        <button type="submit" name="accion" value="guardar">Guardar borrador</button>
+        <button type="submit" name="accion" value="publicar" class="principal">Publicar</button>
+        <button type="submit" name="accion" value="descartar" class="peligro">Descartar</button>
+      </div>
+    </div>
+
+    <div class="editor-columnas">
+      <aside class="editor-panel" aria-label="Partes y propiedades">
+        <p class="editor-ayuda">
+          Haz clic en un título, botón o imagen del lienzo. Aquí aparecen sus opciones
+          y el cambio se ve al momento.
+        </p>
+        <h2>Partes</h2>
+        <ul class="editor-partes">
+          {% for grupo in grupos %}
+          <li>
+            <button
+              type="button"
+              data-grupo-btn="{{ grupo.id }}"
+              {% if forloop.first %}class="activa" aria-current="true"{% endif %}
+            >{{ grupo.nombre }}</button>
+          </li>
+          {% endfor %}
+        </ul>
+
+        <h2 id="titulo-propiedades">{{ grupos.0.nombre }}</h2>
+        <div id="propiedades">
+          {% for grupo in grupos %}
+            {% for bloque in grupo.bloques %}
+            <fieldset
+              data-clave="{{ bloque.clave }}"
+              data-grupo="{{ bloque.grupo }}"
+              data-vista="{{ bloque.vista }}"
+              data-etiqueta="{{ bloque.etiqueta }}"
+              {% if bloque.grupo != grupos.0.id %}hidden{% endif %}
+            >
+              <legend>{{ bloque.etiqueta }}</legend>
+              <label for="texto-{{ bloque.clave }}">{{ bloque.etiqueta_texto }}</label>
+              {% if bloque.area %}
+              <textarea
+                id="texto-{{ bloque.clave }}"
+                name="texto__{{ bloque.clave }}"
+                data-campo="texto"
+                rows="4"
+              >{{ bloque.texto }}</textarea>
+              {% else %}
+              <input
+                id="texto-{{ bloque.clave }}"
+                type="text"
+                name="texto__{{ bloque.clave }}"
+                data-campo="texto"
+                value="{{ bloque.texto }}"
+              >
+              {% endif %}
+              {% if bloque.tipo != "texto" %}
+              <label for="enlace-{{ bloque.clave }}">{{ bloque.etiqueta_enlace }}</label>
+              <input
+                id="enlace-{{ bloque.clave }}"
+                type="text"
+                name="enlace__{{ bloque.clave }}"
+                data-campo="enlace"
+                value="{{ bloque.enlace }}"
+                spellcheck="false"
+                autocomplete="off"
+              >
+              {% endif %}
+            </fieldset>
+            {% endfor %}
+          {% endfor %}
+        </div>
+      </aside>
+
+      <div class="editor-lienzo">
+        <iframe
+          id="lienzo-inicio"
+          title="Lienzo de la página de inicio"
+          src="{{ lienzo_url }}"
+        ></iframe>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}

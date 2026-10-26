@@ -1,11 +1,11 @@
 from django.shortcuts import render, HttpResponse
 from django.views.generic import TemplateView
 
+from paginas.contenido import contexto_publico
 
 
 def inicio(request):
-
-    return render(request, "inicio.html")
+    return render(request, "inicio.html", contexto_publico())
 
 def mi_vista_404(request, exception):
     return render(request, '404.html', status=404)
