@@ -1,4 +1,4 @@
-"""Cuelga el editor de inicio del admin, sin registrar el modelo como formulario suelto."""
+"""Cuelga el editor de páginas del admin, sin registrar el modelo como formulario suelto."""
 
 from django.contrib import admin
 
@@ -12,9 +12,10 @@ def registrar_rutas():
     def get_urls():
         from django.urls import path
 
-        from paginas.editor import editor_inicio, lienzo_inicio
+        from paginas.editor import editor_inicio, editor_pagina, lienzo_inicio, lienzo_pagina
 
         # Antes que el resto: son rutas propias, no un modelo del admin.
+        # Inicio va primero para conservar sus nombres. El resto usa el mismo editor.
         extra = [
             path(
                 'pagina/inicio/lienzo/',
@@ -25,6 +26,16 @@ def registrar_rutas():
                 'pagina/inicio/',
                 admin.site.admin_view(editor_inicio),
                 name='pagina_inicio',
+            ),
+            path(
+                'pagina/<slug:pagina>/lienzo/',
+                admin.site.admin_view(lienzo_pagina),
+                name='pagina_lienzo',
+            ),
+            path(
+                'pagina/<slug:pagina>/',
+                admin.site.admin_view(editor_pagina),
+                name='pagina_editor',
             ),
         ]
         return extra + original()

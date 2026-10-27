@@ -24,6 +24,12 @@ from django.core.exceptions import ValidationError
 from django.http import request
 from django.db import transaction
 from django.urls import reverse
+from paginas.contenido import contexto_publico
+
+
+def contexto_pagina(request=None):
+    """Fichas del modelo. El editor de la página no las convierte en bloques."""
+    return {'profesionales': InformacionProfesional.objects.all()}
 
 
 class busquedaInformacion(TemplateView):
@@ -32,7 +38,7 @@ class busquedaInformacion(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['profesionales'] = InformacionProfesional.objects.all()
+        context.update(contexto_publico('profesionales', self.request))
         return context
 
 

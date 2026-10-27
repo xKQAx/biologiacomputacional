@@ -6,6 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{% block title %}Inicio{% endblock %} · Biología Computacional</title>
     {% block extra_head %}{% endblock %}
+    {% if modo_editor %}
+    <script>document.documentElement.dataset.vista = "visitante";</script>
+    <style>
+      html[data-vista="visitante"] [data-vista="sesion"],
+      html[data-vista="sesion"] [data-vista="visitante"] { display: none !important; }
+    </style>
+    {% endif %}
 
     <!-- Favicon -->
     <link
@@ -61,6 +68,9 @@
 
     <!-- CSS específico por página -->
     {% block extra_css %}{% endblock %}
+    {% if modo_editor %}
+    <link rel="stylesheet" href="{% static 'paginas/lienzo.css' %}" />
+    {% endif %}
   </head>
 
   <body>
@@ -117,5 +127,8 @@
 
     <!-- JS específico por página -->
     {% block extra_js %}{% endblock %}
+    {% if modo_editor %}
+    <script src="{% static 'paginas/lienzo.js' %}"></script>
+    {% endif %}
   </body>
 </html>

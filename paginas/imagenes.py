@@ -53,13 +53,15 @@ def almacenar(archivo):
     return default_storage.url(ruta)
 
 
-def enlaces_subidos(estado):
-    """Direcciones de fotos subidas en ese estado. Las de fábrica no entran."""
+def enlaces_subidos(estado, pagina):
+    """Direcciones de fotos subidas en ese estado de una página. Las de fábrica no entran."""
     from paginas.models import BloquePortada
 
     return [
         enlace
-        for enlace in BloquePortada.objects.filter(estado=estado).values_list('enlace', flat=True)
+        for enlace in BloquePortada.objects.filter(
+            pagina=pagina, estado=estado,
+        ).values_list('enlace', flat=True)
         if _ruta_propia(enlace) is not None
     ]
 

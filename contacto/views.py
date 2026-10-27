@@ -3,8 +3,15 @@ from BiologiaComputacional.mail import send_project_mail
 from django.conf import settings
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from paginas.contenido import contexto_publico
 
 # Create your views here.
+
+
+def _pintar(request, formulario):
+    contexto = contexto_publico('contacto', request)
+    contexto['form'] = formulario
+    return render(request, "contacto/contacto.html", contexto)
 
 
 def contacto(request):
@@ -24,11 +31,10 @@ def contacto(request):
                     request,
                     'No se pudo enviar el mensaje: el correo no está configurado o el servidor lo rechazó. Inténtalo más tarde.',
                 )
-                return render(request, "contacto/contacto.html", {"form": formulario})
+                return _pintar(request, formulario)
             messages.success(request, 'Formulario enviado correctamente')
             return redirect('inicio')
         else:
             messages.error(request, 'Hubo un error en el formulario. Por favor, revisa los campos e inténtalo de nuevo.')
-    else:
-        formulario = FormularioContacto()
-    return render(request, "contacto/contacto.html", {"form": formulario})
+            return _pintar(request, formulario)
+    return _pintar(request, FormularioContacto())

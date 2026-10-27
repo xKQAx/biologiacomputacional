@@ -2,7 +2,7 @@
 (function () {
   var ORIGEN = window.location.origin;
   var form = document.getElementById("form-portada");
-  var marco = document.getElementById("lienzo-inicio");
+  var marco = document.getElementById("lienzo");
   var aviso = document.getElementById("aviso-editor");
   var titulo = document.getElementById("titulo-propiedades");
   if (!form || !marco) return;
@@ -322,11 +322,10 @@
   function documentoListo() {
     try {
       var doc = marco.contentDocument;
-      return !!(
-        doc &&
-        doc.readyState === "complete" &&
-        doc.URL.indexOf("/admin/pagina/inicio/lienzo/") !== -1
-      );
+      if (!doc || doc.readyState !== "complete") return false;
+      var actual = new URL(doc.URL, window.location.href);
+      var esperado = new URL(marco.getAttribute("src"), window.location.href);
+      return actual.pathname === esperado.pathname;
     } catch (error) {
       return false;
     }

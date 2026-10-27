@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static paginas %}
 
 {% block title %}Contacto{% endblock %}
 
@@ -9,16 +9,13 @@
 <section class="page-hero-sm">
   <div class="container">
     <div class="mb-3">
-      <span class="hero-badge">
+      <span class="hero-badge" {% edit_attrs "cto_etiqueta" %}>
         <i class="fa-solid fa-paper-plane me-2" aria-hidden="true"></i>
-        Contáctanos
+        <span data-edit-texto>{{ bloques.cto_etiqueta.contenido }}</span>
       </span>
     </div>
-    <h1 class="page-hero-title">¿Cómo podemos ayudarte?</h1>
-    <p class="page-hero-subtitle">
-      ¿Tienes alguna pregunta, comentario o sugerencia?
-      Estamos siempre disponibles y listos para atenderte.
-    </p>
+    <h1 class="page-hero-title" {% edit_attrs "cto_titulo" %}>{{ bloques.cto_titulo.contenido }}</h1>
+    <p class="page-hero-subtitle" {% edit_attrs "cto_subtitulo" %}>{{ bloques.cto_subtitulo.contenido }}</p>
   </div>
 </section>
 
@@ -28,9 +25,9 @@
     <!-- Información de contacto -->
     <div class="col-12 col-md-4">
       <div class="contact-info-card h-100">
-        <div class="section-tag mb-4">
+        <div class="section-tag mb-4" {% edit_attrs "cto_info_titulo" %}>
           <i class="fa-solid fa-circle-info me-2" aria-hidden="true"></i>
-          Información de contacto
+          <span data-edit-texto>{{ bloques.cto_info_titulo.contenido }}</span>
         </div>
 
         <div class="contact-info-item">
@@ -38,8 +35,8 @@
             <i class="fa-solid fa-phone" aria-hidden="true"></i>
           </div>
           <div>
-            <p class="contact-info-label">Teléfono</p>
-            <p class="contact-info-value">PBX: +57 607 6516500</p>
+            <p class="contact-info-label" {% edit_attrs "cto_tel_etiqueta" %}>{{ bloques.cto_tel_etiqueta.contenido }}</p>
+            <p class="contact-info-value" {% edit_attrs "cto_tel" %}>{{ bloques.cto_tel.contenido }}</p>
           </div>
         </div>
 
@@ -48,8 +45,8 @@
             <i class="fa-solid fa-envelope" aria-hidden="true"></i>
           </div>
           <div>
-            <p class="contact-info-label">Correo electrónico</p>
-            <p class="contact-info-value">biocomp@udes.edu.co</p>
+            <p class="contact-info-label" {% edit_attrs "cto_correo_etiqueta" %}>{{ bloques.cto_correo_etiqueta.contenido }}</p>
+            <p class="contact-info-value" {% edit_attrs "cto_correo" %}>{{ bloques.cto_correo.contenido }}</p>
           </div>
         </div>
 
@@ -58,12 +55,8 @@
             <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
           </div>
           <div>
-            <p class="contact-info-label">Ubicación</p>
-            <p class="contact-info-value">
-              Campus Lagos del Cacique<br>
-              Calle 70 No. 55-210<br>
-              Bucaramanga, Colombia
-            </p>
+            <p class="contact-info-label" {% edit_attrs "cto_lugar_etiqueta" %}>{{ bloques.cto_lugar_etiqueta.contenido }}</p>
+            <p class="contact-info-value" {% edit_attrs "cto_lugar" %}>{{ bloques.cto_lugar.contenido }}</p>
           </div>
         </div>
       </div>
@@ -72,7 +65,7 @@
     <!-- Formulario -->
     <div class="col-12 col-md-7 col-lg-6">
       <div class="contact-form-card">
-        <h5 class="fw-bold mb-4">Envíanos un mensaje</h5>
+        <h5 class="fw-bold mb-4" {% edit_attrs "cto_form_titulo" %}>{{ bloques.cto_form_titulo.contenido }}</h5>
 
         <form class="needs-validation" novalidate method="POST">
           {% csrf_token %}
@@ -83,8 +76,8 @@
                 <input type="text" class="form-control" name="nombres"
                   id="validationCustomName" placeholder="" required
                   autocomplete="given-name">
-                <label for="validationCustomName">Nombres</label>
-                <div class="invalid-feedback">Este campo es obligatorio.</div>
+                <label for="validationCustomName" {% edit_attrs "cto_nombres" %}>{{ bloques.cto_nombres.contenido }}</label>
+                <div class="invalid-feedback" {% edit_attrs "cto_obligatorio" %}>{{ bloques.cto_obligatorio.contenido }}</div>
               </div>
             </div>
             <div class="col-md">
@@ -92,8 +85,8 @@
                 <input type="text" class="form-control" name="apellidos"
                   id="validationCustomLast_name" placeholder="" required
                   autocomplete="family-name">
-                <label for="validationCustomLast_name">Apellidos</label>
-                <div class="invalid-feedback">Este campo es obligatorio.</div>
+                <label for="validationCustomLast_name" {% edit_attrs "cto_apellidos" %}>{{ bloques.cto_apellidos.contenido }}</label>
+                <div class="invalid-feedback" {% edit_attrs "cto_obligatorio" %}>{{ bloques.cto_obligatorio.contenido }}</div>
               </div>
             </div>
           </div>
@@ -102,29 +95,29 @@
             <input type="email" class="form-control" name="email"
               id="validationCustomEmail" placeholder="" required
               autocomplete="email">
-            <label for="validationCustomEmail">Correo electrónico</label>
-            <div class="invalid-feedback">Este campo es obligatorio.</div>
+            <label for="validationCustomEmail" {% edit_attrs "cto_email" %}>{{ bloques.cto_email.contenido }}</label>
+            <div class="invalid-feedback" {% edit_attrs "cto_obligatorio" %}>{{ bloques.cto_obligatorio.contenido }}</div>
           </div>
 
           <div class="form-floating has-validation mb-2">
             <input type="tel" class="form-control" name="telefono"
               id="validationCustomPhone" placeholder="" required
               autocomplete="tel">
-            <label for="validationCustomPhone">Teléfono</label>
-            <div class="invalid-feedback">Este campo es obligatorio.</div>
+            <label for="validationCustomPhone" {% edit_attrs "cto_telefono" %}>{{ bloques.cto_telefono.contenido }}</label>
+            <div class="invalid-feedback" {% edit_attrs "cto_obligatorio" %}>{{ bloques.cto_obligatorio.contenido }}</div>
           </div>
 
           <div class="form-floating has-validation mb-4">
             <textarea class="form-control" placeholder="" name="opiniones"
               id="validationCustomOpinions" required
               style="height: 130px;"></textarea>
-            <label for="validationCustomOpinions">Mensaje</label>
-            <div class="invalid-feedback">Este campo es obligatorio.</div>
+            <label for="validationCustomOpinions" {% edit_attrs "cto_mensaje" %}>{{ bloques.cto_mensaje.contenido }}</label>
+            <div class="invalid-feedback" {% edit_attrs "cto_obligatorio" %}>{{ bloques.cto_obligatorio.contenido }}</div>
           </div>
 
-          <button class="btn btn-primary-custom w-100" type="submit">
+          <button class="btn btn-primary-custom w-100" type="submit" {% edit_attrs "cto_enviar" %}>
             <i class="fa-solid fa-paper-plane me-2" aria-hidden="true"></i>
-            Enviar mensaje
+            <span data-edit-texto>{{ bloques.cto_enviar.contenido }}</span>
           </button>
         </form>
       </div>

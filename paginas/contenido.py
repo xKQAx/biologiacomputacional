@@ -1,18 +1,17 @@
-"""Resuelve y guarda los bloques de la portada.
+"""Resuelve y guarda los bloques de una página pública.
 
 Lo publicado es lo que ve el visitante. El borrador solo lo ve el lienzo
-del editor. Publicar copia el borrador encima de lo publicado.
+del editor de esa página. Publicar copia el borrador encima de lo publicado
+y no toca el borrador de las demás.
 """
+
+import re
 
 from django.db import transaction
 from django.template.defaultfilters import linebreaksbr
 
 from paginas.catalogo import (
-    CATALOGO,
-    GRUPOS,
     IMAGEN,
-    PLANTILLA_SECCION,
-    SECCIONES,
     TEXTO,
     enlace_predeterminado,
     html_subtitulo_visitante,
@@ -26,30 +25,25 @@ from paginas.imagenes import (
     validar_subida,
 )
 from paginas.models import BloquePortada
+from paginas.registro import INICIO, INDICES
 
 MAX_TEXTO = 4000
 MAX_ALT = 200
 MAX_ENLACE = 500
 _ESQUEMAS = ('javascript:', 'data:', 'vbscript:')
+_ANCLA = re.compile(r'^#[A-Za-z][A-Za-z0-9_-]*$')
 # Cada sección ocupa un millar. El resto del número conserva el campo dentro de ella.
 _PASO_SECCION = 1000
-_SECCIONES = frozenset(SECCIONES)
-_CLAVES_POR_GRUPO = {}
-_INDICE_EN_GRUPO = {}
-for _definicion in CATALOGO:
-    _lista = _CLAVES_POR_GRUPO.setdefault(_definicion.grupo, [])
-    _INDICE_EN_GRUPO[_definicion.clave] = len(_lista)
-    _lista.append(_definicion.clave)
 
 
 class BloqueVista:
     """Bloque listo para la plantilla: texto publicado, borrador o el de fábrica."""
 
-    def __init__(self, definicion, texto, enlace):
+    def __init__(self, definicion, texto, enlace, nombres):
         self.clave = definicion.clave
         self.grupo = definicion.grupo
         self.etiqueta = definicion.etiqueta
-        self.nombre = nombre_legible(definicion)
+        self.nombre = nombre_legible(definicion, nombres)
         self.tipo = definicion.tipo
         self.vista = definicion.vista
         self.area = definicion.area
@@ -94,79 +88,122 @@ class MapaBloques:
         return iter(self._mapa.values())
 
 
-def _filas(preferir_borrador):
+def fusionar(base, extra):
+    """Junta dos mapas. Las claves de `extra` pisan a las de `base`."""
+    mapa = dict(base._mapa)
+    mapa.update(extra._mapa)
+    return MapaBloques(mapa)
+
+
+def _indice(pagina):
+    return INDICES[pagina]
+
+
+def _filas(preferir_borrador, pagina):
     estados = [BloquePortada.Estado.PUBLICADO]
     if preferir_borrador:
         estados.append(BloquePortada.Estado.BORRADOR)
     publicados = {}
     borradores = {}
-    for fila in BloquePortada.objects.filter(estado__in=estados):
+    filas = BloquePortada.objects.filter(pagina=pagina, estado__in=estados)
+    for fila in filas:
         destino = borradores if fila.estado == BloquePortada.Estado.BORRADOR else publicados
         destino[fila.clave] = fila
     return publicados, borradores
 
 
-def resolver(preferir_borrador=False):
+def resolver(preferir_borrador=False, pagina=INICIO):
     """Arma cada bloque. El borrador tapa a lo publicado, y eso al texto de fábrica."""
-    publicados, borradores = _filas(preferir_borrador)
-    return _mapa_desde(publicados, borradores if preferir_borrador else {})
+    indice = _indice(pagina)
+    publicados, borradores = _filas(preferir_borrador, pagina)
+    return _mapa_desde(indice, publicados, borradores if preferir_borrador else {})
 
 
-def resolver_orden(preferir_borrador=False):
+def resolver_orden(preferir_borrador=False, pagina=INICIO):
     """Orden de las secciones de contenido. Sin filas, el de la plantilla."""
-    publicados, borradores = _filas(preferir_borrador)
+    indice = _indice(pagina)
+    if not indice.secciones:
+        return ()
+    publicados, borradores = _filas(preferir_borrador, pagina)
     if preferir_borrador and borradores:
-        return _ordenar(borradores, publicados)
-    return _ordenar(publicados, {})
+        return _ordenar(indice, borradores, publicados)
+    return _ordenar(indice, publicados, {})
 
 
-def secciones_en_orden(preferir_borrador=False):
-    return [PLANTILLA_SECCION[grupo] for grupo in resolver_orden(preferir_borrador)]
+def secciones_en_orden(preferir_borrador=False, pagina=INICIO):
+    indice = _indice(pagina)
+    if not indice.secciones:
+        return []
+    return [indice.plantillas[grupo] for grupo in resolver_orden(preferir_borrador, pagina)]
 
 
-def contexto_publico():
-    return {
-        'bloques': resolver(preferir_borrador=False),
-        'secciones': secciones_en_orden(preferir_borrador=False),
+def _bloques_para(pagina, preferir_borrador):
+    """La portada trae barra y pie. El resto suma esos publicados a su propio contenido."""
+    propios = resolver(preferir_borrador=preferir_borrador, pagina=pagina)
+    if pagina == INICIO:
+        return propios
+    return fusionar(resolver(preferir_borrador=False, pagina=INICIO), propios)
+
+
+def contexto_publico(pagina=INICIO, request=None):
+    indice = _indice(pagina)
+    contexto = {
+        'bloques': _bloques_para(pagina, preferir_borrador=False),
+        'secciones': secciones_en_orden(preferir_borrador=False, pagina=pagina),
         'modo_editor': False,
     }
+    if indice.datos is not None:
+        contexto.update(indice.datos(request))
+    return contexto
 
 
-def contexto_lienzo():
-    return {
-        'bloques': resolver(preferir_borrador=True),
-        'secciones': secciones_en_orden(preferir_borrador=True),
+def contexto_lienzo(pagina=INICIO, request=None):
+    indice = _indice(pagina)
+    contexto = {
+        'bloques': _bloques_para(pagina, preferir_borrador=True),
+        'secciones': secciones_en_orden(preferir_borrador=True, pagina=pagina),
         'modo_editor': True,
+        'catalogo_lienzo': indice.por_clave,
     }
+    if indice.datos is not None:
+        contexto.update(indice.datos(request))
+    return contexto
 
 
-def grupos_editor(valores=None, orden=None, errores_campo=None):
-    """Partes de la portada. Con valores, el formulario muestra lo recién enviado.
+def grupos_editor(valores=None, orden=None, errores_campo=None, pagina=INICIO):
+    """Partes de la página. Con valores, el formulario muestra lo recién enviado.
 
-    La barra va primero y el pie al final. En medio, las secciones en `orden`.
+    En la portada, la barra va primero y el pie al final. En medio, las secciones
+    en `orden`. Las demás páginas no reordenan: listan sus partes fijas.
     """
+    indice = _indice(pagina)
     if valores is None:
-        mapa = resolver(preferir_borrador=True)
+        mapa = resolver(preferir_borrador=True, pagina=pagina)
     else:
         mapa = MapaBloques({
             definicion.clave: BloqueVista(
                 definicion,
                 valores[definicion.clave][0],
                 valores[definicion.clave][1],
+                indice.nombres,
             )
-            for definicion in CATALOGO
+            for definicion in indice.catalogo
         })
     if orden is None:
-        orden = resolver_orden(preferir_borrador=True)
+        orden = resolver_orden(preferir_borrador=True, pagina=pagina)
     por_id = {}
-    for grupo_id, nombre in GRUPOS:
+    for grupo_id, nombre in indice.grupos:
         por_id[grupo_id] = {
             'id': grupo_id,
             'nombre': nombre,
-            'bloques': [getattr(mapa, clave) for clave in _CLAVES_POR_GRUPO.get(grupo_id, ())],
-            'ordenable': grupo_id in _SECCIONES,
+            'bloques': [getattr(mapa, clave) for clave in indice.claves_por_grupo.get(grupo_id, ())],
+            'ordenable': grupo_id in indice.secciones_set,
         }
-    grupos = [por_id['barra'], *[por_id[grupo_id] for grupo_id in orden], por_id['pie']]
+    if indice.secciones:
+        grupos = [por_id['barra'], *[por_id[grupo_id] for grupo_id in orden], por_id['pie']]
+    else:
+        grupos = [por_id[grupo_id] for grupo_id, _nombre in indice.grupos]
+    _marcar_zonas(grupos)
     errores_campo = errores_campo or {}
     for grupo in grupos:
         for bloque in grupo['bloques']:
@@ -174,8 +211,10 @@ def grupos_editor(valores=None, orden=None, errores_campo=None):
     return grupos
 
 
-def hay_borrador():
-    return BloquePortada.objects.filter(estado=BloquePortada.Estado.BORRADOR).exists()
+def hay_borrador(pagina=INICIO):
+    return BloquePortada.objects.filter(
+        pagina=pagina, estado=BloquePortada.Estado.BORRADOR,
+    ).exists()
 
 
 class FormularioPortada:
@@ -189,7 +228,7 @@ class FormularioPortada:
         self.imagenes = imagenes
 
 
-def leer_valores(post, archivos=None):
+def leer_valores(post, archivos=None, pagina=INICIO):
     """Arma el formulario y avisa si un valor no se puede guardar.
 
     Si falta una clave, se conserva lo que ya muestra el editor. Un enlace
@@ -197,17 +236,18 @@ def leer_valores(post, archivos=None):
     o una imagen que no sirve no se recortan ni se guardan: se devuelven
     para mostrarlos otra vez. Sin archivo nuevo, la imagen actual sigue.
     """
-    base = resolver(preferir_borrador=True)
+    indice = _indice(pagina)
+    base = resolver(preferir_borrador=True, pagina=pagina)
     valores = {}
     errores = []
     por_campo = {}
     imagenes = {}
-    orden, error_orden = _leer_orden(post)
+    orden, error_orden = _leer_orden(post, indice)
     if error_orden:
         _anotar(errores, por_campo, 'orden', '', error_orden)
-    for definicion in CATALOGO:
+    for definicion in indice.catalogo:
         actual = getattr(base, definicion.clave)
-        nombre = nombre_legible(definicion)
+        nombre = nombre_legible(definicion, indice.nombres)
         clave_texto = f'texto__{definicion.clave}'
         if clave_texto in post:
             texto = _normalizar_texto(post.get(clave_texto))
@@ -257,12 +297,13 @@ def leer_valores(post, archivos=None):
     return FormularioPortada(valores, orden, errores, por_campo, imagenes)
 
 
-def estado_guardado():
+def estado_guardado(pagina=INICIO):
     """Texto, enlaces y orden tal como quedaron la última vez que se guardó."""
-    mapa = resolver(preferir_borrador=True)
+    indice = _indice(pagina)
+    mapa = resolver(preferir_borrador=True, pagina=pagina)
     textos = {}
     enlaces = {}
-    for definicion in CATALOGO:
+    for definicion in indice.catalogo:
         bloque = getattr(mapa, definicion.clave)
         textos[definicion.clave] = bloque.texto
         if definicion.tipo != TEXTO:
@@ -270,41 +311,46 @@ def estado_guardado():
     return {
         'textos': textos,
         'enlaces': enlaces,
-        'orden': ','.join(resolver_orden(preferir_borrador=True)),
+        'orden': ','.join(resolver_orden(preferir_borrador=True, pagina=pagina)),
     }
 
 
-def primer_grupo_con_error(por_campo):
+def primer_grupo_con_error(por_campo, pagina=INICIO):
     """Grupo del primer campo rechazado, para abrirlo al volver a pintar."""
     if not por_campo:
         return None
-    for definicion in CATALOGO:
+    indice = _indice(pagina)
+    for definicion in indice.catalogo:
         if por_campo.get(definicion.clave):
             return definicion.grupo
     return None
 
 
-def guardar_borrador(valores, orden, imagenes=None):
+def guardar_borrador(valores, orden, imagenes=None, pagina=INICIO):
     """Persiste el borrador, incluido el orden y las fotos nuevas. No toca lo publicado."""
-    anteriores = enlaces_subidos(BloquePortada.Estado.BORRADOR)
-    _escribir(_con_imagenes(valores, imagenes), BloquePortada.Estado.BORRADOR, orden)
+    anteriores = enlaces_subidos(BloquePortada.Estado.BORRADOR, pagina)
+    _escribir(_con_imagenes(valores, imagenes), BloquePortada.Estado.BORRADOR, orden, pagina)
     olvidar(anteriores)
 
 
-def publicar(valores, orden, imagenes=None):
-    """Copia el contenido del editor a lo que ve el visitante y borra el borrador."""
-    anteriores = enlaces_subidos(BloquePortada.Estado.BORRADOR)
-    anteriores.extend(enlaces_subidos(BloquePortada.Estado.PUBLICADO))
+def publicar(valores, orden, imagenes=None, pagina=INICIO):
+    """Copia el contenido del editor a lo que ve el visitante y borra el borrador de esta página."""
+    anteriores = enlaces_subidos(BloquePortada.Estado.BORRADOR, pagina)
+    anteriores.extend(enlaces_subidos(BloquePortada.Estado.PUBLICADO, pagina))
     with transaction.atomic():
-        _escribir(_con_imagenes(valores, imagenes), BloquePortada.Estado.PUBLICADO, orden)
-        BloquePortada.objects.filter(estado=BloquePortada.Estado.BORRADOR).delete()
+        _escribir(_con_imagenes(valores, imagenes), BloquePortada.Estado.PUBLICADO, orden, pagina)
+        BloquePortada.objects.filter(
+            pagina=pagina, estado=BloquePortada.Estado.BORRADOR,
+        ).delete()
     olvidar(anteriores)
 
 
-def descartar_borrador():
-    """Borra el borrador. Lo publicado, fotos incluidas, queda igual."""
-    anteriores = enlaces_subidos(BloquePortada.Estado.BORRADOR)
-    BloquePortada.objects.filter(estado=BloquePortada.Estado.BORRADOR).delete()
+def descartar_borrador(pagina=INICIO):
+    """Borra el borrador de esta página. Lo publicado, fotos incluidas, queda igual."""
+    anteriores = enlaces_subidos(BloquePortada.Estado.BORRADOR, pagina)
+    BloquePortada.objects.filter(
+        pagina=pagina, estado=BloquePortada.Estado.BORRADOR,
+    ).delete()
     olvidar(anteriores)
 
 
@@ -328,18 +374,20 @@ def _anotar(errores, por_campo, clave, campo, mensaje):
     por_campo[clave][campo] = mensaje
 
 
-def _escribir(valores, estado, orden):
-    posicion = {grupo_id: indice for indice, grupo_id in enumerate(orden)}
+def _escribir(valores, estado, orden, pagina):
+    indice = _indice(pagina)
+    posicion = {grupo_id: i for i, grupo_id in enumerate(orden)}
     with transaction.atomic():
-        for definicion in CATALOGO:
+        for definicion in indice.catalogo:
             texto, enlace = valores[definicion.clave]
             BloquePortada.objects.update_or_create(
+                pagina=pagina,
                 clave=definicion.clave,
                 estado=estado,
                 defaults={
                     'texto': texto,
                     'enlace': enlace,
-                    'orden': _orden_fila(definicion, posicion),
+                    'orden': _orden_fila(definicion, posicion, indice),
                 },
             )
 
@@ -365,8 +413,8 @@ def _interpretar_enlace(valor, respaldo, predeterminado, etiqueta):
         return predeterminado, None
     if not _es_enlace_seguro(candidato):
         return candidato, (
-            f'El enlace de «{etiqueta}» debe ser una ruta que empiece por / '
-            'o una dirección http(s).'
+            f'El enlace de «{etiqueta}» debe ser una ruta que empiece por /, '
+            'una dirección http(s) o un ancla de la misma página.'
         )
     if len(candidato) > MAX_ENLACE:
         return candidato, (
@@ -375,9 +423,9 @@ def _interpretar_enlace(valor, respaldo, predeterminado, etiqueta):
     return candidato, None
 
 
-def _mapa_desde(publicados, borradores):
+def _mapa_desde(indice, publicados, borradores):
     mapa = {}
-    for definicion in CATALOGO:
+    for definicion in indice.catalogo:
         fuente = borradores.get(definicion.clave) or publicados.get(definicion.clave)
         if fuente is None:
             texto = definicion.texto
@@ -385,52 +433,58 @@ def _mapa_desde(publicados, borradores):
         else:
             texto = fuente.texto
             enlace = _enlace_de_fila(definicion, fuente.enlace)
-        mapa[definicion.clave] = BloqueVista(definicion, texto, enlace)
+        mapa[definicion.clave] = BloqueVista(definicion, texto, enlace, indice.nombres)
     return MapaBloques(mapa)
 
 
-def _ordenar(primarias, secundarias):
-    if not _hay_seccion(primarias) and not _hay_seccion(secundarias):
-        return SECCIONES
+def _ordenar(indice, primarias, secundarias):
+    if not _hay_seccion(indice, primarias) and not _hay_seccion(indice, secundarias):
+        return indice.secciones
 
     def clave(grupo_id):
-        if _tiene_grupo(grupo_id, primarias):
-            return _min_orden(grupo_id, primarias)
-        if _tiene_grupo(grupo_id, secundarias):
-            return _min_orden(grupo_id, secundarias)
-        return _orden_catalogo(grupo_id)
+        if _tiene_grupo(indice, grupo_id, primarias):
+            return _min_orden(indice, grupo_id, primarias)
+        if _tiene_grupo(indice, grupo_id, secundarias):
+            return _min_orden(indice, grupo_id, secundarias)
+        return _orden_catalogo(indice, grupo_id)
 
-    return tuple(sorted(SECCIONES, key=clave))
-
-
-def _hay_seccion(filas):
-    return any(_tiene_grupo(grupo_id, filas) for grupo_id in SECCIONES)
+    return tuple(sorted(indice.secciones, key=clave))
 
 
-def _tiene_grupo(grupo_id, filas):
-    return any(clave in filas for clave in _CLAVES_POR_GRUPO.get(grupo_id, ()))
+def _hay_seccion(indice, filas):
+    return any(_tiene_grupo(indice, grupo_id, filas) for grupo_id in indice.secciones)
 
 
-def _min_orden(grupo_id, filas):
-    return min(filas[clave].orden for clave in _CLAVES_POR_GRUPO[grupo_id] if clave in filas)
+def _tiene_grupo(indice, grupo_id, filas):
+    return any(clave in filas for clave in indice.claves_por_grupo.get(grupo_id, ()))
 
 
-def _orden_catalogo(grupo_id):
-    for definicion in CATALOGO:
+def _min_orden(indice, grupo_id, filas):
+    return min(
+        filas[clave].orden
+        for clave in indice.claves_por_grupo[grupo_id]
+        if clave in filas
+    )
+
+
+def _orden_catalogo(indice, grupo_id):
+    for definicion in indice.catalogo:
         if definicion.grupo == grupo_id:
             return definicion.orden
     return 0
 
 
-def _orden_fila(definicion, posicion):
+def _orden_fila(definicion, posicion, indice):
     if definicion.grupo not in posicion:
         return definicion.orden
-    return (posicion[definicion.grupo] + 1) * _PASO_SECCION + _INDICE_EN_GRUPO[definicion.clave]
+    return (posicion[definicion.grupo] + 1) * _PASO_SECCION + indice.indice_en_grupo[definicion.clave]
 
 
-def _leer_orden(post):
+def _leer_orden(post, indice):
     """Permite solo una permutación de las secciones de contenido."""
-    respaldo = list(resolver_orden(preferir_borrador=True))
+    if not indice.secciones:
+        return [], None
+    respaldo = list(resolver_orden(preferir_borrador=True, pagina=indice.slug))
     if 'orden_secciones' not in post:
         return respaldo, None
     partes = [
@@ -438,7 +492,7 @@ def _leer_orden(post):
         for parte in str(post.get('orden_secciones') or '').split(',')
         if parte.strip()
     ]
-    if len(partes) != len(SECCIONES) or set(partes) != set(SECCIONES):
+    if len(partes) != len(indice.secciones) or set(partes) != set(indice.secciones):
         return respaldo, (
             'El orden de las secciones no es válido. '
             'Solo se pueden reordenar las secciones del contenido.'
@@ -446,11 +500,29 @@ def _leer_orden(post):
     return partes, None
 
 
+def _marcar_zonas(grupos):
+    """Separa la barra, las secciones con flechas y el pie. Sin secciones, una sola lista."""
+    indices = [i for i, grupo in enumerate(grupos) if grupo['ordenable']]
+    if not indices:
+        for grupo in grupos:
+            grupo['zona'] = 'lista'
+        return
+    primero = indices[0]
+    for i, grupo in enumerate(grupos):
+        if grupo['ordenable']:
+            grupo['zona'] = 'seccion'
+        elif i < primero:
+            grupo['zona'] = 'antes'
+        else:
+            grupo['zona'] = 'despues'
+
+
 def _es_enlace_seguro(enlace):
     if not enlace or any(caracter.isspace() for caracter in enlace):
         return False
     # Los iconos de redes y dos enlaces legales salen de fábrica con «#».
-    if enlace == '#':
+    # «#seccion1» es un ancla de la misma página.
+    if enlace == '#' or _ANCLA.fullmatch(enlace):
         return True
     # «//sitio» es una URL de otro dominio, no una ruta del sitio.
     if enlace.startswith('//'):

@@ -1,7 +1,7 @@
 {% extends "admin/base_site.html" %}
 {% load static %}
 
-{% block title %}Editar página de inicio{% endblock %}
+{% block title %}{{ title }}{% endblock %}
 {% block bodyclass %}{{ block.super }} editor-portada{% endblock %}
 
 {% block extrastyle %}
@@ -25,7 +25,7 @@
   id="form-portada"
   method="post"
   enctype="multipart/form-data"
-  action="{% url 'admin:pagina_inicio' %}"
+  action="{{ editor_url }}"
   data-max-imagen="{{ max_imagen }}"
   {% if pendiente %}data-pendiente="1"{% endif %}
 >
@@ -33,19 +33,21 @@
   <div class="editor-app">
     <div class="editor-barra">
       <div class="editor-barra-texto">
-        <h1>Página de inicio</h1>
+        <h1>{{ nombre }}</h1>
         <p>
           {% if hay_borrador %}
-            Hay un borrador. La portada pública sigue mostrando lo publicado.
+            {{ estado_borrador }}
           {% else %}
-            No hay borrador. El lienzo parte de lo que ve el visitante.
+            {{ estado_limpio }}
           {% endif %}
         </p>
       </div>
+      {% if hay_vistas %}
       <div class="editor-vistas" role="group" aria-label="Qué versión muestra el lienzo">
         <button type="button" data-vista-btn="visitante" class="activa" aria-pressed="true">Visitante</button>
         <button type="button" data-vista-btn="sesion" aria-pressed="false">Con sesión</button>
       </div>
+      {% endif %}
       <div class="editor-acciones">
         <button type="submit" name="accion" value="guardar">Guardar borrador</button>
         <button type="submit" name="accion" value="publicar" class="principal">Publicar</button>
@@ -62,25 +64,33 @@
 
     <div class="editor-columnas">
       <aside class="editor-panel" aria-label="Partes y propiedades">
-        <p class="editor-ayuda">
-          Pasa el cursor por el lienzo: lo que se puede editar se resalta. Haz clic
-          para ver aquí su nombre y cambiar el texto al momento. En una foto puedes
-          subir otra imagen y escribir su texto alternativo. Sube o baja las
-          secciones; la barra y el pie se quedan en su sitio.
+        <p class="editor-ayuda">{{ ayuda }}</p>
+        {% if enlace_relacionado %}
+        <p class="editor-nota">
+          {{ enlace_relacionado.nota }}
+          <a href="{{ enlace_relacionado.url }}">{{ enlace_relacionado.texto }}</a>
         </p>
+        {% endif %}
         <h2>Partes</h2>
+        {% if tiene_lista %}
         <ul class="editor-partes">
           {% for grupo in grupos %}
-            {% if grupo.id == "barra" %}
+            {% if grupo.zona == "antes" or grupo.zona == "lista" %}
             <li>
-              <button type="button" data-grupo-btn="{{ grupo.id }}">{{ grupo.nombre }}</button>
+              <button
+                type="button"
+                data-grupo-btn="{{ grupo.id }}"
+                {% if grupo.id == grupo_inicial %}class="activa" aria-current="true"{% endif %}
+              >{{ grupo.nombre }}</button>
             </li>
             {% endif %}
           {% endfor %}
         </ul>
+        {% endif %}
+        {% if hay_orden %}
         <ul class="editor-secciones" id="lista-secciones">
           {% for grupo in grupos %}
-            {% if grupo.ordenable %}
+            {% if grupo.zona == "seccion" %}
             <li data-seccion-item="{{ grupo.id }}">
               <button type="button" class="flecha" data-subir aria-label="Subir {{ grupo.nombre }}">↑</button>
               <button
@@ -93,19 +103,26 @@
             {% endif %}
           {% endfor %}
         </ul>
-        <ul class="editor-partes">
-          {% for grupo in grupos %}
-            {% if grupo.id == "pie" %}
-            <li>
-              <button type="button" data-grupo-btn="{{ grupo.id }}">{{ grupo.nombre }}</button>
-            </li>
-            {% endif %}
-          {% endfor %}
-        </ul>
         {% if error_orden %}
           <p class="error-campo" role="alert">{{ error_orden }}</p>
         {% endif %}
         <input type="hidden" name="orden_secciones" id="orden-secciones" value="{{ orden_secciones }}">
+        {% endif %}
+        {% if tiene_despues %}
+        <ul class="editor-partes">
+          {% for grupo in grupos %}
+            {% if grupo.zona == "despues" %}
+            <li>
+              <button
+                type="button"
+                data-grupo-btn="{{ grupo.id }}"
+                {% if grupo.id == grupo_inicial %}class="activa" aria-current="true"{% endif %}
+              >{{ grupo.nombre }}</button>
+            </li>
+            {% endif %}
+          {% endfor %}
+        </ul>
+        {% endif %}
 
         <h2 id="titulo-propiedades">{{ grupo_inicial_nombre }}</h2>
         <div id="propiedades">
@@ -179,8 +196,8 @@
 
       <div class="editor-lienzo">
         <iframe
-          id="lienzo-inicio"
-          title="Lienzo de la página de inicio"
+          id="lienzo"
+          title="Lienzo de {{ nombre }}"
           src="{{ lienzo_url }}"
         ></iframe>
       </div>

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static paginas %}
 
 {% block title %}Profesionales{% endblock %}
 
@@ -13,16 +13,13 @@
 <section class="page-hero-sm">
   <div class="container">
     <div class="mb-3">
-      <span class="hero-badge">
+      <span class="hero-badge" {% edit_attrs "prof_etiqueta" %}>
         <i class="fa-solid fa-users me-2" aria-hidden="true"></i>
-        Comunidad BioCOM
+        <span data-edit-texto>{{ bloques.prof_etiqueta.contenido }}</span>
       </span>
     </div>
-    <h1 class="page-hero-title">Nuestros Profesionales</h1>
-    <p class="page-hero-subtitle">
-      Investigadores, científicos e ingenieros unidos por la biología computacional.
-      Explora sus perfiles y contribuciones.
-    </p>
+    <h1 class="page-hero-title" {% edit_attrs "prof_titulo" %}>{{ bloques.prof_titulo.contenido }}</h1>
+    <p class="page-hero-subtitle" {% edit_attrs "prof_subtitulo" %}>{{ bloques.prof_subtitulo.contenido }}</p>
   </div>
 </section>
 
@@ -30,29 +27,19 @@
 
   <!-- Sección de introducción -->
   <div class="profesionales-intro-section mb-5">
-    <p class="fw-light profesionales-intro-card">
-      ¡Bienvenido a nuestra comunidad de biología computacional!
-      Nuestros miembros son una mezcla diversa de investigadores,
-      científicos de datos, ingenieros informáticos, académicos y
-      estudiantes, todos unidos por su dedicación compartida a la
-      integración de la biología y la informática en sus prácticas
-      profesionales.<br /><br />
-      Cada uno de nuestros miembros aporta una perspectiva única y valiosa al
-      campo. Desde el diseño de algoritmos hasta el análisis de datos biológicos
-      y la creación de modelos computacionales, nuestros profesionales impulsan
-      el avance de la ciencia. Te invitamos a explorar sus perfiles.
-    </p>
+    <p class="fw-light profesionales-intro-card" {% edit_attrs "prof_intro" %}>{{ bloques.prof_intro.contenido }}</p>
     <div class="d-flex justify-content-center">
       <img
-        src="{% static 'images/profesionales1.jpeg' %}"
-        alt="Profesionales de biología computacional"
+        src="{{ bloques.prof_imagen.enlace }}"
+        alt="{{ bloques.prof_imagen.texto }}"
         class="profesionales-intro-img"
         loading="lazy"
+        {% edit_attrs "prof_imagen" %}
       />
     </div>
   </div>
 
-  {% if user.is_superuser %}
+  {% if not modo_editor and user.is_superuser %}
   <ul class="nav nav-tabs mb-4">
     <li class="nav-item">
       <a class="nav-link active bg-light text-black disabled" aria-disabled="true"
@@ -62,7 +49,7 @@
       <a class="nav-link text-black" href="{% url 'agregar_profesional' %}">Agregar profesional</a>
     </li>
   </ul>
-  {% elif user.is_staff %}
+  {% elif not modo_editor and user.is_staff %}
   <ul class="nav nav-tabs mb-4">
     <li class="nav-item">
       <a class="nav-link active bg-white text-black" aria-current="page" href="#">Gestionar profesional</a>
@@ -88,15 +75,21 @@
       <a
         class="view-button"
         href="id={{ profesional.id }}"
-        aria-label="Ver perfil de {{ profesional.nombre }} {{ profesional.apellido }}"
+        aria-label="{{ bloques.prof_ver_perfil.texto }} de {{ profesional.nombre }} {{ profesional.apellido }}"
       >
-        Ver perfil
+        <span data-edit-texto {% edit_attrs "prof_ver_perfil" %}>{{ bloques.prof_ver_perfil.contenido }}</span>
         <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
       </a>
     </div>
     {% empty %}
-    <p class="text-center w-100 py-4">No hay profesionales registrados aún.</p>
+    <p class="text-center w-100 py-4" {% edit_attrs "prof_vacio" %}>{{ bloques.prof_vacio.contenido }}</p>
     {% endfor %}
+    {% if modo_editor and profesionales %}
+    <p class="text-center w-100 py-4" hidden {% edit_attrs "prof_vacio" %}>{{ bloques.prof_vacio.contenido }}</p>
+    {% endif %}
+    {% if modo_editor and not profesionales %}
+    <span hidden {% edit_attrs "prof_ver_perfil" %}>{{ bloques.prof_ver_perfil.contenido }}</span>
+    {% endif %}
   </div>
 
 </div>

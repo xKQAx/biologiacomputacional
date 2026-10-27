@@ -371,9 +371,10 @@ for _seccion in SECCIONES:
         raise RuntimeError(f'Sección desconocida: {_seccion}.')
 
 
-def nombre_legible(definicion):
+def nombre_legible(definicion, nombres=None):
     """Parte y campo en español, para el panel del editor."""
-    return f'{NOMBRES_GRUPO[definicion.grupo]} · {definicion.etiqueta}'
+    tabla = NOMBRES_GRUPO if nombres is None else nombres
+    return f'{tabla[definicion.grupo]} · {definicion.etiqueta}'
 
 
 def enlace_predeterminado(definicion):

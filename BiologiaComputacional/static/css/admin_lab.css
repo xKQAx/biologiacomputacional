@@ -215,6 +215,25 @@ body.admin-lab #nav-sidebar .admin-lab-atajo:focus {
   text-decoration: none;
 }
 
+body.admin-lab #nav-sidebar .admin-lab-paginas {
+  display: flex;
+  flex-direction: column;
+  margin: 0.15rem 0.75rem 0.75rem;
+  gap: 0.1rem;
+}
+
+body.admin-lab #nav-sidebar .admin-lab-paginas a {
+  color: var(--primary-blue);
+  font-size: 0.82rem;
+  text-decoration: none;
+  padding: 0.12rem 0.15rem;
+}
+
+body.admin-lab #nav-sidebar .admin-lab-paginas a:hover,
+body.admin-lab #nav-sidebar .admin-lab-paginas a:focus {
+  text-decoration: underline;
+}
+
 body.admin-lab.login {
   background: var(--bg-subtle);
 }

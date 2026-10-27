@@ -1,7 +1,7 @@
 from django import template
 from django.utils.html import format_html_join
 
-from paginas.catalogo import IMAGEN, POR_CLAVE
+from paginas.catalogo import ENLACE, IMAGEN, POR_CLAVE
 from paginas.contenido import resolver
 
 register = template.Library()
@@ -19,12 +19,22 @@ def asegurar_bloques(context):
     return ''
 
 
+@register.simple_tag
+def editores_sitio():
+    """Enlaces del índice: la portada y el resto de páginas con el mismo editor."""
+    from paginas.registro import editores_admin
+    return editores_admin()
+
+
 @register.simple_tag(takes_context=True)
 def edit_attrs(context, clave):
-    """Marca el bloque en el lienzo. En la portada pública no escribe nada."""
+    """Marca el bloque en el lienzo. En la página pública no escribe nada."""
     if not context.get('modo_editor'):
         return ''
-    definicion = POR_CLAVE.get(clave)
+    por_clave = context.get('catalogo_lienzo')
+    if por_clave is None:
+        por_clave = POR_CLAVE
+    definicion = por_clave.get(clave)
     if definicion is None:
         return ''
 
@@ -32,6 +42,10 @@ def edit_attrs(context, clave):
     # El área de texto admite saltos de línea; el lienzo tiene que pintarlos.
     if definicion.area:
         partes.append(('data-edit-multilinea', '1'))
+    # El href solo se mueve si el bloque es un enlace. Un texto puesto sobre
+    # un botón (ver perfil, restablecer) no debe vaciar su dirección.
+    if definicion.tipo == ENLACE:
+        partes.append(('data-edit-enlace', '1'))
     if definicion.tipo == IMAGEN:
         partes.append(('data-edit-imagen', '1'))
     if definicion.rico:

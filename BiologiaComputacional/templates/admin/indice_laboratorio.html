@@ -1,5 +1,5 @@
 {% extends "admin/index.html" %}
-{% load i18n %}
+{% load i18n paginas %}
 
 {% block content %}
 <div id="content-main">
@@ -7,17 +7,18 @@
 
   <div class="module" id="paginas-del-sitio">
     <table>
-      <caption>
-        <a href="{% url 'admin:pagina_inicio' %}" class="section">Inicio</a>
-      </caption>
+      <caption>Páginas</caption>
+      {% editores_sitio as editores %}
+      {% for editor in editores %}
       <tr>
         <th scope="row">
-          <a href="{% url 'admin:pagina_inicio' %}">Editar página de inicio</a>
-          <span class="admin-lab-nota">Portada del sitio, con el editor en vivo.</span>
+          <a href="{{ editor.url }}">{{ editor.titulo }}</a>
+          <span class="admin-lab-nota">{{ editor.nota }}</span>
         </th>
         <td></td>
-        <td><a href="{% url 'admin:pagina_inicio' %}" class="changelink">{% translate 'Change' %}</a></td>
+        <td><a href="{{ editor.url }}" class="changelink">{% translate 'Change' %}</a></td>
       </tr>
+      {% endfor %}
     </table>
   </div>
 

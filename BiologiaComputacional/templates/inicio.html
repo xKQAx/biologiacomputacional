@@ -1,18 +1,6 @@
 {% extends "base.html" %} {% load static paginas %} {% block title %}Inicio{% endblock%}
-{% block extra_head %}
-{% if modo_editor %}
-<script>document.documentElement.dataset.vista = "visitante";</script>
-<style>
-  html[data-vista="visitante"] [data-vista="sesion"],
-  html[data-vista="sesion"] [data-vista="visitante"] { display: none !important; }
-</style>
-{% endif %}
-{% endblock %}
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/inicio.css' %}" />
-{% if modo_editor %}
-<link rel="stylesheet" href="{% static 'paginas/lienzo.css' %}" />
-{% endif %}
 {% endblock %} {% block content %}
 <div id="contenido-inicio">
   {% for seccion in secciones %}
@@ -24,7 +12,4 @@
   src="https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.mjs"
   type="module"
 ></script>
-{% if modo_editor %}
-<script src="{% static 'paginas/lienzo.js' %}"></script>
-{% endif %}
 {% endblock %}

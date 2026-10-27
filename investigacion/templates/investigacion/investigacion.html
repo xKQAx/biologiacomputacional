@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static paginas %}
 
 {% block title %}{% if es_vista_previa %}Vista previa del carrusel{% else %}Investigaciones realizadas{% endif %}{% endblock %}
 
@@ -59,8 +59,10 @@
                 <p class="font-monospace fs-5">{{ slide.texto }}</p>
                 {% endif %}
                 {% if forloop.first %}
+                {% if not modo_editor %}
                 {% if user.is_superuser or user.is_staff %}
                 <a class="btn btn-white text-white" href="{% url 'investigacion_editar_carrusel' %}" role="button">Editar carrusel</a>
+                {% endif %}
                 {% endif %}
                 {% endif %}
             </div>
@@ -89,15 +91,15 @@
             <!-- Seccion de texto-->
             <div class="col-12 col-md-6">
                 <div class="card-body text-center">
-                    <h4 class="mb-3">INVESTIGACIÓN</h4>
+                    <h4 class="mb-3" {% edit_attrs "inv_titulo" %}>{{ bloques.inv_titulo.contenido }}</h4>
                     <hr class="border border-primary border-2 shadow opacity-75 mx-auto" style="width: 40px;">
-                    <p>En esta sección se encuentran los resultados obtenidos durante el desarrollo del proyecto
-                        de investigación titulado Docking molecular en la búsqueda de inhibidores potenciales de la
-                        oligomerización de α-sinucleina en la enfermedad de Parkinson y otras investigaciones.</p>
-                    <a class="btn btn-outline-primary mt-2 shadow" href="#seccion1" role="button">Ver más</a>
+                    <p {% edit_attrs "inv_texto" %}>{{ bloques.inv_texto.contenido }}</p>
+                    <a class="btn btn-outline-primary mt-2 shadow" href="{{ bloques.inv_ver_mas.enlace }}" role="button" {% edit_attrs "inv_ver_mas" %}><span data-edit-texto>{{ bloques.inv_ver_mas.contenido }}</span></a>
                     {% if not diapositivas %}
+                    {% if not modo_editor %}
                     {% if user.is_superuser or user.is_staff %}
                     <a class="btn btn-outline-secondary mt-2 ms-2 shadow" href="{% url 'investigacion_editar_carrusel' %}">Editar carrusel</a>
+                    {% endif %}
                     {% endif %}
                     {% endif %}
                 </div>
@@ -107,9 +109,10 @@
             <!-- Seccion imagen-->
             <div class="col-12 col-md-6">
                 <div class="card-body text-center mx-auto custom-photo d-flex justify-content-center align-items-center">
-                    <img src="{% static 'investigacion/images/microscopio.jpg'%}"
+                    <img src="{{ bloques.inv_microscopio.enlace }}"
                         class="img-fluid border border-3 border-secondary border-opacity-75 shadow text-center rounded-pill"
-                        alt="Microscopio de laboratorio">
+                        alt="{{ bloques.inv_microscopio.texto }}"
+                        {% edit_attrs "inv_microscopio" %}>
                 </div>
             </div>
             <!-- Fin Seccion imagen-->
@@ -125,8 +128,10 @@
             <!-- Seccion imagen-->
             <div class="col-12 col-md-6">
                 <div class="card-body text-center mx-auto custom-photo d-flex justify-content-center align-items-center">
-                    <img src="{% static 'investigacion/images/seccion1.jpg'%}"
-                        class="img-fluid border border-3 border-white shadow text-center rounded-pill" alt="Imagen de investigación">
+                    <img src="{{ bloques.inv_contenidos_imagen.enlace }}"
+                        class="img-fluid border border-3 border-white shadow text-center rounded-pill"
+                        alt="{{ bloques.inv_contenidos_imagen.texto }}"
+                        {% edit_attrs "inv_contenidos_imagen" %}>
                 </div>
             </div>
             <!-- Fin Seccion imagen-->
@@ -134,11 +139,8 @@
             <!-- Seccion de texto-->
             <div class="col-12 col-md-6">
                 <div class="card-body text-center text-white">
-                    <h4 class="mb-3">CONTENIDOS VIRTUALES</h4>
-                    <p>El Proyecto Alpha-Sinucleína investiga la relación clave entre la proteína alpha-sinucleína y la
-                        enfermedad de Parkinson. Mientras tanto, la familia Cry11 de Bacillus thuringiensis ofrece
-                        proteínas insecticidas que desempeñan un papel vital en el control de plagas agrícolas,
-                        especialmente mosquitos transmisores de enfermedades como el dengue y la malaria.</p>
+                    <h4 class="mb-3" {% edit_attrs "inv_contenidos_titulo" %}>{{ bloques.inv_contenidos_titulo.contenido }}</h4>
+                    <p {% edit_attrs "inv_contenidos_texto" %}>{{ bloques.inv_contenidos_texto.contenido }}</p>
                 </div>
                 <div class="card-body text-white mt-5">
                     <div class="row d-flex gap-3 justify-content-center  text-center">
@@ -161,15 +163,20 @@
                             {{ investigacion.nombre }} <br>
                             {% endfor %}
                             {% else %}
-                            Sin resultados
+                            <span {% edit_attrs "inv_sin_resultados" %}>{{ bloques.inv_sin_resultados.contenido }}</span>
                             {% endif %}
                         </div>
                         {% endfor %}
+                        {% if not modo_editor %}
                         {% if user.is_superuser or user.is_staff %}
                         <div class="col-12">
                             <a type="button" href="{% url 'investigacion_crear' %}" class="btn btn-light mt-3">Agregar
                                 una nueva investigación</a>
                         </div>
+                        {% endif %}
+                        {% endif %}
+                        {% if modo_editor %}
+                        <span hidden {% edit_attrs "inv_sin_resultados" %}>{{ bloques.inv_sin_resultados.contenido }}</span>
                         {% endif %}
                     </div>
                 </div>

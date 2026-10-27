@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static paginas %}
 
 {% block title %}Herramientas de trabajo{% endblock %}
 
@@ -12,13 +12,9 @@
 
 <!-- Contenido -->
 <div class="container mt-5" >
-    <h5 class="fw-bold mb-3 mt-5">Servicios</h5>
+    <h5 class="fw-bold mb-3 mt-5" {% edit_attrs "srv_titulo" %}>{{ bloques.srv_titulo.contenido }}</h5>
     <hr class="border border-primary border-2 shadow opacity-75 ms-0" style="width: 40px;">
-    <p class="fw-light">Bienvenido a nuestra sección de servicios. Aquí encontrarás una variedad de herramientas y bases
-        de datos que pueden ser útiles para tus investigaciones en biología computacional. Estos recursos están
-        disponibles para que los estudiantes las utilicen en sus proyectos académicos. Explora las opciones que
-        ofrecemos a continuación y aprovecha al máximo estas herramientas para potenciar tu trabajo en el laboratorio.
-    </p>
+    <p class="fw-light" {% edit_attrs "srv_intro" %}>{{ bloques.srv_intro.contenido }}</p>
 </div>
 
 <!-- Contenido entre herramientas y bases de datos -->
@@ -29,23 +25,28 @@
                 <div class="list-group-item list-group-item-secondary" aria-current="page"
                     style="z-index: 1;">
                     <div class="d-flex w-100 justify-content-between">
-                        <h6 class="mb-1">Herramientas</h6>
+                        <h6 class="mb-1" {% edit_attrs "srv_herr_titulo" %}>{{ bloques.srv_herr_titulo.contenido }}</h6>
                         <span class="badge strong-bg-custom rounded-pill mt-2" data-bs-toggle="tooltip"
-                            data-bs-placement="bottom" data-bs-title="Herramientas disponibles">
-                            {{ cantidad_herramientas }}</span>
+                            data-bs-placement="bottom" data-bs-title="{{ bloques.srv_herr_tooltip.texto }}"
+                            {% edit_attrs "srv_herr_tooltip" %}>
+                            {{ cantidad_herramientas }}
+                            <span class="visually-hidden" data-edit-texto aria-hidden="true">{{ bloques.srv_herr_tooltip.texto }}</span>
+                        </span>
                     </div>
-                    <p class="mb-1">Disponemos una amplia variedad de herramientas para
-                        apoyar tus investigaciones en biología computacional.</p>
+                    <p class="mb-1" {% edit_attrs "srv_herr_texto" %}>{{ bloques.srv_herr_texto.contenido }}</p>
                 </div>
 
                 <a href="{% url 'database' %}" class="list-group-item list-group-item-action">
                     <div class="d-flex w-100 justify-content-between">
-                        <h6 class="mb-1">Bases de datos</h6>
+                        <h6 class="mb-1" {% edit_attrs "srv_db_titulo" %}>{{ bloques.srv_db_titulo.contenido }}</h6>
                         <span class="badge strong-bg-custom rounded-pill" data-bs-toggle="tooltip"
-                            data-bs-placement="bottom" data-bs-title="Bases de datos disponibles">{{ cantidad_db }}</span>
+                            data-bs-placement="bottom" data-bs-title="{{ bloques.srv_db_tooltip.texto }}"
+                            {% edit_attrs "srv_db_tooltip" %}>
+                            {{ cantidad_db }}
+                            <span class="visually-hidden" data-edit-texto aria-hidden="true">{{ bloques.srv_db_tooltip.texto }}</span>
+                        </span>
                     </div>
-                    <p class="mb-1">Disponemos de una amplia variedad de bases de datos para respaldar tus
-                        investigaciones en biología computacional.</p>
+                    <p class="mb-1" {% edit_attrs "srv_db_texto" %}>{{ bloques.srv_db_texto.contenido }}</p>
                 </a>
             </div>
 
@@ -54,29 +55,31 @@
         <div class="col-12 col-md-8">
             <div class="row mb-4 mt-3 servicios-toolbar">
                 <div class="col d-flex align-items-center">
-                    <h5 class="">Herramientas disponibles</h5>
+                    <h5 {% edit_attrs "srv_lista_titulo" %}>{{ bloques.srv_lista_titulo.contenido }}</h5>
                 </div>
 
                 <div class="col d-flex">
-                    <!-- Formulario de búsqueda -->
                     <div class="container-fluid">
                         <form class="d-flex servicios-busqueda" action="" method="GET">
-                            <input class="form-control me-2" type="search" placeholder="Buscar"
-                                aria-label="Buscar herramientas" name="q" value="{{ request.GET.q|default:'' }}">
-                            <button class="btn btn-secondary" type="submit">Buscar</button>
+                            <label class="visually-hidden" for="buscar-servicios" {% edit_attrs "srv_buscar_etiqueta" %}>{{ bloques.srv_buscar_etiqueta.contenido }}</label>
+                            <input id="buscar-servicios" class="form-control me-2" type="search"
+                                placeholder="{{ bloques.srv_buscar.texto }}"
+                                {% edit_attrs "srv_buscar" %}
+                                name="q" value="{{ request.GET.q|default:'' }}">
+                            <button class="btn btn-secondary" type="submit" {% edit_attrs "srv_buscar_boton" %}><span data-edit-texto>{{ bloques.srv_buscar_boton.contenido }}</span></button>
                         </form>
                     </div>
                 </div>
-                {% if form_submitted %}
-                <p class="fw-light">{{ cantidad_herramientas_buscadas }} fuentes encontradas para <strong
+                {% if form_submitted or modo_editor %}
+                <p class="fw-light" {% if not form_submitted %}hidden{% endif %}>{{ cantidad_herramientas_buscadas }} <span {% edit_attrs "srv_resultados" %}>{{ bloques.srv_resultados.contenido }}</span> <strong
                         class="fw-bold">{{ request.GET.q }}</strong><a href="{% url 'servicios' %}" type="button"
                         class="btn btn-outline-white custom-color ms-1" data-bs-toggle="tooltip"
-                        data-bs-placement="right" data-bs-title="Restablecer búsqueda"><i
-                            class="fa-solid fa-xmark"></i></a></p>
+                        data-bs-placement="right" data-bs-title="{{ bloques.srv_restablecer.texto }}"
+                        {% edit_attrs "srv_restablecer" %}><i
+                            class="fa-solid fa-xmark"></i><span class="visually-hidden" data-edit-texto>{{ bloques.srv_restablecer.texto }}</span></a></p>
                 {% endif %}
             </div>
 
-            <!-- Mostrar herramientas filtradas -->
             {% for herramienta in herramientas %}
             <div class="list-group">
                 <a href="{% url 'servicios_detalle' herramienta.nombre %}" class="list-group-item list-group-item-action">{{ herramienta.nombre }}<i
@@ -86,16 +89,25 @@
                 </a>
             </div>
             {% empty %}
-            <p>{% if form_submitted %}No se encontraron herramientas para esta búsqueda.{% else %}Aún no hay herramientas publicadas.{% endif %}</p>
+            <p {% if form_submitted %}{% edit_attrs "srv_vacio_busqueda" %}{% else %}{% edit_attrs "srv_vacio" %}{% endif %}>{% if form_submitted %}{{ bloques.srv_vacio_busqueda.contenido }}{% else %}{{ bloques.srv_vacio.contenido }}{% endif %}</p>
             {% endfor %}
+            {% if modo_editor %}
+              {% if form_submitted or herramientas %}
+              <p hidden {% edit_attrs "srv_vacio" %}>{{ bloques.srv_vacio.contenido }}</p>
+              {% endif %}
+              {% if not form_submitted or herramientas %}
+              <p hidden {% edit_attrs "srv_vacio_busqueda" %}>{{ bloques.srv_vacio_busqueda.contenido }}</p>
+              {% endif %}
+            {% endif %}
 
-            <!-- Enlace para agregar nueva herramienta -->
+            {% if not modo_editor %}
             {% if user.is_superuser or user.is_staff %}
             <div class="list-group">
                 <a href="{% url 'nuevo_servicio' %}" class="list-group-item list-group-item-action">Agrega un nuevo servicio aquí <i
                         class="fa-solid fa-circle-plus text-secondary ms-1"></i>
                 </a>
             </div>
+            {% endif %}
             {% endif %}
         </div>
 

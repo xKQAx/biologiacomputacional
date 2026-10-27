@@ -17,6 +17,17 @@ from BiologiaComputacional.forms import InvestigacionForm
 from BiologiaComputacional.permissions import staff_required
 from django.contrib import messages
 from django.views import View
+from paginas.contenido import contexto_publico
+
+
+def contexto_pagina(request=None):
+    """Datos del listado. El carrusel aquí es el publicado; su borrador tiene otra pantalla."""
+    carrusel = publicado_actual()
+    return {
+        'categorias': CategoriaI.objects.all(),
+        'carrusel': carrusel,
+        'diapositivas': diapositivas_publicas(carrusel),
+    }
 
 
 class investigacion_view(TemplateView):
@@ -24,11 +35,7 @@ class investigacion_view(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Solo el carrusel publicado. El borrador no entra en esta página.
-        carrusel = publicado_actual()
-        context['categorias'] = CategoriaI.objects.all()
-        context['carrusel'] = carrusel
-        context['diapositivas'] = diapositivas_publicas(carrusel)
+        context.update(contexto_publico('investigacion', self.request))
         return context
 
 
@@ -146,11 +153,10 @@ class CarruselVistaPreviaView(View):
             messages.info(request, 'No hay un borrador para previsualizar.')
             return redirect('investigacion_editar_carrusel')
 
-        response = render(request, 'investigacion/investigacion.html', {
-            'categorias': CategoriaI.objects.all(),
-            'diapositivas': diapositivas_publicas(borrador),
-            'es_vista_previa': True,
-        })
+        contexto = contexto_publico('investigacion', request)
+        contexto['diapositivas'] = diapositivas_publicas(borrador)
+        contexto['es_vista_previa'] = True
+        response = render(request, 'investigacion/investigacion.html', contexto)
         response['X-Robots-Tag'] = 'noindex, nofollow'
         response['Cache-Control'] = 'private, no-store'
         return response

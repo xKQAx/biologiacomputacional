@@ -10,8 +10,56 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from BiologiaComputacional.permissions import is_staff_or_superuser, staff_required
+from paginas.contenido import contexto_publico
 
-# Vista para mostrar todas las herramientas
+
+def contexto_herramientas(request):
+    """Listado de herramientas. Cada registro sigue en el modelo Servicio."""
+    query = None if request is None else request.GET.get('q')
+    herramientas = Servicio.objects.filter(
+        categoria__nombre_categoria='Herramienta')
+    form_submitted = False
+
+    if query:
+        herramientas = herramientas.filter(Q(nombre__icontains=query))
+        cantidad_herramientas_buscadas = herramientas.count()
+        form_submitted = True
+    else:
+        cantidad_herramientas_buscadas = herramientas.count()
+
+    return {
+        'cantidad_db': Servicio.objects.filter(
+            categoria__nombre_categoria='Base de Datos').count(),
+        'herramientas': herramientas,
+        'cantidad_herramientas': Servicio.objects.filter(
+            categoria__nombre_categoria='Herramienta').count(),
+        'cantidad_herramientas_buscadas': cantidad_herramientas_buscadas,
+        'form_submitted': form_submitted,
+    }
+
+
+def contexto_bases(request):
+    """Listado de bases de datos. Cada registro sigue en el modelo Servicio."""
+    query = None if request is None else request.GET.get('q')
+    db = Servicio.objects.filter(categoria__nombre_categoria='Base de Datos')
+    form_submitted = False
+
+    if query:
+        db = db.filter(Q(nombre__icontains=query))
+        cantidad_db_buscadas = db.count()
+        form_submitted = True
+    else:
+        cantidad_db_buscadas = db.count()
+
+    return {
+        'db': db,
+        'cantidad_db': Servicio.objects.filter(
+            categoria__nombre_categoria='Base de Datos').count(),
+        'cantidad_herramientas': Servicio.objects.filter(
+            categoria__nombre_categoria='Herramienta').count(),
+        'cantidad_db_buscadas': cantidad_db_buscadas,
+        'form_submitted': form_submitted,
+    }
 
 
 class herramientas_view(TemplateView):
@@ -19,63 +67,16 @@ class herramientas_view(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        query = self.request.GET.get('q')
-        herramientas = Servicio.objects.filter(
-            categoria__nombre_categoria='Herramienta')
-        form_submitted = False
-
-        if query:
-            herramientas = herramientas.filter(
-                Q(nombre__icontains=query)
-            )
-            cantidad_herramientas_buscadas = herramientas.count()
-            form_submitted = True
-        else:
-            cantidad_herramientas_buscadas = herramientas.count()
-
-        cantidad_total_db = Servicio.objects.filter(
-            categoria__nombre_categoria='Base de Datos').count()
-        cantidad_total_herramientas = Servicio.objects.filter(
-            categoria__nombre_categoria='Herramienta').count()
-
-        context['cantidad_db'] = cantidad_total_db
-        context['herramientas'] = herramientas
-        context['cantidad_herramientas'] = cantidad_total_herramientas
-        context['cantidad_herramientas_buscadas'] = cantidad_herramientas_buscadas
-        context['form_submitted'] = form_submitted
+        context.update(contexto_publico('servicios', self.request))
         return context
 
 
-# Vista para mostrar todas las bases de datos
 class bases_de_datos_view(TemplateView):
     template_name = "servicios/bases_de_datos.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        query = self.request.GET.get('q')
-        db = Servicio.objects.filter(
-            categoria__nombre_categoria='Base de Datos')
-        form_submitted = False
-
-        if query:
-            db = db.filter(
-                Q(nombre__icontains=query)
-            )
-            cantidad_db_buscadas = db.count()
-            form_submitted = True
-        else:
-            cantidad_db_buscadas = db.count()
-
-        cantidad_total_herramientas = Servicio.objects.filter(
-            categoria__nombre_categoria='Herramienta').count()
-        cantidad_total_db = Servicio.objects.filter(
-            categoria__nombre_categoria='Base de Datos').count()
-
-        context['db'] = db
-        context['cantidad_db'] = cantidad_total_db
-        context['cantidad_herramientas'] = cantidad_total_herramientas
-        context['cantidad_db_buscadas'] = cantidad_db_buscadas
-        context['form_submitted'] = form_submitted
+        context.update(contexto_publico('bases-de-datos', self.request))
         return context
 
 

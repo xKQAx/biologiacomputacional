@@ -6,9 +6,9 @@
     return typeof clave === "string" && /^[a-z0-9_-]+$/.test(clave);
   }
 
-  function buscar(clave) {
-    if (!claveValida(clave)) return null;
-    return document.querySelector('[data-edit-id="' + CSS.escape(clave) + '"]');
+  function buscarTodos(clave) {
+    if (!claveValida(clave)) return [];
+    return document.querySelectorAll('[data-edit-id="' + CSS.escape(clave) + '"]');
   }
 
   function enlacePermitido(valor) {
@@ -44,26 +44,25 @@
   }
 
   function previsualizar(data) {
-    var el = buscar(data.clave);
-    if (!el || el.getAttribute("data-edit-imagen") !== "1") return;
     var src = String(data.src || "");
     if (!/^data:image\/(png|jpeg|gif|webp);base64,/i.test(src)) return;
-    el.src = src;
+    Array.prototype.forEach.call(buscarTodos(data.clave), function (el) {
+      if (el.getAttribute("data-edit-imagen") === "1") el.src = src;
+    });
   }
 
-  function aplicar(data) {
-    var el = buscar(data.clave);
-    if (!el) return;
+  function aplicarUno(el, data) {
     var enlace = enlacePermitido(data.enlace);
-
     if (el.hasAttribute("aria-label")) el.setAttribute("aria-label", data.texto);
     if (el.hasAttribute("data-bs-title")) el.setAttribute("data-bs-title", data.texto);
+    if (el.hasAttribute("placeholder")) el.setAttribute("placeholder", data.texto);
 
     if (el.getAttribute("data-edit-imagen") === "1") {
       el.alt = data.texto == null ? "" : data.texto;
       if (!data.conservarImagen && enlace) el.src = enlace;
       return;
     }
+    if (el.matches("input, textarea")) return;
 
     var destino = el.querySelector("[data-edit-texto]") || el;
     var predeterminado = el.getAttribute("data-edit-predeterminado");
@@ -74,7 +73,19 @@
       escribir(destino, data.texto, el.hasAttribute("data-edit-multilinea"));
     }
 
-    if (el.hasAttribute("href") && enlace !== null) el.setAttribute("href", enlace);
+    if (
+      el.getAttribute("data-edit-enlace") === "1" &&
+      el.hasAttribute("href") &&
+      enlace !== null
+    ) {
+      el.setAttribute("href", enlace);
+    }
+  }
+
+  function aplicar(data) {
+    Array.prototype.forEach.call(buscarTodos(data.clave), function (el) {
+      aplicarUno(el, data);
+    });
   }
 
   function reordenar(orden) {
@@ -90,11 +101,17 @@
   }
 
   function resaltar(clave, desplazar) {
-    var el = buscar(clave);
-    if (!el) return;
+    var nodos = buscarTodos(clave);
+    if (!nodos.length) return;
     quitarSeleccion();
-    el.classList.add("edit-seleccionado");
-    if (desplazar) el.scrollIntoView({ block: "center", behavior: "smooth" });
+    Array.prototype.forEach.call(nodos, function (el) {
+      el.classList.add("edit-seleccionado");
+    });
+    if (!desplazar) return;
+    var visible = Array.prototype.filter.call(nodos, function (el) {
+      return el.getClientRects().length > 0;
+    })[0] || nodos[0];
+    visible.scrollIntoView({ block: "center", behavior: "smooth" });
   }
 
   document.addEventListener(
