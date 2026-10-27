@@ -57,6 +57,55 @@ class EliminarUsuarioTests(TestCase):
         self.assertTrue(User.objects.filter(pk=self.objetivo.pk).exists())
 
 
+class ActivarUsuarioMismoRangoTests(TestCase):
+    def setUp(self):
+        self.staff = User.objects.create_user(
+            "gestor_activar",
+            "gestor.activar@example.com",
+            "ClaveSegura1",
+            is_staff=True,
+        )
+        self.otro_staff = User.objects.create_user(
+            "otro_gestor",
+            "otro.gestor@example.com",
+            "ClaveSegura1",
+            is_staff=True,
+            is_active=False,
+        )
+        ProfileAdditionalInfo.objects.filter(user=self.otro_staff).update(suspendida=True)
+        self.estudiante = User.objects.create_user(
+            "alumno_activar",
+            "alumno.activar@example.com",
+            "ClaveSegura1",
+            is_active=False,
+        )
+        ProfileAdditionalInfo.objects.filter(user=self.estudiante).update(suspendida=True)
+
+    def test_el_personal_no_reabre_una_cuenta_de_personal(self):
+        self.client.force_login(self.staff)
+        respuesta = self.client.post(
+            f"/identity/activar_usuario/id={self.otro_staff.pk}/",
+        )
+        self.assertEqual(respuesta.status_code, 302)
+        self.otro_staff.refresh_from_db()
+        self.assertFalse(self.otro_staff.is_active)
+        self.assertTrue(
+            ProfileAdditionalInfo.objects.get(user=self.otro_staff).suspendida
+        )
+
+    def test_el_personal_si_reabre_una_cuenta_que_no_es_de_personal(self):
+        self.client.force_login(self.staff)
+        respuesta = self.client.post(
+            f"/identity/activar_usuario/id={self.estudiante.pk}/",
+        )
+        self.assertEqual(respuesta.status_code, 302)
+        self.estudiante.refresh_from_db()
+        self.assertTrue(self.estudiante.is_active)
+        self.assertFalse(
+            ProfileAdditionalInfo.objects.get(user=self.estudiante).suspendida
+        )
+
+
 class PerfilAlCrearUsuarioTests(TestCase):
     def test_crear_usuario_crea_perfil(self):
         user = User.objects.create_user('nuevo_perfil', 'np@example.com', 'ClaveSegura1')

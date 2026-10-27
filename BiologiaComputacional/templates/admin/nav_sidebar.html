@@ -1,18 +1,39 @@
-{% load i18n paginas %}
+{% load i18n static paginas %}
 <button class="sticky toggle-nav-sidebar" id="toggle-nav-sidebar" aria-label="{% translate 'Toggle navigation' %}"></button>
 <nav class="sticky" id="nav-sidebar" aria-label="{% translate 'Sidebar' %}">
-  <a class="admin-lab-atajo" href="{% url 'admin:pagina_inicio' %}">Editar página de inicio</a>
-  {% editores_sitio as editores %}
-  <div class="admin-lab-paginas">
-    {% for editor in editores %}
-      {% if not forloop.first %}
-      <a href="{{ editor.url }}">{{ editor.titulo }}</a>
-      {% endif %}
-    {% endfor %}
-    <a href="{% url 'admin:cuentas' %}">Cuentas</a>
-  </div>
   <input type="search" id="nav-filter"
-         placeholder="{% translate 'Start typing to filter…' %}"
-         aria-label="{% translate 'Filter navigation items' %}">
+         placeholder="Filtrar menú"
+         aria-label="Filtrar el menú">
+  {% editores_sitio as editores %}
+  {% url 'admin:cuentas' as url_cuentas %}
+  <div class="admin-lab-nav-grupo admin-lab-nav-paginas">
+    <p id="nav-titulo-paginas" class="admin-lab-nav-titulo">Páginas</p>
+    <table>
+      <caption class="admin-lab-sr">Páginas</caption>
+      <tbody>
+        {% for editor in editores %}
+        <tr{% if request.path == editor.url %} class="current-model"{% endif %}>
+          <th scope="row">
+            <a class="admin-lab-nav-enlace" href="{{ editor.url }}"{% if request.path == editor.url %} aria-current="page"{% endif %}>{{ editor.nombre }}</a>
+          </th>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="admin-lab-nav-grupo admin-lab-nav-usuarios">
+    <p id="nav-titulo-usuarios" class="admin-lab-nav-titulo">Usuarios</p>
+    <table>
+      <caption class="admin-lab-sr">Usuarios</caption>
+      <tbody>
+        <tr{% if url_cuentas in request.path %} class="current-model"{% endif %}>
+          <th scope="row">
+            <a class="admin-lab-nav-enlace" href="{{ url_cuentas }}"{% if url_cuentas in request.path %} aria-current="page"{% endif %}>Cuentas</a>
+          </th>
+        </tr>
+      </tbody>
+    </table>
+  </div>
   {% include 'admin/app_list.html' with app_list=available_apps show_changelinks=False %}
 </nav>
+<script src="{% static 'js/admin_lab_nav.js' %}" defer></script>

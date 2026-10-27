@@ -1,0 +1,35 @@
+{% extends "admin/cuentas/base.html" %}
+
+{% block content %}
+<div id="content-main" class="admin-lab-cuentas">
+  <p class="admin-lab-volver"><a href="{% url volver %}">Volver al listado</a></p>
+  <div class="admin-lab-confirmar">
+    <p>{{ aviso }}</p>
+    {% if consecuencias %}
+    <p>También se borra:</p>
+    <ul>
+      {% for linea in consecuencias %}
+      <li>{{ linea }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% if protegidos %}
+    <p class="errornote">No se puede eliminar porque otros registros dependen de ella. La cuenta sigue igual.</p>
+    <ul>
+      {% for linea in protegidos %}
+      <li>{{ linea }}</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="confirmar" value="si">
+      <div class="submit-row">
+        <input type="submit" value="{{ boton }}"{% if peligro %} class="admin-lab-boton-peligro"{% endif %}>
+        <a href="{% url volver %}">Cancelar</a>
+      </div>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,6 +1,4 @@
-{% extends "admin/base_site.html" %}
-
-{% block bodyclass %}{{ block.super }} cuentas{% endblock %}
+{% extends "admin/cuentas/base.html" %}
 
 {% block content %}
 <div id="content-main" class="admin-lab-cuentas">
@@ -11,6 +9,13 @@
     <p class="errornote">{{ form.non_field_errors }}</p>
     {% endif %}
     {% for field in form %}
+      {% if field.name == "username" %}
+      <h2 class="admin-lab-seccion">Datos</h2>
+      {% elif field.name == "is_active" %}
+      <h2 class="admin-lab-seccion">Acceso</h2>
+      {% elif field.name == "password1" %}
+      <h2 class="admin-lab-seccion">Contraseña</h2>
+      {% endif %}
       {% if field.field.widget.input_type == "checkbox" %}
       <div class="form-row admin-lab-check">
         {{ field }}
@@ -27,9 +32,31 @@
       </div>
       {% endif %}
     {% endfor %}
+    {% if cuenta %}
+    <p class="admin-lab-fechas">
+      Alta: {{ cuenta.date_joined|date:"d/m/Y H:i" }}.
+      Último acceso:
+      {% if cuenta.last_login %}{{ cuenta.last_login|date:"d/m/Y H:i" }}{% else %}todavía no entra{% endif %}.
+    </p>
+    {% endif %}
     <div class="submit-row">
       <input type="submit" value="Guardar">
     </div>
   </form>
+
+  {% if cuenta %}
+  <div class="admin-lab-ficha-acciones">
+    {% if puede_cerrar %}
+      {% if cuenta.is_active %}
+      <a href="{% url 'admin:cuentas_desactivar' cuenta.pk %}">Desactivar</a>
+      {% else %}
+      <a href="{% url 'admin:cuentas_activar' cuenta.pk %}">Activar</a>
+      {% endif %}
+      <a class="admin-lab-peligro" href="{% url 'admin:cuentas_eliminar' cuenta.pk %}">Eliminar</a>
+    {% else %}
+    <p class="admin-lab-nota">No puedes desactivar ni eliminar tu propia cuenta.</p>
+    {% endif %}
+  </div>
+  {% endif %}
 </div>
 {% endblock %}

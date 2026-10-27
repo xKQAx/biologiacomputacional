@@ -37,7 +37,8 @@ class AdminLaboratorioTests(TestCase):
         indice = self.client.get("/admin/")
         self.assertEqual(indice.status_code, 200)
         self.assertContains(indice, "Editar página de inicio")
-        self.assertContains(indice, "Páginas del sitio")
+        self.assertContains(indice, ">Páginas<")
+        self.assertContains(indice, ">Usuarios<")
         for ruta in (
             "/admin/pagina/inicio/",
             "/admin/pagina/investigacion/",
@@ -48,7 +49,12 @@ class AdminLaboratorioTests(TestCase):
             "/admin/cuentas/",
         ):
             self.assertContains(indice, ruta)
-        self.assertContains(indice, "Usuarios del laboratorio: correo, acceso de personal")
+        self.assertContains(indice, "Crear, editar, activar, desactivar y eliminar.")
+        self.assertContains(indice, 'class="colM"')
+        self.assertNotContains(indice, "Acciones recientes")
+        self.assertNotContains(indice, "Mis acciones")
+        self.assertNotContains(indice, "Ninguno disponible")
+        self.assertNotContains(indice, "recent-actions-module")
         self._sin_filas_de_cuentas(indice)
         self.assertNotContains(indice, "Carrusel")
         self.assertNotContains(indice, "Investigaciones")
@@ -123,10 +129,65 @@ class AdminLaboratorioTests(TestCase):
         self.assertEqual(grupos[0]["models"][0]["admin_url"], "/admin/sessions/session/")
 
     def test_un_anonimo_no_abre_la_gestion_de_cuentas(self):
-        for ruta in ("/admin/cuentas/", "/admin/cuentas/nueva/", "/admin/cuentas/1/"):
+        rutas = (
+            "/admin/cuentas/",
+            "/admin/cuentas/nueva/",
+            "/admin/cuentas/1/",
+            "/admin/cuentas/1/desactivar/",
+            "/admin/cuentas/1/activar/",
+            "/admin/cuentas/1/eliminar/",
+        )
+        for ruta in rutas:
             respuesta = self.client.get(ruta)
             self.assertEqual(respuesta.status_code, 302, ruta)
             self.assertIn("/admin/login/", respuesta.url)
+            enviado = self.client.post(ruta, {"confirmar": "si"})
+            self.assertEqual(enviado.status_code, 302, ruta)
+            self.assertIn("/admin/login/", enviado.url)
+
+    def test_el_menu_y_el_indice_separan_paginas_de_usuarios(self):
+        staff = User.objects.create_user(
+            "gestor_menu_lab",
+            "menulab@example.com",
+            "ClaveSegura1",
+            is_staff=True,
+        )
+        self.client.force_login(staff)
+        indice = self.client.get("/admin/")
+        html = indice.content.decode()
+        contenido = html[html.find('id="content"'):]
+        for titulo in (">Páginas<", ">Usuarios<"):
+            self.assertIn(titulo, contenido)
+
+        cuentas = self.client.get("/admin/cuentas/")
+        menu = cuentas.content.decode()
+        nav = menu[menu.find('id="nav-sidebar"'):menu.find('id="content"')]
+        self.assertIn('id="nav-sidebar"', nav)
+        for nombre in (
+            ">Inicio<",
+            ">Investigación<",
+            ">Profesionales<",
+            ">Servicios<",
+            ">Bases de datos<",
+            ">Contacto<",
+        ):
+            self.assertIn(nombre, nav)
+        self.assertLess(nav.find(">Páginas<"), nav.find(">Inicio<"))
+        self.assertLess(nav.find(">Contacto<"), nav.find(">Usuarios<"))
+        self.assertLess(nav.find(">Usuarios<"), nav.find(">Cuentas<"))
+        self.assertLess(contenido.find(">Contacto<"), contenido.find(">Usuarios<"))
+        self.assertLess(contenido.find(">Usuarios<"), contenido.find(">Cuentas<"))
+        self.assertNotIn("admin-lab-atajo", nav)
+        self.assertLess(nav.find('id="nav-filter"'), nav.find('id="nav-titulo-paginas"'))
+        self.assertIn('placeholder="Filtrar menú"', nav)
+        self.assertIn('aria-current="page">Cuentas', nav)
+        migas = menu[menu.find('class="breadcrumbs"'):menu.find('id="main"')]
+        self.assertIn(">Inicio<", migas)
+        self.assertIn('aria-current="page">Cuentas', migas)
+        self.assertNotIn('href="/admin/cuentas/"', migas)
+
+        editor = self.client.get("/admin/pagina/inicio/")
+        self.assertNotContains(editor, 'id="nav-sidebar"')
 
     def test_el_login_del_admin_sigue_entrando(self):
         User.objects.create_user(
@@ -151,4 +212,3 @@ class AdminLaboratorioTests(TestCase):
             self.assertNotContains(indice, ruta)
         self.assertNotContains(indice, ">Perfiles<")
         self.assertNotContains(indice, ">Grupos<")
-        self.assertNotContains(indice, ">Usuarios<")

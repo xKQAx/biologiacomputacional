@@ -26,7 +26,10 @@ class ProfileAdditionalInfo(models.Model):
     image = models.ImageField(default='default.jpg', upload_to='profile_pics', blank=True, null=True)
     phone_number = models.CharField(max_length=20, blank=True)
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, blank=True)
-    
+    # La pone el panel al desactivar. El alta pública no la usa: si no,
+    # el correo de activación del sitio volvería a abrir la cuenta.
+    suspendida = models.BooleanField(default=False)
+
     def __str__(self):
         return 'Informacion adicional del usuario %s' % (self.user)
     

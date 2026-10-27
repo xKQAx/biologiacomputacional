@@ -83,6 +83,32 @@ def login_candidates(identifier):
     return [account] if account is not None else []
 
 
+def cuenta_suspendida(user):
+    """True si el panel desactivó la cuenta.
+
+    No es lo mismo que el alta pública, que nace inactiva y espera el correo.
+    """
+    if not getattr(user, "pk", None):
+        return False
+    from identity.models import ProfileAdditionalInfo
+
+    return ProfileAdditionalInfo.objects.filter(
+        user_id=user.pk, suspendida=True,
+    ).exists()
+
+
+def marcar_suspension(user, suspendida):
+    """Deja la marca alineada con activa/desactivada. No toca el resto del perfil."""
+    from identity.models import ProfileAdditionalInfo
+
+    perfil, _creado = ProfileAdditionalInfo.objects.get_or_create(user=user)
+    if perfil.suspendida == suspendida:
+        return perfil
+    perfil.suspendida = suspendida
+    perfil.save(update_fields=["suspendida"])
+    return perfil
+
+
 def user_for_login(identifier):
     """Resuelve con qué cuenta entrar.
 

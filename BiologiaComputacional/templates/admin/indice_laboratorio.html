@@ -1,13 +1,21 @@
 {% extends "admin/index.html" %}
 {% load paginas %}
 
+{% comment %}
+LogEntry del admin ya no recibe altas: las páginas y las cuentas no pasan
+por el ModelAdmin. Sin eso el cuadro solo decía «Ninguno disponible».
+{% endcomment %}
+{% block coltype %}colM{% endblock %}
+{% block sidebar %}{% endblock %}
+
 {% block content %}
 <div id="content-main">
   <p class="admin-lab-intro">Elige qué parte del sitio quieres actualizar.</p>
 
   {% editores_sitio as editores %}
-  <section class="admin-lab-paginas-indice" id="paginas-del-sitio" aria-label="Páginas del sitio">
-    <h2>Páginas del sitio</h2>
+  <section class="admin-lab-bloque admin-lab-bloque-paginas" id="paginas-del-sitio" aria-labelledby="titulo-paginas">
+    <h2 id="titulo-paginas">Páginas</h2>
+    <p class="admin-lab-bloque-texto">Textos e imágenes de cada página del sitio.</p>
     <div class="admin-lab-tarjetas">
       {% for editor in editores %}
       <a class="admin-lab-tarjeta" href="{{ editor.url }}" aria-label="{{ editor.titulo }}">
@@ -19,13 +27,14 @@
     </div>
   </section>
 
-  <section class="admin-lab-paginas-indice" id="cuentas" aria-label="Cuentas">
-    <h2>Cuentas</h2>
+  <section class="admin-lab-bloque admin-lab-bloque-usuarios" id="usuarios" aria-labelledby="titulo-usuarios">
+    <h2 id="titulo-usuarios">Usuarios</h2>
+    <p class="admin-lab-bloque-texto">Quien entra al sitio y al panel.</p>
     <div class="admin-lab-tarjetas">
       <a class="admin-lab-tarjeta" href="{% url 'admin:cuentas' %}" aria-label="Cuentas">
         <span class="admin-lab-tarjeta-accion">Gestionar</span>
         <span class="admin-lab-tarjeta-nombre">Cuentas</span>
-        <span class="admin-lab-nota">Usuarios del laboratorio: correo, acceso de personal y si pueden entrar.</span>
+        <span class="admin-lab-nota">Crear, editar, activar, desactivar y eliminar. La foto y el teléfono siguen en el perfil.</span>
       </a>
     </div>
   </section>

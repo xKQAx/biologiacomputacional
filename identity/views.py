@@ -38,13 +38,17 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
 from BiologiaComputacional.permissions import staff_required, superuser_required
+from django.db import transaction
+from django.db.models import ProtectedError
 from identity.accounts import (
     ACTIVATION_RESEND_SESSION_KEY,
     PASSWORD_RESET_TOKEN_SESSION_KEY,
     PASSWORD_RESET_UID_SESSION_KEY,
     account_for_email,
     accounts_for_email,
+    cuenta_suspendida,
     login_candidates,
+    marcar_suspension,
     username_taken,
     email_taken,
 )
@@ -249,6 +253,12 @@ class CustomAuthenticationForm(AuthenticationForm):
                     and not account.is_active
                     and account.check_password(password)
                 ):
+                    if cuenta_suspendida(account):
+                        raise forms.ValidationError(
+                            "Esta cuenta está desactivada. No puede entrar "
+                            "hasta que el laboratorio la active.",
+                            code="inactive",
+                        )
                     self.offer_resend = True
                     self.resend_user_id = account.pk
                     raise forms.ValidationError(
@@ -325,7 +335,7 @@ def resend_activation(request):
     user_id = request.session.pop(ACTIVATION_RESEND_SESSION_KEY, None)
     if user_id:
         user = User.objects.filter(pk=user_id, is_active=False).first()
-        if user is not None:
+        if user is not None and not cuenta_suspendida(user):
             mail_ok = send_activation_mail(request, user)
             return render(
                 request,
@@ -337,7 +347,7 @@ def resend_activation(request):
 
     email = (request.POST.get('email') or '').strip()
     account = account_for_email(email)
-    if account is not None and not account.is_active:
+    if account is not None and not account.is_active and not cuenta_suspendida(account):
         send_activation_mail(request, account)
     return render(
         request,
@@ -378,7 +388,9 @@ class AccountPasswordResetView(PasswordResetView):
         if len(matches) > 1:
             return redirect(self.get_success_url())
         if len(matches) == 1 and not matches[0].is_active:
-            send_activation_mail(self.request, matches[0])
+            # Una cuenta cerrada en el panel no se reabre con este correo.
+            if not cuenta_suspendida(matches[0]):
+                send_activation_mail(self.request, matches[0])
             return redirect(self.get_success_url())
         return super().form_valid(form)
 
@@ -510,9 +522,14 @@ def descender_administrador(request, pk):
 @require_POST
 def desactivar_usuario(request, pk):
     usuario = get_object_or_404(User, pk=pk)
+    if usuario.pk == request.user.pk:
+        messages.error(request, "No puedes desactivar tu propia cuenta.")
+        return redirect('detalle_usuarios', pk=pk)
     if request.user.is_superuser or (request.user.is_staff and not usuario.is_staff):
-        usuario.is_active = False
-        usuario.save()
+        with transaction.atomic():
+            usuario.is_active = False
+            usuario.save(update_fields=["is_active"])
+            marcar_suspension(usuario, True)
         messages.success(
             request, f"El usuario {usuario.username} ha sido desactivado correctamente.")
     else:
@@ -524,9 +541,17 @@ def desactivar_usuario(request, pk):
 @staff_required
 @require_POST
 def activar_usuario(request, pk):
+    # La misma regla que desactivar: el personal no reabre cuentas de personal.
+    from identity.cuentas import puede_editar_cuenta
+
     usuario = get_object_or_404(User, pk=pk)
-    usuario.is_active = True
-    usuario.save()
+    if not puede_editar_cuenta(request.user, usuario):
+        messages.error(request, "Imposible activar un usuario del mismo rango.")
+        return redirect("detalle_usuarios", pk=pk)
+    with transaction.atomic():
+        usuario.is_active = True
+        usuario.save(update_fields=["is_active"])
+        marcar_suspension(usuario, False)
 
     messages.success(
         request, f"El usuario {usuario.username} ha sido activado correctamente.")
@@ -538,10 +563,19 @@ def activar_usuario(request, pk):
 @require_POST
 def eliminar_usuario(request, pk):
     usuario = get_object_or_404(User, pk=pk)
-    usuario.delete()
+    if usuario.pk == request.user.pk:
+        messages.error(request, "No puedes eliminar tu propia cuenta.")
+        return redirect('detalle_usuarios', pk=pk)
+    nombre = usuario.username
+    try:
+        with transaction.atomic():
+            usuario.delete()
+    except ProtectedError:
+        messages.error(request, f"No se pudo eliminar la cuenta {nombre}. Sigue existiendo.")
+        return redirect('detalle_usuarios', pk=pk)
 
     messages.success(
-        request, f"El usuario {usuario.username} ha sido eliminado correctamente.")
+        request, f"El usuario {nombre} ha sido eliminado correctamente.")
 
     return redirect('gestion_usuarios')
 
@@ -558,6 +592,8 @@ def _user_from_uid(uidb64):
 
 def activate(request, uidb64, token):
     user = _user_from_uid(uidb64)
+    if user is not None and cuenta_suspendida(user):
+        return render(request, "identity/activation_invalid.html", {"suspendida": True})
     if user is not None and default_token_generator.check_token(user, token):
         if not user.is_active:
             user.is_active = True

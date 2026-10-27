@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}Enlace de activación inválido{% endblock %}
+{% block title %}{% if suspendida %}Cuenta desactivada{% else %}Enlace de activación inválido{% endif %}{% endblock %}
 
 {% block content %}
 <div class="container text-center py-5">
@@ -9,6 +9,10 @@
 
   <div class="info-card">
     <i class="info-card-icon fa-solid fa-circle-xmark text-danger" aria-hidden="true"></i>
+    {% if suspendida %}
+    <h2>Cuenta desactivada</h2>
+    <p class="mb-4">El laboratorio desactivó esta cuenta. El enlace de activación no la vuelve a abrir.</p>
+    {% else %}
     <h2>Enlace de activación inválido</h2>
     <p class="mb-4">El enlace de activación es inválido o ya se usó. Si la cuenta existe,
       pide otro enlace. No hace falta registrarte otra vez.</p>
@@ -25,6 +29,7 @@
         </div>
       </div>
     </form>
+    {% endif %}
     <div class="d-flex gap-3 justify-content-center flex-wrap">
       <a class="btn btn-outline-secondary" href="{% url 'signin' %}">Iniciar sesión</a>
       <a class="btn btn-outline-secondary" href="{% url 'contactos' %}">Contactar soporte</a>
