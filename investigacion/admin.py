@@ -1,8 +1,5 @@
-from django.contrib import admin
-from investigacion.models import CategoriaI, Investigacion, Carrusel
+"""Estas tablas no se administran desde el índice.
 
-# Register your models here.
-
-admin.site.register(Carrusel)
-admin.site.register(CategoriaI)
-admin.site.register(Investigacion)
+La página pública sigue leyendo los modelos. El carrusel se cambia en
+/investigacion/editar-carrusel y los textos de la página en el editor.
+"""

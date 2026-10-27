@@ -1,29 +1,28 @@
 {% extends "admin/index.html" %}
-{% load i18n paginas %}
+{% load paginas %}
 
 {% block content %}
 <div id="content-main">
   <p class="admin-lab-intro">Elige qué parte del sitio quieres actualizar.</p>
 
-  <div class="module" id="paginas-del-sitio">
-    <table>
-      <caption>Páginas</caption>
-      {% editores_sitio as editores %}
+  {% editores_sitio as editores %}
+  <section class="admin-lab-paginas-indice" id="paginas-del-sitio" aria-label="Páginas del sitio">
+    <h2>Páginas del sitio</h2>
+    <div class="admin-lab-tarjetas">
       {% for editor in editores %}
-      <tr>
-        <th scope="row">
-          <a href="{{ editor.url }}">{{ editor.titulo }}</a>
-          <span class="admin-lab-nota">{{ editor.nota }}</span>
-        </th>
-        <td></td>
-        <td><a href="{{ editor.url }}" class="changelink">{% translate 'Change' %}</a></td>
-      </tr>
+      <a class="admin-lab-tarjeta" href="{{ editor.url }}" aria-label="{{ editor.titulo }}">
+        <span class="admin-lab-tarjeta-accion">Editar</span>
+        <span class="admin-lab-tarjeta-nombre">{{ editor.nombre }}</span>
+        <span class="admin-lab-nota">{{ editor.nota }}</span>
+      </a>
       {% endfor %}
-    </table>
-  </div>
+    </div>
+  </section>
 
   {% if app_list %}
+  <div class="admin-lab-secundario">
     {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
+  </div>
   {% endif %}
 </div>
 {% endblock %}

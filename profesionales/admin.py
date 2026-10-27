@@ -1,13 +1,5 @@
-from django.contrib import admin
-from profesionales.models import InformacionProfesional, Articulos
+"""Estas tablas no se administran desde el índice.
 
-# Register your models here.
-
-class ProfesionalesFiltro(admin.ModelAdmin):
-    search_fields = ("nombre", "apellido", "email", "telefono")
-
-class TablaFiltro(admin.ModelAdmin): # Agregar una tabla con filtros
-    list_filter = ("nombre",)
-
-admin.site.register(InformacionProfesional, ProfesionalesFiltro)
-admin.site.register(Articulos)
+La página pública sigue leyendo los modelos. Los textos de la página
+se cambian en el editor; cada ficha sigue en su propia pantalla.
+"""

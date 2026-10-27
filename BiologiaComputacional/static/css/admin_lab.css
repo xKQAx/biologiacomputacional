@@ -145,7 +145,7 @@ body.admin-lab.dashboard #content {
 }
 
 body.admin-lab.dashboard #content-main {
-  max-width: 52rem;
+  max-width: 72rem;
 }
 
 body.admin-lab .admin-lab-intro {
@@ -188,9 +188,69 @@ body.admin-lab .admin-lab-nota {
   color: var(--text-secondary);
 }
 
-body.admin-lab #paginas-del-sitio th a {
+body.admin-lab.dashboard .admin-lab-paginas-indice h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.05rem;
   font-weight: 600;
-  font-size: 1rem;
+  color: var(--primary-dark);
+}
+
+body.admin-lab.dashboard .admin-lab-tarjetas {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+body.admin-lab.dashboard .admin-lab-tarjeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.28rem;
+  min-height: 8.25rem;
+  padding: 0.95rem 1rem 1.05rem;
+  background: var(--bg-clean);
+  border: 1px solid var(--border-color);
+  border-top: 3px solid var(--accent-gold);
+  border-radius: 10px;
+  box-shadow: var(--shadow-soft);
+  color: inherit;
+  text-decoration: none;
+}
+
+body.admin-lab.dashboard .admin-lab-tarjeta:hover,
+body.admin-lab.dashboard .admin-lab-tarjeta:focus {
+  border-color: var(--primary-blue);
+  border-top-color: var(--primary-blue);
+  box-shadow: var(--shadow-medium);
+  color: inherit;
+  text-decoration: none;
+}
+
+body.admin-lab.dashboard .admin-lab-tarjeta-accion {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--primary-blue);
+}
+
+body.admin-lab.dashboard .admin-lab-tarjeta-nombre {
+  font-size: 1.08rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--primary-dark);
+}
+
+body.admin-lab.dashboard .admin-lab-tarjeta .admin-lab-nota {
+  margin-top: 0.15rem;
+}
+
+body.admin-lab.dashboard .admin-lab-secundario {
+  margin-top: 1.75rem;
+}
+
+body.admin-lab.dashboard .admin-lab-secundario .module {
+  max-width: 40rem;
 }
 
 body.admin-lab .app-sistema caption {
@@ -281,6 +341,12 @@ body.admin-lab:not(.editor-portada) select:focus {
   outline-offset: 1px;
 }
 
+@media (max-width: 1200px) {
+  body.admin-lab.dashboard .admin-lab-tarjetas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 900px) {
   body.admin-lab #header {
     padding: 0.85rem 1rem;
@@ -296,6 +362,10 @@ body.admin-lab:not(.editor-portada) select:focus {
 
   body.admin-lab.dashboard #content-main {
     max-width: none;
+  }
+
+  body.admin-lab.dashboard .admin-lab-tarjetas {
+    grid-template-columns: 1fr;
   }
 
   body.admin-lab.login #container {

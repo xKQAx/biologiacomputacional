@@ -1,21 +1,14 @@
-"""Agrupa el índice del admin para quien edita el sitio del laboratorio.
+"""Agrupa lo que queda del índice del admin, debajo de las páginas del sitio.
 
-El registro de modelos no cambia: un superusuario sigue entrando por la URL
-directa. En el índice, las tablas internas quedan al final y solo para él.
+Investigación, profesionales y servicios se editan en sus páginas, no aquí.
+Cuentas queda en un grupo secundario. Las tablas internas, al final y solo
+para un superusuario.
 """
 
 from django.contrib import admin
-from django.urls import NoReverseMatch, reverse
 
 # Nombre visible en el índice, no el de la clase.
 NOMBRES = {
-    ("investigacion", "carrusel"): ("Carrusel", "Carrusel"),
-    ("investigacion", "investigacion"): ("Investigación", "Investigaciones"),
-    ("investigacion", "categoriai"): ("Categoría", "Categorías"),
-    ("profesionales", "informacionprofesional"): ("Profesional", "Profesionales"),
-    ("profesionales", "articulos"): ("Artículo", "Artículos"),
-    ("servicios", "servicio"): ("Servicio", "Servicios"),
-    ("servicios", "categoria"): ("Categoría", "Categorías"),
     ("identity", "profileadditionalinfo"): ("Perfil", "Perfiles"),
     ("auth", "user"): ("Usuario", "Usuarios"),
     ("auth", "group"): ("Grupo", "Grupos"),
@@ -27,28 +20,16 @@ NOMBRES = {
 
 # Orden dentro de cada grupo. Lo que no esté aquí va al final, por nombre.
 ORDEN = {
-    "investigacion": ("carrusel", "investigacion", "categoriai"),
-    "profesionales": ("informacionprofesional", "articulos"),
-    "servicios": ("servicio", "categoria"),
     "cuentas": ("user", "group", "profileadditionalinfo"),
 }
 
 SECCIONES = (
-    ("investigacion", "Investigación"),
-    ("profesionales", "Profesionales"),
-    ("servicios", "Servicios"),
     ("cuentas", "Cuentas"),
     ("sistema", "Sistema"),
 )
 
-# Apps de una sola sección: el título del grupo abre su página.
-ENLACE_APP = {
-    "investigacion": "investigacion",
-    "profesionales": "profesionales",
-    "servicios": "servicios",
-}
-
-APPS_CONTENIDO = {"investigacion", "profesionales", "servicios"}
+# El sitio público sigue leyendo estos modelos. No vuelven al índice ni a la barra.
+APPS_FUERA_DEL_INDICE = {"investigacion", "profesionales", "servicios"}
 APPS_CUENTAS = {"auth", "identity"}
 APPS_SISTEMA = {"admin", "sessions", "contenttypes"}
 
@@ -79,11 +60,11 @@ def aplicar_nombres():
 
 
 def destino_de(app_label, model_name):
+    if app_label in APPS_FUERA_DEL_INDICE:
+        return None
     clave = (app_label, model_name)
     if clave in INTERNOS or app_label in APPS_SISTEMA or app_label == "paginas":
         return "sistema"
-    if app_label in APPS_CONTENIDO:
-        return app_label
     if app_label in APPS_CUENTAS:
         return "cuentas"
     return "sistema"
@@ -98,7 +79,7 @@ def agrupar_indice(app_list, request):
         for modelo in app["models"]:
             clase = modelo["model"]
             destino = destino_de(clase._meta.app_label, clase._meta.model_name)
-            if destino == "sistema" and not es_super:
+            if destino is None or (destino == "sistema" and not es_super):
                 continue
             grupos[destino].append(modelo)
 
@@ -111,7 +92,7 @@ def agrupar_indice(app_list, request):
         resultado.append({
             "name": nombre,
             "app_label": clave,
-            "app_url": _enlace(clave),
+            "app_url": "",
             "has_module_perms": True,
             "models": modelos,
         })
@@ -124,16 +105,6 @@ def _clave_orden(seccion, modelo):
     if nombre in preferido:
         return (0, preferido.index(nombre))
     return (1, modelo["name"].lower())
-
-
-def _enlace(seccion):
-    etiqueta = ENLACE_APP.get(seccion)
-    if not etiqueta:
-        return ""
-    try:
-        return reverse("admin:app_list", kwargs={"app_label": etiqueta})
-    except NoReverseMatch:
-        return ""
 
 
 def configurar_admin():

@@ -5,6 +5,17 @@ from django.test import RequestFactory, TestCase
 
 from BiologiaComputacional.admin_lab import agrupar_indice
 
+# Listados que ya no se abren desde el admin.
+_CHANGELISTS_RETIRADOS = (
+    "/admin/investigacion/carrusel/",
+    "/admin/investigacion/investigacion/",
+    "/admin/investigacion/categoriai/",
+    "/admin/profesionales/informacionprofesional/",
+    "/admin/profesionales/articulos/",
+    "/admin/servicios/servicio/",
+    "/admin/servicios/categoria/",
+)
+
 
 class AdminLaboratorioTests(TestCase):
     def test_el_login_responde_con_el_nombre_del_laboratorio(self):
@@ -26,7 +37,21 @@ class AdminLaboratorioTests(TestCase):
         indice = self.client.get("/admin/")
         self.assertEqual(indice.status_code, 200)
         self.assertContains(indice, "Editar página de inicio")
-        self.assertContains(indice, "/admin/pagina/inicio/")
+        self.assertContains(indice, "Páginas del sitio")
+        for ruta in (
+            "/admin/pagina/inicio/",
+            "/admin/pagina/investigacion/",
+            "/admin/pagina/profesionales/",
+            "/admin/pagina/servicios/",
+            "/admin/pagina/bases-de-datos/",
+            "/admin/pagina/contacto/",
+        ):
+            self.assertContains(indice, ruta)
+        self.assertNotContains(indice, "Carrusel")
+        self.assertNotContains(indice, "Investigaciones")
+        self.assertNotContains(indice, "Artículos")
+        for ruta in _CHANGELISTS_RETIRADOS:
+            self.assertNotContains(indice, ruta)
 
     def test_el_superuser_ve_el_contenido_agrupado(self):
         User.objects.create_superuser(
@@ -38,15 +63,21 @@ class AdminLaboratorioTests(TestCase):
         indice = self.client.get("/admin/")
         html = indice.content.decode()
 
-        self.assertLess(html.find("Editar página de inicio"), html.find("Investigación"))
-        self.assertLess(html.find("Investigación"), html.find(">Profesionales<"))
+        self.assertLess(html.find(">Inicio<"), html.find(">Investigación<"))
+        self.assertLess(html.find(">Investigación<"), html.find(">Profesionales<"))
         self.assertLess(html.find(">Profesionales<"), html.find(">Servicios<"))
-        self.assertLess(html.find(">Servicios<"), html.find(">Cuentas<"))
-        self.assertContains(indice, "Carrusel")
-        self.assertContains(indice, "Artículos")
+        self.assertLess(html.find(">Servicios<"), html.find(">Bases de datos<"))
+        self.assertLess(html.find(">Bases de datos<"), html.find(">Contacto<"))
+        self.assertLess(html.find(">Contacto<"), html.find(">Cuentas<"))
+        self.assertContains(indice, "Portada del sitio, con el editor en vivo.")
         self.assertContains(indice, "Perfiles")
+        self.assertNotContains(indice, "Carrusel")
+        self.assertNotContains(indice, "Investigaciones")
+        self.assertNotContains(indice, "Artículos")
         self.assertNotContains(indice, "Categoria is")
         self.assertNotContains(indice, "Informacion profesional")
+        for ruta in _CHANGELISTS_RETIRADOS:
+            self.assertNotContains(indice, ruta)
         self.assertNotContains(indice, "/admin/sessions/session/")
         self.assertNotContains(indice, "/admin/auth/permission/")
         self.assertNotContains(indice, ">Sistema<")

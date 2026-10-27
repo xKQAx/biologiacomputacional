@@ -262,11 +262,14 @@ def obtener(slug):
 
 
 def editores_admin():
-    return [
-        {
-            'titulo': INDICES[slug].titulo,
-            'nota': INDICES[slug].nota,
-            'url': INDICES[slug].url_editor(),
-        }
-        for slug in ORDEN
-    ]
+    """Nombre corto del índice, para qué sirve la página y su editor."""
+    editores = []
+    for slug in ORDEN:
+        pagina = INDICES[slug]
+        editores.append({
+            'titulo': pagina.titulo,
+            'nombre': 'Inicio' if slug == INICIO else pagina.nombre,
+            'nota': pagina.nota,
+            'url': pagina.url_editor(),
+        })
+    return editores

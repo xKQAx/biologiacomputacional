@@ -1,7 +1,5 @@
-from django.contrib import admin
-from servicios.models import Categoria, Servicio
+"""Estas tablas no se administran desde el índice.
 
-# Register your models here.
-
-admin.site.register(Categoria)
-admin.site.register(Servicio)
+La página pública sigue leyendo los modelos. Los textos de la página
+se cambian en el editor; cada herramienta o base sigue en su ficha.
+"""
