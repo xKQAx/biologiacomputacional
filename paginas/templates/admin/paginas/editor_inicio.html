@@ -15,11 +15,20 @@
 {% endblock %}
 
 {% block nav-sidebar %}{% endblock %}
+{% block messages %}{% endblock %}
 {% block content_title %}{% endblock %}
 {% block content_subtitle %}{% endblock %}
 
 {% block content %}
-<form id="form-portada" method="post" action="{% url 'admin:pagina_inicio' %}"{% if pendiente %} data-pendiente="1"{% endif %}>
+{{ estado_guardado|json_script:"estado-guardado" }}
+<form
+  id="form-portada"
+  method="post"
+  enctype="multipart/form-data"
+  action="{% url 'admin:pagina_inicio' %}"
+  data-max-imagen="{{ max_imagen }}"
+  {% if pendiente %}data-pendiente="1"{% endif %}
+>
   {% csrf_token %}
   <div class="editor-app">
     <div class="editor-barra">
@@ -32,7 +41,6 @@
             No hay borrador. El lienzo parte de lo que ve el visitante.
           {% endif %}
         </p>
-        <p id="aviso-editor" aria-live="polite"></p>
       </div>
       <div class="editor-vistas" role="group" aria-label="Qué versión muestra el lienzo">
         <button type="button" data-vista-btn="visitante" class="activa" aria-pressed="true">Visitante</button>
@@ -45,11 +53,19 @@
       </div>
     </div>
 
+    <div id="avisos-editor" aria-live="polite">
+      {% for message in messages %}
+        <p class="aviso aviso-{{ message.level_tag }}" role="{% if message.level_tag == 'error' %}alert{% else %}status{% endif %}">{{ message }}</p>
+      {% endfor %}
+      <p id="aviso-editor" class="aviso aviso-pendiente" hidden></p>
+    </div>
+
     <div class="editor-columnas">
       <aside class="editor-panel" aria-label="Partes y propiedades">
         <p class="editor-ayuda">
           Pasa el cursor por el lienzo: lo que se puede editar se resalta. Haz clic
-          para ver aquí su nombre y cambiar el texto al momento. Sube o baja las
+          para ver aquí su nombre y cambiar el texto al momento. En una foto puedes
+          subir otra imagen y escribir su texto alternativo. Sube o baja las
           secciones; la barra y el pie se quedan en su sitio.
         </p>
         <h2>Partes</h2>
@@ -86,6 +102,9 @@
             {% endif %}
           {% endfor %}
         </ul>
+        {% if error_orden %}
+          <p class="error-campo" role="alert">{{ error_orden }}</p>
+        {% endif %}
         <input type="hidden" name="orden_secciones" id="orden-secciones" value="{{ orden_secciones }}">
 
         <h2 id="titulo-propiedades">{{ grupo_inicial_nombre }}</h2>
@@ -98,16 +117,30 @@
               data-vista="{{ bloque.vista }}"
               data-etiqueta="{{ bloque.etiqueta }}"
               data-nombre="{{ bloque.nombre }}"
-              {% if bloque.grupo != grupo_inicial %}hidden{% endif %}
+              {% if bloque.grupo != grupo_inicial and not bloque.errores.texto and not bloque.errores.enlace and not bloque.errores.imagen %}hidden{% endif %}
             >
               <legend>{{ bloque.nombre }}</legend>
+              {% if bloque.tipo == "imagen" %}
+              <label for="imagen-{{ bloque.clave }}">Imagen</label>
+              <input
+                id="imagen-{{ bloque.clave }}"
+                type="file"
+                name="imagen__{{ bloque.clave }}"
+                data-campo="imagen"
+                accept="image/jpeg,image/png,image/gif,image/webp"
+                {% if bloque.errores.imagen %}aria-invalid="true" aria-describedby="error-imagen-{{ bloque.clave }}"{% endif %}
+              >
+              <p class="editor-nota">Si no eliges otra, se conserva la imagen actual.</p>
+              <p class="error-campo" id="error-imagen-{{ bloque.clave }}" data-error-imagen{% if bloque.errores.imagen %} role="alert"{% endif %}>{{ bloque.errores.imagen }}</p>
+              {% endif %}
               <label for="texto-{{ bloque.clave }}">{{ bloque.etiqueta_texto }}</label>
-              {% if bloque.area %}
+              {% if bloque.area and bloque.tipo != "imagen" %}
               <textarea
                 id="texto-{{ bloque.clave }}"
                 name="texto__{{ bloque.clave }}"
                 data-campo="texto"
                 rows="4"
+                {% if bloque.errores.texto %}aria-invalid="true" aria-describedby="error-texto-{{ bloque.clave }}"{% endif %}
               >{{ bloque.texto }}</textarea>
               {% else %}
               <input
@@ -116,7 +149,11 @@
                 name="texto__{{ bloque.clave }}"
                 data-campo="texto"
                 value="{{ bloque.texto }}"
+                {% if bloque.errores.texto %}aria-invalid="true" aria-describedby="error-texto-{{ bloque.clave }}"{% endif %}
               >
+              {% endif %}
+              {% if bloque.errores.texto %}
+              <p class="error-campo" id="error-texto-{{ bloque.clave }}" data-error-texto role="alert">{{ bloque.errores.texto }}</p>
               {% endif %}
               {% if bloque.tipo != "texto" %}
               <label for="enlace-{{ bloque.clave }}">{{ bloque.etiqueta_enlace }}</label>
@@ -128,7 +165,11 @@
                 value="{{ bloque.enlace }}"
                 spellcheck="false"
                 autocomplete="off"
+                {% if bloque.errores.enlace %}aria-invalid="true" aria-describedby="error-enlace-{{ bloque.clave }}"{% endif %}
               >
+              {% if bloque.errores.enlace %}
+              <p class="error-campo" id="error-enlace-{{ bloque.clave }}" data-error-enlace role="alert">{{ bloque.errores.enlace }}</p>
+              {% endif %}
               {% endif %}
             </fieldset>
             {% endfor %}

@@ -1,11 +1,65 @@
-from django.contrib.auth.models import User
-from django.test import TestCase
+import io
+import json
+import re
+import shutil
+import tempfile
+from html import unescape
+from pathlib import Path
 
-from paginas.contenido import MAX_ENLACE, MAX_TEXTO
+from django.contrib.auth.models import User
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import TestCase, override_settings
+from PIL import Image
+
+from paginas.contenido import MAX_ALT, MAX_ENLACE, MAX_TEXTO
+from paginas.imagenes import MAX_IMAGEN
 from paginas.models import BloquePortada
 
 
+def _valor_campo(html, tipo, clave):
+    if tipo == 'texto' and f'name="texto__{clave}"' in html:
+        area = re.search(
+            rf'<textarea[^>]*name="texto__{re.escape(clave)}"[^>]*>(.*?)</textarea>',
+            html,
+            flags=re.S,
+        )
+        if area:
+            return unescape(area.group(1))
+    etiqueta = 'texto' if tipo == 'texto' else 'enlace'
+    campo = re.search(
+        rf'<input[^>]*name="{etiqueta}__{re.escape(clave)}"[^>]*>',
+        html,
+    )
+    if campo is None:
+        return None
+    valor = re.search(r'value="([^"]*)"', campo.group(0))
+    return unescape(valor.group(1)) if valor else ''
+
+
+def _png(color='red'):
+    buffer = io.BytesIO()
+    Image.new('RGB', (8, 8), color).save(buffer, format='PNG')
+    return SimpleUploadedFile('foto.png', buffer.getvalue(), content_type='image/png')
+
+
+def _archivo(nombre, contenido, tipo):
+    return SimpleUploadedFile(nombre, contenido, content_type=tipo)
+
+
 class EditorInicioTests(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.media_root = tempfile.mkdtemp()
+        cls.media_override = override_settings(MEDIA_ROOT=cls.media_root)
+        cls.media_override.enable()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.media_override.disable()
+        shutil.rmtree(cls.media_root, ignore_errors=True)
+        super().tearDownClass()
+
     def setUp(self):
         self.editor = '/admin/pagina/inicio/'
         self.lienzo = '/admin/pagina/inicio/lienzo/'
@@ -374,3 +428,267 @@ class EditorInicioTests(TestCase):
         self.assertContains(portada, 'text-warning fw-bold')
         self.assertContains(portada, 'herramientas')
         self.assertContains(portada, 'recursos')
+
+    def _enlace_imagen(self, clave, estado):
+        fila = BloquePortada.objects.get(clave=clave, estado=estado)
+        self.assertIn('/portada/', fila.enlace)
+        return fila.enlace
+
+    def _ruta_subida(self, url):
+        return Path(self.media_root) / 'portada' / url.rsplit('/', 1)[-1]
+
+    def test_la_imagen_del_borrador_no_sale_en_la_portada_anonima(self):
+        self.client.force_login(self.staff)
+        respuesta = self.client.post(self.editor, {
+            'accion': 'guardar',
+            'imagen__tarjeta_profesionales_imagen': _png(),
+            'texto__tarjeta_profesionales_imagen': 'Alt del borrador de la foto',
+        })
+        self.assertRedirects(respuesta, self.editor)
+        url = self._enlace_imagen(
+            'tarjeta_profesionales_imagen', BloquePortada.Estado.BORRADOR,
+        )
+        lienzo = self.client.get(self.lienzo)
+        self.assertContains(lienzo, url)
+        self.assertContains(lienzo, 'alt="Alt del borrador de la foto"')
+        self.client.logout()
+        portada = self.client.get('/')
+        self.assertNotContains(portada, url)
+        self.assertNotContains(portada, 'Alt del borrador de la foto')
+        self.assertContains(portada, 'profesional.jpg')
+        self.assertContains(portada, 'alt="Profesionales"')
+
+    def test_publicar_cambia_la_imagen_publica_y_conserva_la_actual_si_no_hay_archivo(self):
+        self.client.force_login(self.staff)
+        self.client.post(self.editor, {
+            'accion': 'publicar',
+            'imagen__tarjeta_profesionales_imagen': _png('blue'),
+            'texto__tarjeta_profesionales_imagen': 'Alt publicado de la tarjeta',
+        })
+        url = self._enlace_imagen(
+            'tarjeta_profesionales_imagen', BloquePortada.Estado.PUBLICADO,
+        )
+        self.assertFalse(
+            BloquePortada.objects.filter(estado=BloquePortada.Estado.BORRADOR).exists()
+        )
+        self.client.logout()
+        portada = self.client.get('/')
+        self.assertContains(portada, url)
+        self.assertContains(portada, 'alt="Alt publicado de la tarjeta"')
+        self.assertNotContains(portada, 'profesional.jpg')
+
+        self.client.force_login(self.staff)
+        self.client.post(self.editor, {
+            'accion': 'publicar',
+            'texto__encontrar_titulo': 'Título sin tocar la foto',
+        })
+        self.client.logout()
+        seguida = self.client.get('/')
+        self.assertContains(seguida, url)
+        self.assertContains(seguida, 'alt="Alt publicado de la tarjeta"')
+        self.assertContains(seguida, 'Título sin tocar la foto')
+        self.assertTrue(self._ruta_subida(url).is_file())
+
+    def test_publicar_el_borrador_lleva_su_imagen_sin_volver_a_subirla(self):
+        self.client.force_login(self.staff)
+        self.client.post(self.editor, {
+            'accion': 'guardar',
+            'imagen__partner_biocom': _png('green'),
+        })
+        url = self._enlace_imagen('partner_biocom', BloquePortada.Estado.BORRADOR)
+        self.client.post(self.editor, {'accion': 'publicar'})
+        self.client.logout()
+        portada = self.client.get('/')
+        self.assertContains(portada, url)
+        self.assertNotContains(portada, 'sigiip.udes.edu.co')
+
+    def test_descartar_no_cambia_la_imagen_publicada(self):
+        self.client.force_login(self.staff)
+        self.client.post(self.editor, {
+            'accion': 'publicar',
+            'imagen__tarjeta_servicios_imagen': _png('blue'),
+        })
+        publicada = self._enlace_imagen(
+            'tarjeta_servicios_imagen', BloquePortada.Estado.PUBLICADO,
+        )
+        self.client.post(self.editor, {
+            'accion': 'guardar',
+            'imagen__tarjeta_servicios_imagen': _png('green'),
+        })
+        borrador = self._enlace_imagen(
+            'tarjeta_servicios_imagen', BloquePortada.Estado.BORRADOR,
+        )
+        self.assertNotEqual(publicada, borrador)
+        self.client.post(self.editor, {'accion': 'descartar'})
+        self.assertFalse(self._ruta_subida(borrador).exists())
+        self.assertTrue(self._ruta_subida(publicada).is_file())
+        self.client.logout()
+        portada = self.client.get('/')
+        self.assertContains(portada, publicada)
+        self.assertNotContains(portada, borrador)
+
+    def test_un_archivo_que_no_es_imagen_se_rechaza(self):
+        self.client.force_login(self.staff)
+        antes = set(Path(self.media_root).rglob('*'))
+        respuesta = self.client.post(self.editor, {
+            'accion': 'publicar',
+            'imagen__tarjeta_profesionales_imagen': _archivo(
+                'nota.txt', b'esto no es una imagen', 'text/plain',
+            ),
+            'texto__hero_titulo': 'Título que no debe perderse',
+            'texto__tarjeta_profesionales_imagen': 'Alt que tampoco se publica',
+        })
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(respuesta, 'no es una imagen')
+        self.assertContains(respuesta, 'id="error-imagen-tarjeta_profesionales_imagen"')
+        self.assertContains(respuesta, 'Título que no debe perderse')
+        self.assertContains(respuesta, 'Alt que tampoco se publica')
+        self.assertFalse(
+            BloquePortada.objects.filter(texto='Título que no debe perderse').exists()
+        )
+        self.assertEqual(set(Path(self.media_root).rglob('*')), antes)
+        self.client.logout()
+        portada = self.client.get('/')
+        self.assertContains(portada, 'profesional.jpg')
+        self.assertContains(portada, 'Ciencia e Innovación')
+        self.assertNotContains(portada, 'Alt que tampoco se publica')
+        self.assertNotContains(portada, 'Título que no debe perderse')
+
+    def test_una_imagen_demasiado_grande_no_se_guarda_ni_se_publica(self):
+        self.client.force_login(self.staff)
+        respuesta = self.client.post(self.editor, {
+            'accion': 'guardar',
+            'imagen__partner_udes': _archivo(
+                'grande.png', b'\x89PNG\r\n\x1a\n' + b'a' * (MAX_IMAGEN + 1), 'image/png',
+            ),
+        })
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(respuesta, 'más de 2 MB')
+        self.assertContains(respuesta, 'id="error-imagen-partner_udes"')
+        self.assertFalse(
+            BloquePortada.objects.filter(estado=BloquePortada.Estado.BORRADOR).exists()
+        )
+        self.client.logout()
+        portada = self.client.get('/')
+        self.assertContains(portada, 'udes-logo-principal.svg')
+        self.assertNotContains(portada, '/portada/')
+
+    def test_el_alt_publicado_sale_y_el_del_borrador_no(self):
+        self.client.force_login(self.staff)
+        self.client.post(self.editor, {
+            'accion': 'publicar',
+            'texto__tarjeta_investigacion_imagen': 'Alt publicado de investigación',
+        })
+        self.client.post(self.editor, {
+            'accion': 'guardar',
+            'texto__tarjeta_investigacion_imagen': 'Alt secreto del borrador',
+        })
+        lienzo = self.client.get(self.lienzo)
+        self.assertContains(lienzo, 'alt="Alt secreto del borrador"')
+        self.client.logout()
+        portada = self.client.get('/')
+        self.assertContains(portada, 'alt="Alt publicado de investigación"')
+        self.assertNotContains(portada, 'Alt secreto del borrador')
+
+    def test_un_alt_vacio_no_inventa_texto(self):
+        self.client.force_login(self.staff)
+        self.client.post(self.editor, {
+            'accion': 'publicar',
+            'texto__partner_biocom': '   ',
+        })
+        self.client.logout()
+        html = self.client.get('/').content.decode()
+        imagenes = re.findall(r'<img\b[^>]*>', html, flags=re.I)
+        logo = next(img for img in imagenes if 'sigiip.udes.edu.co' in img)
+        self.assertIn('alt=""', logo)
+        self.assertNotIn('Logo Biología Computacional', logo)
+
+    def test_un_alt_demasiado_largo_no_se_guarda_ni_se_publica(self):
+        self.client.force_login(self.staff)
+        largo = 'á' * (MAX_ALT + 1)
+        respuesta = self.client.post(self.editor, {
+            'accion': 'publicar',
+            'texto__tarjeta_servicios_imagen': largo,
+        })
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(respuesta, largo)
+        self.assertContains(respuesta, f'{MAX_ALT} caracteres')
+        self.assertContains(respuesta, 'id="error-texto-tarjeta_servicios_imagen"')
+        self.assertFalse(BloquePortada.objects.filter(texto=largo).exists())
+        self.client.logout()
+        portada = self.client.get('/')
+        self.assertNotContains(portada, largo)
+        self.assertContains(portada, 'alt="Servicios"')
+
+    def test_los_avisos_de_guardar_publicar_y_descartar_se_ven_en_el_editor(self):
+        self.client.force_login(self.staff)
+        editor = self.client.get(self.editor)
+        self.assertContains(editor, 'name="imagen__partner_biocom"')
+        self.assertContains(editor, 'Texto alternativo')
+        self.assertContains(editor, 'id="avisos-editor"')
+        self.assertContains(editor, 'id="estado-guardado"')
+
+        guardado = self.client.post(self.editor, {
+            'accion': 'guardar',
+            'texto__hero_titulo': 'Para el aviso de borrador',
+        }, follow=True)
+        self.assertContains(guardado, 'Borrador guardado. La portada pública no cambió.')
+        self.assertContains(guardado, 'class="aviso aviso-success"')
+
+        publicado = self.client.post(self.editor, {
+            'accion': 'publicar',
+            'texto__hero_titulo': 'Para el aviso de publicar',
+        }, follow=True)
+        self.assertContains(publicado, 'Página de inicio publicada.')
+        self.assertContains(publicado, 'class="aviso aviso-success"')
+
+        self.client.post(self.editor, {
+            'accion': 'guardar',
+            'texto__hero_titulo': 'Borrador que se descarta',
+        })
+        descartado = self.client.post(self.editor, {'accion': 'descartar'}, follow=True)
+        self.assertContains(descartado, 'Borrador descartado. La portada publicada sigue igual.')
+        self.assertTrue(
+            BloquePortada.objects.filter(
+                clave='hero_titulo',
+                estado=BloquePortada.Estado.PUBLICADO,
+                texto='Para el aviso de publicar',
+            ).exists()
+        )
+
+    def test_al_abrir_no_hay_cambios_respecto_de_lo_guardado(self):
+        self.client.force_login(self.staff)
+        self.client.post(self.editor, {
+            'accion': 'guardar',
+            'texto__hero_subtitulo_sesion': 'Línea uno\nLínea dos',
+            'texto__partner_biocom': 'Logo guardado',
+        })
+        html = self.client.get(self.editor).content.decode()
+        datos = json.loads(re.search(
+            r'<script id="estado-guardado" type="application/json">(.*?)</script>',
+            html,
+            flags=re.S,
+        ).group(1))
+        self.assertEqual(datos['textos']['hero_subtitulo_sesion'], 'Línea uno\nLínea dos')
+        self.assertEqual(_valor_campo(html, 'texto', 'hero_subtitulo_sesion'), 'Línea uno\nLínea dos')
+        self.assertEqual(_valor_campo(html, 'texto', 'partner_biocom'), 'Logo guardado')
+        self.assertEqual(
+            _valor_campo(html, 'enlace', 'partner_biocom'),
+            datos['enlaces']['partner_biocom'],
+        )
+        orden = re.search(r'id="orden-secciones"[^>]*value="([^"]*)"', html)
+        self.assertEqual(orden.group(1), datos['orden'])
+        for clave, texto in datos['textos'].items():
+            self.assertEqual(_valor_campo(html, 'texto', clave), texto)
+        for clave, enlace in datos['enlaces'].items():
+            self.assertEqual(_valor_campo(html, 'enlace', clave), enlace)
+
+    def test_el_aviso_de_salida_esta_en_el_script_y_no_borra_el_borrador(self):
+        from django.contrib.staticfiles import finders
+
+        ruta = finders.find('paginas/editor.js')
+        script = Path(ruta).read_text(encoding='utf-8')
+        self.assertIn('beforeunload', script)
+        self.assertIn('hayCambios', script)
+        self.assertNotIn('accion=descartar', script)
+        self.assertNotIn("value = \"descartar\"", script)

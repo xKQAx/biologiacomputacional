@@ -7,10 +7,28 @@
   var titulo = document.getElementById("titulo-propiedades");
   if (!form || !marco) return;
 
+  var TIPOS_IMAGEN = { "image/jpeg": 1, "image/png": 1, "image/gif": 1, "image/webp": 1 };
+  var MAX_IMAGEN = Number(form.getAttribute("data-max-imagen")) || 2 * 1024 * 1024;
+  var guardado = leerGuardado();
   var listo = false;
   var editado = form.hasAttribute("data-pendiente");
+  var enviando = false;
   var cola = [];
   var seleccion = { tipo: "parte", grupo: grupoInicial(), clave: "" };
+
+  function leerGuardado() {
+    var nodo = document.getElementById("estado-guardado");
+    if (!nodo) return { textos: {}, enlaces: {}, orden: "" };
+    try {
+      var datos = JSON.parse(nodo.textContent);
+      datos.textos = datos.textos || {};
+      datos.enlaces = datos.enlaces || {};
+      datos.orden = datos.orden || "";
+      return datos;
+    } catch (error) {
+      return { textos: {}, enlaces: {}, orden: "" };
+    }
+  }
 
   function grupoInicial() {
     var boton = document.querySelector("[data-grupo-btn][aria-current='true']");
@@ -36,12 +54,40 @@
 
   function mensajeCampo(fs) {
     var enlace = fs.querySelector("[data-campo=enlace]");
+    var imagen = fs.querySelector("[data-campo=imagen]");
+    var hayArchivo = !!(imagen && imagen.files && imagen.files.length);
     return {
       tipo: "actualizar",
       clave: fs.getAttribute("data-clave"),
       texto: fs.querySelector("[data-campo=texto]").value,
-      enlace: enlace ? enlace.value : "",
+      enlace: hayArchivo ? "" : enlace ? enlace.value : "",
+      conservarImagen: hayArchivo,
     };
+  }
+
+  function hayCambios() {
+    var distinto = false;
+    form.querySelectorAll("fieldset[data-clave]").forEach(function (fs) {
+      var clave = fs.getAttribute("data-clave");
+      var texto = fs.querySelector("[data-campo=texto]");
+      var enlace = fs.querySelector("[data-campo=enlace]");
+      var imagen = fs.querySelector("[data-campo=imagen]");
+      if (texto && texto.value !== (guardado.textos[clave] || "")) distinto = true;
+      if (enlace && enlace.value !== (guardado.enlaces[clave] || "")) distinto = true;
+      if (imagen && imagen.files && imagen.files.length) distinto = true;
+    });
+    var orden = document.getElementById("orden-secciones");
+    if (orden && orden.value !== guardado.orden) distinto = true;
+    return distinto;
+  }
+
+  function refrescarAvisoPendiente() {
+    if (!aviso) return;
+    var pendiente = hayCambios();
+    aviso.hidden = !pendiente;
+    aviso.textContent = pendiente
+      ? "Hay cambios sin guardar. Guarda el borrador para no perderlos."
+      : "";
   }
 
   function ordenActual() {
@@ -92,7 +138,7 @@
     if (campo) campo.value = ordenActual().join(",");
     actualizarFlechas();
     editado = true;
-    aviso.textContent = "El lienzo ya muestra el cambio. Guarda el borrador para no perderlo.";
+    refrescarAvisoPendiente();
     enviarOrden();
   }
 
@@ -184,21 +230,93 @@
     });
   });
 
+  function avisoImagen(archivo) {
+    if (archivo.size > MAX_IMAGEN) {
+      return "la imagen pesa más de 2 MB. Elige un archivo más liviano.";
+    }
+    if (!TIPOS_IMAGEN[archivo.type]) {
+      return "el archivo no es una imagen JPG, PNG, GIF o WEBP.";
+    }
+    return "";
+  }
+
   form.addEventListener("input", function (event) {
     var fs = event.target.closest("fieldset[data-clave]");
-    if (!fs) return;
+    if (!fs || event.target.getAttribute("data-campo") === "imagen") return;
     editado = true;
-    aviso.textContent = "El lienzo ya muestra el cambio. Guarda el borrador para no perderlo.";
+    refrescarAvisoPendiente();
     if (listo) post(mensajeCampo(fs));
   });
+
+  form.addEventListener("change", function (event) {
+    var input = event.target;
+    if (input.getAttribute("data-campo") !== "imagen") return;
+    var fs = input.closest("fieldset[data-clave]");
+    if (!fs) return;
+    var error = fs.querySelector("[data-error-imagen]");
+    var archivo = input.files && input.files[0];
+    if (!archivo) {
+      if (error) error.textContent = "";
+      refrescarAvisoPendiente();
+      if (listo) post(mensajeCampo(fs));
+      return;
+    }
+    var detalle = avisoImagen(archivo);
+    if (detalle) {
+      rechazarImagen(fs, error, detalle);
+      return;
+    }
+    if (error) error.textContent = "";
+    editado = true;
+    refrescarAvisoPendiente();
+    var lector = new FileReader();
+    lector.onload = function () {
+      var prueba = new Image();
+      prueba.onload = function () {
+        post({
+          tipo: "previsualizar-imagen",
+          clave: fs.getAttribute("data-clave"),
+          src: lector.result,
+        });
+      };
+      prueba.onerror = function () {
+        rechazarImagen(fs, error, "el archivo no es una imagen JPG, PNG, GIF o WEBP.");
+      };
+      prueba.src = lector.result;
+    };
+    lector.readAsDataURL(archivo);
+  });
+
+  function rechazarImagen(fs, error, detalle) {
+    if (error) {
+      error.textContent = "«" + fs.getAttribute("data-nombre") + "»: " + detalle;
+    }
+    refrescarAvisoPendiente();
+    var enlace = fs.querySelector("[data-campo=enlace]");
+    post({
+      tipo: "actualizar",
+      clave: fs.getAttribute("data-clave"),
+      texto: fs.querySelector("[data-campo=texto]").value,
+      enlace: enlace ? enlace.value : "",
+      conservarImagen: false,
+    });
+  }
 
   form.addEventListener("submit", function (event) {
     var boton = event.submitter;
     if (boton && boton.value === "descartar") {
       if (!window.confirm("¿Descartar el borrador? Lo publicado no cambia.")) {
         event.preventDefault();
+        return;
       }
     }
+    enviando = true;
+  });
+
+  window.addEventListener("beforeunload", function (event) {
+    if (enviando || !hayCambios()) return;
+    event.preventDefault();
+    event.returnValue = "Hay cambios sin guardar. Si sales, se pierden; el borrador ya guardado se conserva.";
   });
 
   function documentoListo() {
@@ -236,4 +354,24 @@
 
   actualizarFlechas();
   pintar();
+
+  var primerError = null;
+  form.querySelectorAll(".error-campo").forEach(function (nodo) {
+    if (!primerError && nodo.textContent.trim()) primerError = nodo;
+  });
+  if (primerError) {
+    var fsError = primerError.closest("fieldset[data-clave]");
+    if (fsError) {
+      elegirBloque(fsError.getAttribute("data-clave"), false);
+      var destino = fsError.querySelector("[data-campo=texto]");
+      if (primerError.hasAttribute("data-error-imagen")) {
+        destino = fsError.querySelector("[data-campo=imagen]");
+      } else if (primerError.hasAttribute("data-error-enlace")) {
+        destino = fsError.querySelector("[data-campo=enlace]");
+      }
+      if (destino) destino.focus();
+      fsError.scrollIntoView({ block: "nearest" });
+    }
+  }
+  refrescarAvisoPendiente();
 })();

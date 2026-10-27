@@ -10,13 +10,16 @@ from paginas.catalogo import NOMBRES_GRUPO
 from paginas.contenido import (
     contexto_lienzo,
     descartar_borrador,
+    estado_guardado,
     grupos_editor,
     guardar_borrador,
     hay_borrador,
     leer_valores,
+    primer_grupo_con_error,
     publicar,
     resolver_orden,
 )
+from paginas.imagenes import MAX_IMAGEN
 
 
 def editor_inicio(request):
@@ -31,20 +34,29 @@ def editor_inicio(request):
             )
             return redirect('admin:pagina_inicio')
         if accion in ('guardar', 'publicar'):
-            valores, orden, errores = leer_valores(request.POST)
-            if errores:
-                for error in errores:
+            formulario = leer_valores(request.POST, request.FILES)
+            if formulario.errores:
+                for error in formulario.errores:
                     messages.error(request, error)
-                return _pintar(request, valores, orden, pendiente=True)
+                return _pintar(
+                    request,
+                    formulario.valores,
+                    formulario.orden,
+                    pendiente=True,
+                    errores_campo=formulario.por_campo,
+                )
             if accion == 'guardar':
-                guardar_borrador(valores, orden)
+                guardar_borrador(formulario.valores, formulario.orden, formulario.imagenes)
                 messages.success(
                     request,
                     'Borrador guardado. La portada pública no cambió.',
                 )
             else:
-                publicar(valores, orden)
-                messages.success(request, 'Página de inicio publicada.')
+                publicar(formulario.valores, formulario.orden, formulario.imagenes)
+                messages.success(
+                    request,
+                    'Página de inicio publicada. Los visitantes ya ven estos cambios.',
+                )
             return redirect('admin:pagina_inicio')
         messages.error(request, 'No se reconoció la acción.')
         return redirect('admin:pagina_inicio')
@@ -52,19 +64,23 @@ def editor_inicio(request):
     return _pintar(request)
 
 
-def _pintar(request, valores=None, orden=None, pendiente=False):
+def _pintar(request, valores=None, orden=None, pendiente=False, errores_campo=None):
     if orden is None:
         orden = resolver_orden(preferir_borrador=True)
+    grupo_inicial = primer_grupo_con_error(errores_campo) or orden[0]
     context = admin.site.each_context(request)
     context.update({
         'title': 'Editar página de inicio',
-        'grupos': grupos_editor(valores, orden),
+        'grupos': grupos_editor(valores, orden, errores_campo),
         'hay_borrador': hay_borrador(),
         'lienzo_url': reverse('admin:pagina_inicio_lienzo'),
         'pendiente': pendiente,
         'orden_secciones': ','.join(orden),
-        'grupo_inicial': orden[0],
-        'grupo_inicial_nombre': NOMBRES_GRUPO[orden[0]],
+        'grupo_inicial': grupo_inicial,
+        'grupo_inicial_nombre': NOMBRES_GRUPO[grupo_inicial],
+        'estado_guardado': estado_guardado(),
+        'error_orden': (errores_campo or {}).get('orden', ''),
+        'max_imagen': MAX_IMAGEN,
     })
     respuesta = render(request, 'admin/paginas/editor_inicio.html', context)
     respuesta['Cache-Control'] = 'no-store'

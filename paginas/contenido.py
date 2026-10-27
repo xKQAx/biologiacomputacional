@@ -10,6 +10,7 @@ from django.template.defaultfilters import linebreaksbr
 from paginas.catalogo import (
     CATALOGO,
     GRUPOS,
+    IMAGEN,
     PLANTILLA_SECCION,
     SECCIONES,
     TEXTO,
@@ -17,9 +18,17 @@ from paginas.catalogo import (
     html_subtitulo_visitante,
     nombre_legible,
 )
+from paginas.imagenes import (
+    almacenar,
+    archivo_util,
+    enlaces_subidos,
+    olvidar,
+    validar_subida,
+)
 from paginas.models import BloquePortada
 
 MAX_TEXTO = 4000
+MAX_ALT = 200
 MAX_ENLACE = 500
 _ESQUEMAS = ('javascript:', 'data:', 'vbscript:')
 # Cada sección ocupa un millar. El resto del número conserva el campo dentro de ella.
@@ -49,6 +58,7 @@ class BloqueVista:
         self.predeterminado = definicion.texto
         self.usa_rico = bool(definicion.rico and texto == definicion.texto)
         self.html_rico = html_subtitulo_visitante() if definicion.rico else ''
+        self.errores = {}
 
     @property
     def contenido(self):
@@ -130,7 +140,7 @@ def contexto_lienzo():
     }
 
 
-def grupos_editor(valores=None, orden=None):
+def grupos_editor(valores=None, orden=None, errores_campo=None):
     """Partes de la portada. Con valores, el formulario muestra lo recién enviado.
 
     La barra va primero y el pie al final. En medio, las secciones en `orden`.
@@ -156,34 +166,60 @@ def grupos_editor(valores=None, orden=None):
             'bloques': [getattr(mapa, clave) for clave in _CLAVES_POR_GRUPO.get(grupo_id, ())],
             'ordenable': grupo_id in _SECCIONES,
         }
-    return [por_id['barra'], *[por_id[grupo_id] for grupo_id in orden], por_id['pie']]
+    grupos = [por_id['barra'], *[por_id[grupo_id] for grupo_id in orden], por_id['pie']]
+    errores_campo = errores_campo or {}
+    for grupo in grupos:
+        for bloque in grupo['bloques']:
+            bloque.errores = errores_campo.get(bloque.clave, {})
+    return grupos
 
 
 def hay_borrador():
     return BloquePortada.objects.filter(estado=BloquePortada.Estado.BORRADOR).exists()
 
 
-def leer_valores(post):
+class FormularioPortada:
+    """Lo que el editor envió, listo para guardar o para volver a mostrar."""
+
+    def __init__(self, valores, orden, errores, por_campo, imagenes):
+        self.valores = valores
+        self.orden = orden
+        self.errores = errores
+        self.por_campo = por_campo
+        self.imagenes = imagenes
+
+
+def leer_valores(post, archivos=None):
     """Arma el formulario y avisa si un valor no se puede guardar.
 
     Si falta una clave, se conserva lo que ya muestra el editor. Un enlace
-    vacío vuelve al anterior. Un enlace inválido o un texto demasiado largo
-    no se recorta: se devuelve tal cual para mostrarlo otra vez.
+    vacío vuelve al anterior. Un enlace inválido, un texto demasiado largo
+    o una imagen que no sirve no se recortan ni se guardan: se devuelven
+    para mostrarlos otra vez. Sin archivo nuevo, la imagen actual sigue.
     """
     base = resolver(preferir_borrador=True)
     valores = {}
     errores = []
+    por_campo = {}
+    imagenes = {}
     orden, error_orden = _leer_orden(post)
     if error_orden:
-        errores.append(error_orden)
+        _anotar(errores, por_campo, 'orden', '', error_orden)
     for definicion in CATALOGO:
         actual = getattr(base, definicion.clave)
+        nombre = nombre_legible(definicion)
         clave_texto = f'texto__{definicion.clave}'
         if clave_texto in post:
             texto = _normalizar_texto(post.get(clave_texto))
-            if len(texto) > MAX_TEXTO:
-                errores.append(
-                    f'«{nombre_legible(definicion)}» admite como máximo {MAX_TEXTO} caracteres.'
+            if definicion.tipo == IMAGEN and len(texto) > MAX_ALT:
+                _anotar(
+                    errores, por_campo, definicion.clave, 'texto',
+                    f'El texto alternativo de «{nombre}» admite como máximo {MAX_ALT} caracteres.',
+                )
+            elif len(texto) > MAX_TEXTO:
+                _anotar(
+                    errores, por_campo, definicion.clave, 'texto',
+                    f'«{nombre}» admite como máximo {MAX_TEXTO} caracteres.',
                 )
         else:
             texto = actual.texto
@@ -198,31 +234,98 @@ def leer_valores(post):
                     post.get(clave_enlace),
                     respaldo,
                     enlace_predeterminado(definicion),
-                    nombre_legible(definicion),
+                    nombre,
                 )
                 if error:
-                    errores.append(error)
+                    _anotar(errores, por_campo, definicion.clave, 'enlace', error)
             else:
                 enlace = respaldo
+
+        if definicion.tipo == IMAGEN and archivos is not None:
+            archivo = archivos.get(f'imagen__{definicion.clave}')
+            if archivo_util(archivo):
+                detalle = validar_subida(archivo)
+                if detalle:
+                    _anotar(
+                        errores, por_campo, definicion.clave, 'imagen',
+                        f'«{nombre}»: {detalle}',
+                    )
+                else:
+                    # El archivo sustituye a la dirección. No se escribe hasta guardar.
+                    imagenes[definicion.clave] = archivo
         valores[definicion.clave] = (texto, enlace)
-    return valores, orden, errores
+    return FormularioPortada(valores, orden, errores, por_campo, imagenes)
 
 
-def guardar_borrador(valores, orden):
-    """Persiste el borrador, incluido el orden. No toca lo publicado."""
-    _escribir(valores, BloquePortada.Estado.BORRADOR, orden)
+def estado_guardado():
+    """Texto, enlaces y orden tal como quedaron la última vez que se guardó."""
+    mapa = resolver(preferir_borrador=True)
+    textos = {}
+    enlaces = {}
+    for definicion in CATALOGO:
+        bloque = getattr(mapa, definicion.clave)
+        textos[definicion.clave] = bloque.texto
+        if definicion.tipo != TEXTO:
+            enlaces[definicion.clave] = bloque.enlace
+    return {
+        'textos': textos,
+        'enlaces': enlaces,
+        'orden': ','.join(resolver_orden(preferir_borrador=True)),
+    }
 
 
-def publicar(valores, orden):
+def primer_grupo_con_error(por_campo):
+    """Grupo del primer campo rechazado, para abrirlo al volver a pintar."""
+    if not por_campo:
+        return None
+    for definicion in CATALOGO:
+        if por_campo.get(definicion.clave):
+            return definicion.grupo
+    return None
+
+
+def guardar_borrador(valores, orden, imagenes=None):
+    """Persiste el borrador, incluido el orden y las fotos nuevas. No toca lo publicado."""
+    anteriores = enlaces_subidos(BloquePortada.Estado.BORRADOR)
+    _escribir(_con_imagenes(valores, imagenes), BloquePortada.Estado.BORRADOR, orden)
+    olvidar(anteriores)
+
+
+def publicar(valores, orden, imagenes=None):
     """Copia el contenido del editor a lo que ve el visitante y borra el borrador."""
+    anteriores = enlaces_subidos(BloquePortada.Estado.BORRADOR)
+    anteriores.extend(enlaces_subidos(BloquePortada.Estado.PUBLICADO))
     with transaction.atomic():
-        _escribir(valores, BloquePortada.Estado.PUBLICADO, orden)
+        _escribir(_con_imagenes(valores, imagenes), BloquePortada.Estado.PUBLICADO, orden)
         BloquePortada.objects.filter(estado=BloquePortada.Estado.BORRADOR).delete()
+    olvidar(anteriores)
 
 
 def descartar_borrador():
-    """Borra el borrador. Lo publicado queda igual."""
+    """Borra el borrador. Lo publicado, fotos incluidas, queda igual."""
+    anteriores = enlaces_subidos(BloquePortada.Estado.BORRADOR)
     BloquePortada.objects.filter(estado=BloquePortada.Estado.BORRADOR).delete()
+    olvidar(anteriores)
+
+
+def _con_imagenes(valores, imagenes):
+    """La foto nueva pasa a ser la dirección del bloque. Sin archivo, queda la de ahora."""
+    if not imagenes:
+        return valores
+    ajustados = dict(valores)
+    for clave, archivo in imagenes.items():
+        texto, _enlace = ajustados[clave]
+        ajustados[clave] = (texto, almacenar(archivo))
+    return ajustados
+
+
+def _anotar(errores, por_campo, clave, campo, mensaje):
+    errores.append(mensaje)
+    if not campo:
+        por_campo[clave] = mensaje
+        return
+    por_campo.setdefault(clave, {})
+    por_campo[clave][campo] = mensaje
 
 
 def _escribir(valores, estado, orden):

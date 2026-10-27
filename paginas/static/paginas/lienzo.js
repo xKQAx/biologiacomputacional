@@ -43,6 +43,14 @@
     });
   }
 
+  function previsualizar(data) {
+    var el = buscar(data.clave);
+    if (!el || el.getAttribute("data-edit-imagen") !== "1") return;
+    var src = String(data.src || "");
+    if (!/^data:image\/(png|jpeg|gif|webp);base64,/i.test(src)) return;
+    el.src = src;
+  }
+
   function aplicar(data) {
     var el = buscar(data.clave);
     if (!el) return;
@@ -52,8 +60,8 @@
     if (el.hasAttribute("data-bs-title")) el.setAttribute("data-bs-title", data.texto);
 
     if (el.getAttribute("data-edit-imagen") === "1") {
-      el.alt = data.texto;
-      if (enlace) el.src = enlace;
+      el.alt = data.texto == null ? "" : data.texto;
+      if (!data.conservarImagen && enlace) el.src = enlace;
       return;
     }
 
@@ -118,6 +126,7 @@
     if (event.origin !== ORIGEN || event.source !== window.parent) return;
     var data = event.data || {};
     if (data.tipo === "actualizar") aplicar(data);
+    if (data.tipo === "previsualizar-imagen") previsualizar(data);
     if (data.tipo === "reordenar") reordenar(data.orden);
     if (data.tipo === "vista") {
       document.documentElement.dataset.vista = data.vista === "sesion" ? "sesion" : "visitante";
