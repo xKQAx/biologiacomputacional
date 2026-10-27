@@ -16,6 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from BiologiaComputacional.admin_lab import configurar_admin
 from BiologiaComputacional.views import inicio, politicas_privacidad
 from django.conf import settings
 from django.conf.urls.static import static
@@ -39,3 +40,6 @@ handler403 = 'BiologiaComputacional.views.view_403'
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# Después de admin.site.urls: así el índice del laboratorio queda por encima del predeterminado.
+configurar_admin()

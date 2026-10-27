@@ -1,0 +1,285 @@
+/* Chrome del admin. Los colores salen de tokens.css.
+   No pisa el lienzo ni el panel del editor de portada. */
+
+body.admin-lab {
+  --primary: var(--primary-blue);
+  --secondary: var(--primary-dark);
+  --accent: var(--accent-gold);
+  --primary-fg: #fff;
+
+  --body-fg: var(--text-primary);
+  --body-bg: var(--bg-clean);
+  --body-quiet-color: var(--text-secondary);
+  --body-loud-color: var(--text-primary);
+
+  --header-color: #fff;
+  --header-branding-color: #fff;
+  --header-bg: var(--primary-dark);
+  --header-link-color: #fff;
+
+  --breadcrumbs-fg: rgba(255, 255, 255, 0.8);
+  --breadcrumbs-link-fg: #fff;
+  --breadcrumbs-bg: var(--primary-blue);
+
+  --link-fg: var(--primary-blue);
+  --link-hover-color: var(--primary-dark);
+  --link-selected-fg: var(--primary-dark);
+
+  --button-fg: #fff;
+  --button-bg: var(--primary-blue);
+  --button-hover-bg: var(--primary-dark);
+  --default-button-bg: var(--primary-dark);
+  --default-button-hover-bg: var(--primary-blue);
+
+  --object-tools-fg: #fff;
+  --object-tools-bg: var(--primary-blue);
+  --object-tools-hover-bg: var(--primary-dark);
+
+  --selected-bg: #e7eef8;
+  --selected-row: #fff6d8;
+  --hairline-color: #e8e8e8;
+  --border-color: #d5dbe3;
+  --error-fg: var(--color-danger);
+  --message-success-bg: #e5f6ea;
+  --message-warning-bg: #fff6d8;
+  --message-error-bg: #fdecec;
+  --darkened-bg: var(--bg-subtle);
+  --close-button-bg: #5c6770;
+  --close-button-hover-bg: #3d444b;
+  --delete-button-bg: var(--color-danger);
+  --delete-button-hover-bg: #b02a37;
+
+  color-scheme: light;
+
+  --font-family-primary: "Montserrat", "Segoe UI", system-ui, sans-serif;
+
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+body.admin-lab #header {
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  padding: 0.85rem 1.5rem;
+  background: linear-gradient(90deg, var(--primary-dark) 0%, var(--primary-blue) 100%);
+  border-bottom: 3px solid var(--accent-gold);
+}
+
+body.admin-lab #branding {
+  align-items: center;
+  gap: 0.9rem;
+  min-width: 0;
+}
+
+body.admin-lab #site-name {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+body.admin-lab #site-name a:link,
+body.admin-lab #site-name a:visited {
+  color: #fff;
+  text-decoration: none;
+}
+
+body.admin-lab .admin-lab-marca {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+body.admin-lab .admin-lab-marca img {
+  width: 40px;
+  height: 38px;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
+body.admin-lab #header .admin-lab-sitio {
+  align-self: center;
+  color: var(--primary-dark);
+  background: var(--accent-gold);
+  font-weight: 600;
+  font-size: 0.8rem;
+  line-height: 1.2;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+body.admin-lab #header .admin-lab-sitio:hover,
+body.admin-lab #header .admin-lab-sitio:focus {
+  background: var(--accent-gold-dark);
+  color: var(--primary-dark);
+  text-decoration: none;
+}
+
+body.admin-lab #user-tools,
+body.admin-lab #logout-form button {
+  text-transform: none;
+  letter-spacing: 0.01em;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+body.admin-lab .theme-toggle {
+  display: none;
+}
+
+body.admin-lab div.breadcrumbs {
+  padding: 0.7rem 1.5rem;
+}
+
+body.admin-lab:not(.editor-portada) #content {
+  padding: 1.6rem 2rem 2.5rem;
+}
+
+body.admin-lab.dashboard #content {
+  width: auto;
+}
+
+body.admin-lab.dashboard #content-main {
+  max-width: 52rem;
+}
+
+body.admin-lab .admin-lab-intro {
+  margin: 0 0 1.1rem;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+body.admin-lab:not(.editor-portada) .module {
+  border-radius: 10px;
+  box-shadow: var(--shadow-soft);
+  margin-bottom: 1.15rem;
+}
+
+body.admin-lab:not(.editor-portada) .module caption,
+body.admin-lab:not(.editor-portada) .inline-group h2 {
+  text-transform: none;
+  letter-spacing: 0.01em;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 0.7rem 0.9rem;
+  border-left: 4px solid var(--accent-gold);
+}
+
+body.admin-lab:not(.editor-portada) .module caption {
+  border-radius: 10px 10px 0 0;
+}
+
+body.admin-lab:not(.editor-portada) .module th,
+body.admin-lab:not(.editor-portada) .module td {
+  padding-top: 0.65rem;
+  padding-bottom: 0.65rem;
+}
+
+body.admin-lab .admin-lab-nota {
+  display: block;
+  margin-top: 0.15rem;
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+body.admin-lab #paginas-del-sitio th a {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+body.admin-lab .app-sistema caption {
+  background: #4a5568;
+}
+
+body.admin-lab #nav-sidebar .admin-lab-atajo {
+  display: block;
+  margin: 0.8rem 0.75rem 0.35rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 8px;
+  background: var(--primary-blue);
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+body.admin-lab #nav-sidebar .admin-lab-atajo:hover,
+body.admin-lab #nav-sidebar .admin-lab-atajo:focus {
+  background: var(--primary-dark);
+  color: #fff;
+  text-decoration: none;
+}
+
+body.admin-lab.login {
+  background: var(--bg-subtle);
+}
+
+body.admin-lab.login #container {
+  width: min(32rem, calc(100% - 1.5rem));
+  min-width: 0;
+  margin: 2.5rem auto;
+  border: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-hover);
+}
+
+body.admin-lab.login #header {
+  justify-content: center;
+  padding: 1.15rem 1rem;
+}
+
+body.admin-lab.login #content {
+  padding: 1.25rem 1.35rem 1.5rem;
+}
+
+body.admin-lab.login .form-row input {
+  border-radius: 8px;
+  padding: 0.55rem 0.7rem;
+}
+
+body.admin-lab.login .submit-row input {
+  width: 100%;
+  padding: 0.7rem 1rem;
+  font-weight: 600;
+}
+
+body.admin-lab:not(.editor-portada) .form-row {
+  padding-top: 0.55rem;
+  padding-bottom: 0.55rem;
+}
+
+body.admin-lab:not(.editor-portada) input:focus,
+body.admin-lab:not(.editor-portada) textarea:focus,
+body.admin-lab:not(.editor-portada) select:focus {
+  border-color: var(--primary-blue);
+  outline: 2px solid rgba(3, 82, 166, 0.25);
+  outline-offset: 1px;
+}
+
+@media (max-width: 900px) {
+  body.admin-lab #header {
+    padding: 0.85rem 1rem;
+  }
+
+  body.admin-lab .admin-lab-marca span {
+    font-size: 0.95rem;
+  }
+
+  body.admin-lab:not(.editor-portada) #content {
+    padding: 1rem 1rem 2rem;
+  }
+
+  body.admin-lab.dashboard #content-main {
+    max-width: none;
+  }
+
+  body.admin-lab.login #container {
+    margin: 1rem auto 2rem;
+  }
+}

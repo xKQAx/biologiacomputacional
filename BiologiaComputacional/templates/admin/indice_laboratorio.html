@@ -1,0 +1,28 @@
+{% extends "admin/index.html" %}
+{% load i18n %}
+
+{% block content %}
+<div id="content-main">
+  <p class="admin-lab-intro">Elige qué parte del sitio quieres actualizar.</p>
+
+  <div class="module" id="paginas-del-sitio">
+    <table>
+      <caption>
+        <a href="{% url 'admin:pagina_inicio' %}" class="section">Inicio</a>
+      </caption>
+      <tr>
+        <th scope="row">
+          <a href="{% url 'admin:pagina_inicio' %}">Editar página de inicio</a>
+          <span class="admin-lab-nota">Portada del sitio, con el editor en vivo.</span>
+        </th>
+        <td></td>
+        <td><a href="{% url 'admin:pagina_inicio' %}" class="changelink">{% translate 'Change' %}</a></td>
+      </tr>
+    </table>
+  </div>
+
+  {% if app_list %}
+    {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
+  {% endif %}
+</div>
+{% endblock %}
