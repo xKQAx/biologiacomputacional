@@ -48,23 +48,47 @@
     <div class="editor-columnas">
       <aside class="editor-panel" aria-label="Partes y propiedades">
         <p class="editor-ayuda">
-          Haz clic en un título, botón o imagen del lienzo. Aquí aparecen sus opciones
-          y el cambio se ve al momento.
+          Pasa el cursor por el lienzo: lo que se puede editar se resalta. Haz clic
+          para ver aquí su nombre y cambiar el texto al momento. Sube o baja las
+          secciones; la barra y el pie se quedan en su sitio.
         </p>
         <h2>Partes</h2>
         <ul class="editor-partes">
           {% for grupo in grupos %}
-          <li>
-            <button
-              type="button"
-              data-grupo-btn="{{ grupo.id }}"
-              {% if forloop.first %}class="activa" aria-current="true"{% endif %}
-            >{{ grupo.nombre }}</button>
-          </li>
+            {% if grupo.id == "barra" %}
+            <li>
+              <button type="button" data-grupo-btn="{{ grupo.id }}">{{ grupo.nombre }}</button>
+            </li>
+            {% endif %}
           {% endfor %}
         </ul>
+        <ul class="editor-secciones" id="lista-secciones">
+          {% for grupo in grupos %}
+            {% if grupo.ordenable %}
+            <li data-seccion-item="{{ grupo.id }}">
+              <button type="button" class="flecha" data-subir aria-label="Subir {{ grupo.nombre }}">↑</button>
+              <button
+                type="button"
+                data-grupo-btn="{{ grupo.id }}"
+                {% if grupo.id == grupo_inicial %}class="activa" aria-current="true"{% endif %}
+              >{{ grupo.nombre }}</button>
+              <button type="button" class="flecha" data-bajar aria-label="Bajar {{ grupo.nombre }}">↓</button>
+            </li>
+            {% endif %}
+          {% endfor %}
+        </ul>
+        <ul class="editor-partes">
+          {% for grupo in grupos %}
+            {% if grupo.id == "pie" %}
+            <li>
+              <button type="button" data-grupo-btn="{{ grupo.id }}">{{ grupo.nombre }}</button>
+            </li>
+            {% endif %}
+          {% endfor %}
+        </ul>
+        <input type="hidden" name="orden_secciones" id="orden-secciones" value="{{ orden_secciones }}">
 
-        <h2 id="titulo-propiedades">{{ grupos.0.nombre }}</h2>
+        <h2 id="titulo-propiedades">{{ grupo_inicial_nombre }}</h2>
         <div id="propiedades">
           {% for grupo in grupos %}
             {% for bloque in grupo.bloques %}
@@ -73,9 +97,10 @@
               data-grupo="{{ bloque.grupo }}"
               data-vista="{{ bloque.vista }}"
               data-etiqueta="{{ bloque.etiqueta }}"
-              {% if bloque.grupo != grupos.0.id %}hidden{% endif %}
+              data-nombre="{{ bloque.nombre }}"
+              {% if bloque.grupo != grupo_inicial %}hidden{% endif %}
             >
-              <legend>{{ bloque.etiqueta }}</legend>
+              <legend>{{ bloque.nombre }}</legend>
               <label for="texto-{{ bloque.clave }}">{{ bloque.etiqueta_texto }}</label>
               {% if bloque.area %}
               <textarea

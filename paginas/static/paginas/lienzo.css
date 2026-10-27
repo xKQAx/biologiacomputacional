@@ -1,4 +1,6 @@
-/* Solo dentro del lienzo del editor: marca lo que se puede tocar. */
+/* Solo dentro del lienzo del editor: marca lo que se puede tocar.
+   El anillo va por dentro: botones, fotos y el pie recortan lo que se dibuja
+   por fuera, y el hover del sitio tapa un fondo suave. */
 html[data-vista="visitante"] [data-vista="sesion"] {
   display: none !important;
 }
@@ -9,14 +11,22 @@ html[data-vista="sesion"] [data-vista="visitante"] {
 
 [data-edit-id] {
   cursor: pointer;
-  outline-offset: 3px;
+  border-radius: 3px;
 }
 
 [data-edit-id]:hover {
-  outline: 2px dashed #c9a227;
+  cursor: pointer;
+  outline: 2px dashed #022d7c !important;
+  outline-offset: -3px;
+  box-shadow: inset 0 0 0 3px #efb810 !important;
+  background-color: rgba(239, 184, 16, 0.34) !important;
 }
 
-.edit-seleccionado {
-  outline: 3px solid #c9a227 !important;
-  outline-offset: 3px;
+.edit-seleccionado,
+[data-edit-id].edit-seleccionado:hover {
+  cursor: pointer;
+  outline: 3px solid #022d7c !important;
+  outline-offset: -4px;
+  background-color: rgba(239, 184, 16, 0.5) !important;
+  box-shadow: inset 0 0 0 4px #efb810 !important;
 }

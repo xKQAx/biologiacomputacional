@@ -47,7 +47,8 @@ body.editor-portada #content {
 
 .editor-vistas button,
 .editor-acciones button,
-.editor-partes button {
+.editor-partes button,
+.editor-secciones button {
   font: inherit;
   cursor: pointer;
   border: 1px solid var(--border-color, #ccc);
@@ -58,7 +59,8 @@ body.editor-portada #content {
 }
 
 .editor-vistas button.activa,
-.editor-partes button.activa {
+.editor-partes button.activa,
+.editor-secciones button.activa {
   background: var(--selected-bg, #e4e4e4);
   border-color: var(--secondary, #417690);
   font-weight: 600;
@@ -113,6 +115,37 @@ body.editor-portada #content {
 .editor-partes button {
   width: 100%;
   text-align: left;
+}
+
+.editor-secciones {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.editor-secciones li {
+  display: flex;
+  gap: 0.25rem;
+  align-items: stretch;
+}
+
+.editor-secciones [data-grupo-btn] {
+  flex: 1;
+  text-align: left;
+}
+
+.editor-secciones .flecha {
+  width: 2rem;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.editor-secciones .flecha:disabled {
+  opacity: 0.35;
+  cursor: default;
 }
 
 #propiedades fieldset {

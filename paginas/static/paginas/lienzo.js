@@ -48,6 +48,9 @@
     if (!el) return;
     var enlace = enlacePermitido(data.enlace);
 
+    if (el.hasAttribute("aria-label")) el.setAttribute("aria-label", data.texto);
+    if (el.hasAttribute("data-bs-title")) el.setAttribute("data-bs-title", data.texto);
+
     if (el.getAttribute("data-edit-imagen") === "1") {
       el.alt = data.texto;
       if (enlace) el.src = enlace;
@@ -64,6 +67,18 @@
     }
 
     if (el.hasAttribute("href") && enlace !== null) el.setAttribute("href", enlace);
+  }
+
+  function reordenar(orden) {
+    var contenedor = document.getElementById("contenido-inicio");
+    if (!contenedor || !Array.isArray(orden)) return;
+    var vistos = {};
+    orden.forEach(function (id) {
+      if (!claveValida(id) || vistos[id]) return;
+      vistos[id] = true;
+      var el = contenedor.querySelector('[data-seccion="' + CSS.escape(id) + '"]');
+      if (el) contenedor.appendChild(el);
+    });
   }
 
   function resaltar(clave, desplazar) {
@@ -103,6 +118,7 @@
     if (event.origin !== ORIGEN || event.source !== window.parent) return;
     var data = event.data || {};
     if (data.tipo === "actualizar") aplicar(data);
+    if (data.tipo === "reordenar") reordenar(data.orden);
     if (data.tipo === "vista") {
       document.documentElement.dataset.vista = data.vista === "sesion" ? "sesion" : "visitante";
     }

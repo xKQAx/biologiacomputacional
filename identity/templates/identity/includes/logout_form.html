@@ -1,7 +1,8 @@
+{% load paginas %}
 <form method="post" action="{% url 'logout' %}" class="{{ form_class|default:'' }}">
   {% csrf_token %}
   <button type="submit" class="{{ button_class }}">
     <i class="fa-solid fa-arrow-right-from-bracket{% if icon_class %} {{ icon_class }}{% endif %}" aria-hidden="true"></i>
-    Cerrar sesión
+    <span {% edit_attrs "nav_salir" %}>{{ bloques.nav_salir.contenido }}</span>
   </button>
 </form>

@@ -1,0 +1,65 @@
+{% load paginas %}
+<section class="beneficios-section py-5" data-seccion="beneficios">
+  <div class="container">
+    <div class="row align-items-center gy-5">
+      <div class="col-12 col-md-6 fade-in-left">
+        <div class="section-tag mb-3" {% edit_attrs "beneficios_etiqueta" %}>
+          <i class="fa-solid fa-star me-2" aria-hidden="true"></i>
+          <span data-edit-texto>{{ bloques.beneficios_etiqueta.contenido }}</span>
+        </div>
+        <h2 class="section-title mb-4" {% edit_attrs "beneficios_titulo" %}>{{ bloques.beneficios_titulo.contenido }}</h2>
+
+        <div class="beneficio-card mb-3">
+          <div class="beneficio-icon">
+            <i class="fa-solid fa-database" aria-hidden="true"></i>
+          </div>
+          <div>
+            <h6 class="beneficio-title" {% edit_attrs "beneficio_acceso_titulo" %}>{{ bloques.beneficio_acceso_titulo.contenido }}</h6>
+            <p class="beneficio-text" {% edit_attrs "beneficio_acceso_texto" %}>{{ bloques.beneficio_acceso_texto.contenido }}</p>
+          </div>
+        </div>
+
+        <div class="beneficio-card mb-3">
+          <div class="beneficio-icon">
+            <i class="fa-solid fa-users" aria-hidden="true"></i>
+          </div>
+          <div>
+            <h6 class="beneficio-title" {% edit_attrs "beneficio_comunidad_titulo" %}>{{ bloques.beneficio_comunidad_titulo.contenido }}</h6>
+            <p class="beneficio-text" {% edit_attrs "beneficio_comunidad_texto" %}>{{ bloques.beneficio_comunidad_texto.contenido }}</p>
+          </div>
+        </div>
+
+        <div class="beneficio-card mb-3">
+          <div class="beneficio-icon">
+            <i class="fa-solid fa-microscope" aria-hidden="true"></i>
+          </div>
+          <div>
+            <h6 class="beneficio-title" {% edit_attrs "beneficio_investigacion_titulo" %}>{{ bloques.beneficio_investigacion_titulo.contenido }}</h6>
+            <p class="beneficio-text" {% edit_attrs "beneficio_investigacion_texto" %}>{{ bloques.beneficio_investigacion_texto.contenido }}</p>
+          </div>
+        </div>
+
+        <div class="beneficio-card">
+          <div class="beneficio-icon">
+            <i class="fa-solid fa-headset" aria-hidden="true"></i>
+          </div>
+          <div>
+            <h6 class="beneficio-title" {% edit_attrs "beneficio_soporte_titulo" %}>{{ bloques.beneficio_soporte_titulo.contenido }}</h6>
+            <p class="beneficio-text" {% edit_attrs "beneficio_soporte_texto" %}>{{ bloques.beneficio_soporte_texto.contenido }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-md-6 d-flex justify-content-center fade-in-right">
+        <dotlottie-player
+          src="https://lottie.host/79369937-3d10-4b1f-8c34-691a5c151efd/KHCB4BnzAO.json"
+          background="transparent"
+          speed="1"
+          class="beneficios-lottie"
+          loop
+          autoplay
+        ></dotlottie-player>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,143 @@
+{% load static paginas %}
+<footer class="mt-5 pt-5 pb-4">
+  <div class="container text-center text-md-start">
+    <div class="row align-items-start gy-4">
+      <div class="col-12 col-md-4 fade-in-left">
+        <a
+          href="{% url 'inicio' %}"
+          class="navbar-brand"
+          data-bs-toggle="tooltip"
+          data-bs-placement="right"
+          data-bs-title="Inicio"
+          aria-label="Inicio - Biología Computacional"
+        >
+          <img
+            src="{% static 'images/logo-white.png' %}"
+            width="50"
+            height="40"
+            alt="Logo BC"
+          />
+        </a>
+        <p class="light-text mt-3" style="color: white" {% edit_attrs "pie_descripcion" %}>
+          {{ bloques.pie_descripcion.contenido }}
+        </p>
+        <div class="mt-3">
+          <a
+            href="{{ bloques.pie_facebook.enlace }}"
+            class="text-white me-3 text-decoration-none"
+            data-bs-toggle="tooltip"
+            data-bs-placement="bottom"
+            data-bs-title="{{ bloques.pie_facebook.texto }}"
+            aria-label="{{ bloques.pie_facebook.texto }}"
+            {% edit_attrs "pie_facebook" %}
+          >
+            <i class="fa-brands fa-facebook" aria-hidden="true"></i>
+            <span class="visually-hidden" data-edit-texto>{{ bloques.pie_facebook.texto }}</span>
+          </a>
+          <a
+            href="{{ bloques.pie_instagram.enlace }}"
+            class="text-white me-3 text-decoration-none"
+            data-bs-toggle="tooltip"
+            data-bs-placement="bottom"
+            data-bs-title="{{ bloques.pie_instagram.texto }}"
+            aria-label="{{ bloques.pie_instagram.texto }}"
+            {% edit_attrs "pie_instagram" %}
+          >
+            <i class="fa-brands fa-instagram" aria-hidden="true"></i>
+            <span class="visually-hidden" data-edit-texto>{{ bloques.pie_instagram.texto }}</span>
+          </a>
+          <a
+            href="{{ bloques.pie_x.enlace }}"
+            class="text-white me-3 text-decoration-none"
+            data-bs-toggle="tooltip"
+            data-bs-placement="bottom"
+            data-bs-title="{{ bloques.pie_x.texto }}"
+            aria-label="{{ bloques.pie_x.texto }}"
+            {% edit_attrs "pie_x" %}
+          >
+            <i class="fa-brands fa-x-twitter" aria-hidden="true"></i>
+            <span class="visually-hidden" data-edit-texto>{{ bloques.pie_x.texto }}</span>
+          </a>
+          <a
+            href="{{ bloques.pie_linkedin.enlace }}"
+            class="text-white text-decoration-none"
+            data-bs-toggle="tooltip"
+            data-bs-placement="bottom"
+            data-bs-title="{{ bloques.pie_linkedin.texto }}"
+            aria-label="{{ bloques.pie_linkedin.texto }}"
+            {% edit_attrs "pie_linkedin" %}
+          >
+            <i class="fa-brands fa-linkedin" aria-hidden="true"></i>
+            <span class="visually-hidden" data-edit-texto>{{ bloques.pie_linkedin.texto }}</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="col-12 col-md-2 fade-in-up">
+        <h6 {% edit_attrs "pie_recursos_titulo" %}>{{ bloques.pie_recursos_titulo.contenido }}</h6>
+        <p class="mb-2">
+          <a href="{{ bloques.pie_recursos_inicio.enlace }}" {% edit_attrs "pie_recursos_inicio" %}
+            ><span data-edit-texto>{{ bloques.pie_recursos_inicio.contenido }}</span></a
+          >
+        </p>
+        <p class="mb-2">
+          <a href="{{ bloques.pie_recursos_profesionales.enlace }}" {% edit_attrs "pie_recursos_profesionales" %}
+            ><span data-edit-texto>{{ bloques.pie_recursos_profesionales.contenido }}</span></a
+          >
+        </p>
+        <p class="mb-2">
+          <a href="{{ bloques.pie_recursos_investigacion.enlace }}" {% edit_attrs "pie_recursos_investigacion" %}
+            ><span data-edit-texto>{{ bloques.pie_recursos_investigacion.contenido }}</span></a
+          >
+        </p>
+        <p class="mb-2">
+          <a href="{{ bloques.pie_recursos_servicios.enlace }}" {% edit_attrs "pie_recursos_servicios" %}
+            ><span data-edit-texto>{{ bloques.pie_recursos_servicios.contenido }}</span></a
+          >
+        </p>
+        <p>
+          <a href="{{ bloques.pie_recursos_contacto.enlace }}" {% edit_attrs "pie_recursos_contacto" %}
+            ><span data-edit-texto>{{ bloques.pie_recursos_contacto.contenido }}</span></a
+          >
+        </p>
+      </div>
+
+      <div class="col-12 col-md-3 fade-in-up">
+        <h6 {% edit_attrs "pie_legal_titulo" %}>{{ bloques.pie_legal_titulo.contenido }}</h6>
+        <p class="mb-2">
+          <a href="{{ bloques.pie_legal_privacidad.enlace }}" {% edit_attrs "pie_legal_privacidad" %}
+            ><span data-edit-texto>{{ bloques.pie_legal_privacidad.contenido }}</span></a
+          >
+        </p>
+        <p class="mb-2">
+          <a href="{{ bloques.pie_legal_terminos.enlace }}" {% edit_attrs "pie_legal_terminos" %}
+            ><span data-edit-texto>{{ bloques.pie_legal_terminos.contenido }}</span></a
+          >
+        </p>
+        <p>
+          <a href="{{ bloques.pie_legal_aviso.enlace }}" {% edit_attrs "pie_legal_aviso" %}
+            ><span data-edit-texto>{{ bloques.pie_legal_aviso.contenido }}</span></a
+          >
+        </p>
+      </div>
+
+      <div class="col-12 col-md-3 fade-in-right">
+        <h6 {% edit_attrs "pie_contacto_titulo" %}>{{ bloques.pie_contacto_titulo.contenido }}</h6>
+        <p class="light-text" style="color: white">
+          <i class="fa-solid fa-location-dot me-2" aria-hidden="true"></i>
+          <span {% edit_attrs "pie_direccion_1" %}>{{ bloques.pie_direccion_1.contenido }}</span><br />
+          <span class="ms-4" {% edit_attrs "pie_direccion_2" %}>{{ bloques.pie_direccion_2.contenido }}</span><br />
+          <span class="ms-4" {% edit_attrs "pie_direccion_3" %}>{{ bloques.pie_direccion_3.contenido }}</span>
+        </p>
+        <p class="light-text mt-3" style="color: white">
+          <i class="fa-solid fa-phone me-2" aria-hidden="true"></i>
+          <span {% edit_attrs "pie_telefono" %}>{{ bloques.pie_telefono.contenido }}</span>
+        </p>
+      </div>
+
+      <div class="col-12 mt-4 mb-3">
+        <hr />
+      </div>
+    </div>
+  </div>
+</footer>

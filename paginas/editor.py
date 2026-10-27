@@ -6,6 +6,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 
+from paginas.catalogo import NOMBRES_GRUPO
 from paginas.contenido import (
     contexto_lienzo,
     descartar_borrador,
@@ -14,6 +15,7 @@ from paginas.contenido import (
     hay_borrador,
     leer_valores,
     publicar,
+    resolver_orden,
 )
 
 
@@ -29,19 +31,19 @@ def editor_inicio(request):
             )
             return redirect('admin:pagina_inicio')
         if accion in ('guardar', 'publicar'):
-            valores, errores = leer_valores(request.POST)
+            valores, orden, errores = leer_valores(request.POST)
             if errores:
                 for error in errores:
                     messages.error(request, error)
-                return _pintar(request, valores, pendiente=True)
+                return _pintar(request, valores, orden, pendiente=True)
             if accion == 'guardar':
-                guardar_borrador(valores)
+                guardar_borrador(valores, orden)
                 messages.success(
                     request,
                     'Borrador guardado. La portada pública no cambió.',
                 )
             else:
-                publicar(valores)
+                publicar(valores, orden)
                 messages.success(request, 'Página de inicio publicada.')
             return redirect('admin:pagina_inicio')
         messages.error(request, 'No se reconoció la acción.')
@@ -50,14 +52,19 @@ def editor_inicio(request):
     return _pintar(request)
 
 
-def _pintar(request, valores=None, pendiente=False):
+def _pintar(request, valores=None, orden=None, pendiente=False):
+    if orden is None:
+        orden = resolver_orden(preferir_borrador=True)
     context = admin.site.each_context(request)
     context.update({
         'title': 'Editar página de inicio',
-        'grupos': grupos_editor(valores),
+        'grupos': grupos_editor(valores, orden),
         'hay_borrador': hay_borrador(),
         'lienzo_url': reverse('admin:pagina_inicio_lienzo'),
         'pendiente': pendiente,
+        'orden_secciones': ','.join(orden),
+        'grupo_inicial': orden[0],
+        'grupo_inicial_nombre': NOMBRES_GRUPO[orden[0]],
     })
     respuesta = render(request, 'admin/paginas/editor_inicio.html', context)
     respuesta['Cache-Control'] = 'no-store'

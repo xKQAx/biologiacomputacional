@@ -30,6 +30,7 @@ TEXTO_SUBTITULO_VISITANTE = (
 )
 
 GRUPOS = (
+    ('barra', 'Barra de navegación'),
     ('encabezado', 'Encabezado'),
     ('instituciones', 'Instituciones'),
     ('caracteristicas', 'Características'),
@@ -37,7 +38,31 @@ GRUPOS = (
     ('nosotros', 'Nosotros'),
     ('beneficios', 'Beneficios'),
     ('llamado', 'Llamado a la acción'),
+    ('pie', 'Pie de página'),
 )
+
+# La barra queda arriba y el pie abajo. Solo estas secciones se reordenan.
+SECCIONES = (
+    'encabezado',
+    'instituciones',
+    'caracteristicas',
+    'encontrar',
+    'nosotros',
+    'beneficios',
+    'llamado',
+)
+
+PLANTILLA_SECCION = {
+    'encabezado': 'inicio/secciones/encabezado.html',
+    'instituciones': 'inicio/secciones/instituciones.html',
+    'caracteristicas': 'inicio/secciones/caracteristicas.html',
+    'encontrar': 'inicio/secciones/encontrar.html',
+    'nosotros': 'inicio/secciones/nosotros.html',
+    'beneficios': 'inicio/secciones/beneficios.html',
+    'llamado': 'inicio/secciones/llamado.html',
+}
+
+NOMBRES_GRUPO = dict(GRUPOS)
 
 
 @dataclass(frozen=True)
@@ -247,6 +272,82 @@ _BASE = (
         'cta_contacto', 'llamado', 'Botón de contactar', 'Contactar al equipo',
         tipo=ENLACE, enlace_nombre='contactos', vista=VISITANTE,
     ),
+    _b('nav_inicio', 'barra', 'Inicio', 'Inicio', tipo=ENLACE, enlace_nombre='inicio'),
+    _b(
+        'nav_profesionales', 'barra', 'Profesionales', 'Profesionales',
+        tipo=ENLACE, enlace_nombre='buscarProfesional',
+    ),
+    _b(
+        'nav_investigacion', 'barra', 'Investigación', 'Investigación',
+        tipo=ENLACE, enlace_nombre='investigacion',
+    ),
+    _b('nav_servicios', 'barra', 'Servicios', 'Servicios', tipo=ENLACE, enlace_nombre='servicios'),
+    _b('nav_contacto', 'barra', 'Contacto', 'Contacto', tipo=ENLACE, enlace_nombre='contactos'),
+    _b(
+        'nav_registro', 'barra', 'Registrarme', 'Registrarme',
+        tipo=ENLACE, enlace_nombre='register', vista=VISITANTE,
+    ),
+    _b(
+        'nav_sesion', 'barra', 'Iniciar sesión', 'Iniciar sesión',
+        tipo=ENLACE, enlace_nombre='signin', vista=VISITANTE,
+    ),
+    _b(
+        'nav_perfil', 'barra', 'Mi perfil', 'Mi perfil',
+        tipo=ENLACE, enlace_nombre='perfil', vista=SESION,
+    ),
+    _b(
+        'nav_clave', 'barra', 'Cambiar contraseña', 'Cambiar contraseña',
+        tipo=ENLACE, enlace_nombre='cambio_contrasena', vista=SESION,
+    ),
+    _b(
+        'nav_gestion', 'barra', 'Gestionar usuarios', 'Gestionar usuarios',
+        tipo=ENLACE, enlace_nombre='gestion_usuarios', vista=SESION,
+    ),
+    _b('nav_salir', 'barra', 'Cerrar sesión', 'Cerrar sesión', vista=SESION),
+    _b(
+        'pie_descripcion', 'pie', 'Descripción',
+        'Laboratorio de Biología Computacional - Conectando Ciencia e Innovación',
+    ),
+    _b('pie_facebook', 'pie', 'Facebook', 'Facebook', tipo=ENLACE, enlace='#'),
+    _b('pie_instagram', 'pie', 'Instagram', 'Instagram', tipo=ENLACE, enlace='#'),
+    _b('pie_x', 'pie', 'Twitter / X', 'Twitter / X', tipo=ENLACE, enlace='#'),
+    _b('pie_linkedin', 'pie', 'LinkedIn', 'LinkedIn', tipo=ENLACE, enlace='#'),
+    _b('pie_recursos_titulo', 'pie', 'Título de recursos', 'Recursos'),
+    _b(
+        'pie_recursos_inicio', 'pie', 'Recursos: Inicio', 'Inicio',
+        tipo=ENLACE, enlace_nombre='inicio',
+    ),
+    _b(
+        'pie_recursos_profesionales', 'pie', 'Recursos: Profesionales', 'Profesionales',
+        tipo=ENLACE, enlace_nombre='buscarProfesional',
+    ),
+    _b(
+        'pie_recursos_investigacion', 'pie', 'Recursos: Investigación', 'Investigación',
+        tipo=ENLACE, enlace_nombre='investigacion',
+    ),
+    _b(
+        'pie_recursos_servicios', 'pie', 'Recursos: Servicios', 'Servicios',
+        tipo=ENLACE, enlace_nombre='servicios',
+    ),
+    _b(
+        'pie_recursos_contacto', 'pie', 'Recursos: Contacto', 'Contacto',
+        tipo=ENLACE, enlace_nombre='contactos',
+    ),
+    _b('pie_legal_titulo', 'pie', 'Título legal', 'Información Legal'),
+    _b(
+        'pie_legal_privacidad', 'pie', 'Políticas de Privacidad', 'Políticas de Privacidad',
+        tipo=ENLACE, enlace_nombre='politicas_privacidad',
+    ),
+    _b(
+        'pie_legal_terminos', 'pie', 'Términos de Servicio', 'Términos de Servicio',
+        tipo=ENLACE, enlace='#',
+    ),
+    _b('pie_legal_aviso', 'pie', 'Aviso Legal', 'Aviso Legal', tipo=ENLACE, enlace='#'),
+    _b('pie_contacto_titulo', 'pie', 'Título de contacto', 'Contacto'),
+    _b('pie_direccion_1', 'pie', 'Dirección', 'Campus Universitario Lagos del Cacique'),
+    _b('pie_direccion_2', 'pie', 'Calle', 'Calle 70 No. 55-210'),
+    _b('pie_direccion_3', 'pie', 'Ciudad', 'Bucaramanga, Colombia'),
+    _b('pie_telefono', 'pie', 'Teléfono', 'PBX: +57 607 6516500'),
 )
 
 CATALOGO = tuple(
@@ -261,6 +362,18 @@ _GRUPOS_VALIDOS = {grupo_id for grupo_id, _nombre in GRUPOS}
 for _item in CATALOGO:
     if _item.grupo not in _GRUPOS_VALIDOS:
         raise RuntimeError(f'Grupo desconocido en {_item.clave}.')
+
+if set(PLANTILLA_SECCION) != set(SECCIONES):
+    raise RuntimeError('Cada sección ordenable necesita su plantilla.')
+
+for _seccion in SECCIONES:
+    if _seccion not in _GRUPOS_VALIDOS:
+        raise RuntimeError(f'Sección desconocida: {_seccion}.')
+
+
+def nombre_legible(definicion):
+    """Parte y campo en español, para el panel del editor."""
+    return f'{NOMBRES_GRUPO[definicion.grupo]} · {definicion.etiqueta}'
 
 
 def enlace_predeterminado(definicion):

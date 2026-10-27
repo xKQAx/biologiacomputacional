@@ -1,0 +1,71 @@
+{% load paginas %}
+<section class="py-5" data-seccion="encontrar">
+  <div class="container">
+    <div class="section-header text-center mb-5">
+      <h2 class="section-title" {% edit_attrs "encontrar_titulo" %}>{{ bloques.encontrar_titulo.contenido }}</h2>
+      <p class="section-subtitle" {% edit_attrs "encontrar_subtitulo" %}>{{ bloques.encontrar_subtitulo.contenido }}</p>
+    </div>
+
+    <div class="row g-4 justify-content-center">
+      <div class="col-12 col-md-4 d-flex justify-content-center">
+        <div class="cardbox cardbox--delay-1 fade-in-up">
+          <div class="card-image-container">
+            <img
+              src="{{ bloques.tarjeta_profesionales_imagen.enlace }}"
+              class="card-img-fit"
+              alt="{{ bloques.tarjeta_profesionales_imagen.texto }}"
+              loading="lazy"
+              width="380"
+              height="280"
+              {% edit_attrs "tarjeta_profesionales_imagen" %}
+            />
+          </div>
+          <a href="{{ bloques.tarjeta_profesionales_titulo.enlace }}" {% edit_attrs "tarjeta_profesionales_titulo" %}>
+            <h5 class="mt-2 mb-3" data-edit-texto>{{ bloques.tarjeta_profesionales_titulo.contenido }}</h5>
+          </a>
+          <p class="fw-light" {% edit_attrs "tarjeta_profesionales_texto" %}>{{ bloques.tarjeta_profesionales_texto.contenido }}</p>
+        </div>
+      </div>
+
+      <div class="col-12 col-md-4 d-flex justify-content-center">
+        <div class="cardbox cardbox--delay-2 fade-in-up">
+          <div class="card-image-container">
+            <img
+              src="{{ bloques.tarjeta_investigacion_imagen.enlace }}"
+              class="card-img-fit"
+              alt="{{ bloques.tarjeta_investigacion_imagen.texto }}"
+              loading="lazy"
+              width="380"
+              height="280"
+              {% edit_attrs "tarjeta_investigacion_imagen" %}
+            />
+          </div>
+          <a href="{{ bloques.tarjeta_investigacion_titulo.enlace }}" {% edit_attrs "tarjeta_investigacion_titulo" %}>
+            <h5 class="mt-2 mb-3" data-edit-texto>{{ bloques.tarjeta_investigacion_titulo.contenido }}</h5>
+          </a>
+          <p class="fw-light" {% edit_attrs "tarjeta_investigacion_texto" %}>{{ bloques.tarjeta_investigacion_texto.contenido }}</p>
+        </div>
+      </div>
+
+      <div class="col-12 col-md-4 d-flex justify-content-center">
+        <div class="cardbox cardbox--delay-3 fade-in-up">
+          <div class="card-image-container">
+            <img
+              src="{{ bloques.tarjeta_servicios_imagen.enlace }}"
+              class="card-img-fit"
+              alt="{{ bloques.tarjeta_servicios_imagen.texto }}"
+              loading="lazy"
+              width="380"
+              height="280"
+              {% edit_attrs "tarjeta_servicios_imagen" %}
+            />
+          </div>
+          <a href="{{ bloques.tarjeta_servicios_titulo.enlace }}" {% edit_attrs "tarjeta_servicios_titulo" %}>
+            <h5 class="mt-2 mb-3" data-edit-texto>{{ bloques.tarjeta_servicios_titulo.contenido }}</h5>
+          </a>
+          <p class="fw-light" {% edit_attrs "tarjeta_servicios_texto" %}>{{ bloques.tarjeta_servicios_texto.contenido }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

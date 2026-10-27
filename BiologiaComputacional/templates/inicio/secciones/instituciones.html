@@ -1,0 +1,28 @@
+{% load paginas %}
+<section class="partners-section py-4" data-seccion="instituciones">
+  <div class="container">
+    <p class="text-center partners-label mb-4" {% edit_attrs "partners_etiqueta" %}>{{ bloques.partners_etiqueta.contenido }}</p>
+    <div
+      class="d-flex justify-content-center align-items-center flex-wrap gap-5"
+    >
+      <img
+        src="{{ bloques.partner_biocom.enlace }}"
+        height="110"
+        width="130"
+        alt="{{ bloques.partner_biocom.texto }}"
+        class="partner-logo"
+        loading="lazy"
+        {% edit_attrs "partner_biocom" %}
+      />
+      <img
+        src="{{ bloques.partner_udes.enlace }}"
+        height="110"
+        width="130"
+        alt="{{ bloques.partner_udes.texto }}"
+        class="partner-logo"
+        loading="lazy"
+        {% edit_attrs "partner_udes" %}
+      />
+    </div>
+  </div>
+</section>

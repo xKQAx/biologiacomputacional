@@ -1,0 +1,46 @@
+{% load paginas %}
+<section class="highlights-section py-5" data-seccion="caracteristicas">
+  <div class="container">
+    <div class="row g-3 justify-content-center">
+      <div class="col-6 col-md-3">
+        <div class="highlight-card text-center">
+          <div class="highlight-icon mx-auto mb-3">
+            <i class="fa-solid fa-users" aria-hidden="true"></i>
+          </div>
+          <h6 class="highlight-title" {% edit_attrs "highlight_comunidad_titulo" %}>{{ bloques.highlight_comunidad_titulo.contenido }}</h6>
+          <p class="highlight-text" {% edit_attrs "highlight_comunidad_texto" %}>{{ bloques.highlight_comunidad_texto.contenido }}</p>
+        </div>
+      </div>
+
+      <div class="col-6 col-md-3">
+        <div class="highlight-card text-center">
+          <div class="highlight-icon mx-auto mb-3">
+            <i class="fa-solid fa-microscope" aria-hidden="true"></i>
+          </div>
+          <h6 class="highlight-title" {% edit_attrs "highlight_investigacion_titulo" %}>{{ bloques.highlight_investigacion_titulo.contenido }}</h6>
+          <p class="highlight-text" {% edit_attrs "highlight_investigacion_texto" %}>{{ bloques.highlight_investigacion_texto.contenido }}</p>
+        </div>
+      </div>
+
+      <div class="col-6 col-md-3">
+        <div class="highlight-card text-center">
+          <div class="highlight-icon mx-auto mb-3">
+            <i class="fa-solid fa-database" aria-hidden="true"></i>
+          </div>
+          <h6 class="highlight-title" {% edit_attrs "highlight_datos_titulo" %}>{{ bloques.highlight_datos_titulo.contenido }}</h6>
+          <p class="highlight-text" {% edit_attrs "highlight_datos_texto" %}>{{ bloques.highlight_datos_texto.contenido }}</p>
+        </div>
+      </div>
+
+      <div class="col-6 col-md-3">
+        <div class="highlight-card text-center">
+          <div class="highlight-icon mx-auto mb-3">
+            <i class="fa-solid fa-lock-open" aria-hidden="true"></i>
+          </div>
+          <h6 class="highlight-title" {% edit_attrs "highlight_acceso_titulo" %}>{{ bloques.highlight_acceso_titulo.contenido }}</h6>
+          <p class="highlight-text" {% edit_attrs "highlight_acceso_texto" %}>{{ bloques.highlight_acceso_texto.contenido }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

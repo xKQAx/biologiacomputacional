@@ -1,4 +1,4 @@
-/* Panel izquierdo y lienzo: el clic elige el bloque y el texto se ve al escribir. */
+/* Panel izquierdo y lienzo: el clic elige el bloque, el texto se ve al escribir y el orden se mueve al instante. */
 (function () {
   var ORIGEN = window.location.origin;
   var form = document.getElementById("form-portada");
@@ -13,7 +13,8 @@
   var seleccion = { tipo: "parte", grupo: grupoInicial(), clave: "" };
 
   function grupoInicial() {
-    var boton = document.querySelector("[data-grupo-btn]");
+    var boton = document.querySelector("[data-grupo-btn][aria-current='true']");
+    if (!boton) boton = document.querySelector("[data-grupo-btn]");
     return boton ? boton.getAttribute("data-grupo-btn") : "";
   }
 
@@ -43,10 +44,56 @@
     };
   }
 
+  function ordenActual() {
+    return Array.prototype.map.call(
+      document.querySelectorAll("[data-seccion-item]"),
+      function (item) {
+        return item.getAttribute("data-seccion-item");
+      }
+    );
+  }
+
+  function enviarOrden() {
+    var orden = ordenActual();
+    if (orden.length) post({ tipo: "reordenar", orden: orden });
+  }
+
   function sincronizar() {
     form.querySelectorAll("fieldset[data-clave]").forEach(function (fs) {
       post(mensajeCampo(fs));
     });
+    enviarOrden();
+  }
+
+  function actualizarFlechas() {
+    var items = document.querySelectorAll("[data-seccion-item]");
+    Array.prototype.forEach.call(items, function (item, indice) {
+      var subir = item.querySelector("[data-subir]");
+      var bajar = item.querySelector("[data-bajar]");
+      if (subir) subir.disabled = indice === 0;
+      if (bajar) bajar.disabled = indice === items.length - 1;
+    });
+  }
+
+  function moverSeccion(id, delta) {
+    var lista = document.getElementById("lista-secciones");
+    if (!lista || !claveValida(id)) return;
+    var items = Array.prototype.slice.call(lista.querySelectorAll("[data-seccion-item]"));
+    var index = -1;
+    items.forEach(function (item, indice) {
+      if (item.getAttribute("data-seccion-item") === id) index = indice;
+    });
+    var destino = index + delta;
+    if (index < 0 || destino < 0 || destino >= items.length) return;
+    var nodo = items[index];
+    if (delta < 0) lista.insertBefore(nodo, items[destino]);
+    else lista.insertBefore(items[destino], nodo);
+    var campo = document.getElementById("orden-secciones");
+    if (campo) campo.value = ordenActual().join(",");
+    actualizarFlechas();
+    editado = true;
+    aviso.textContent = "El lienzo ya muestra el cambio. Guarda el borrador para no perderlo.";
+    enviarOrden();
   }
 
   function marcarVista(vista) {
@@ -75,7 +122,7 @@
 
     if (seleccion.tipo === "bloque") {
       var fs = fieldset(seleccion.clave);
-      titulo.textContent = fs ? fs.getAttribute("data-etiqueta") : "Propiedades";
+      titulo.textContent = fs ? fs.getAttribute("data-nombre") : "Propiedades";
     } else {
       var boton = form.querySelector(
         '[data-grupo-btn="' + CSS.escape(seleccion.grupo) + '"]'
@@ -109,6 +156,18 @@
       if (campo) campo.focus();
       fs.scrollIntoView({ block: "nearest" });
     }
+  }
+
+  var listaSecciones = document.getElementById("lista-secciones");
+  if (listaSecciones) {
+    listaSecciones.addEventListener("click", function (event) {
+      var subir = event.target.closest("[data-subir]");
+      var bajar = event.target.closest("[data-bajar]");
+      if (!subir && !bajar) return;
+      var item = event.target.closest("[data-seccion-item]");
+      if (!item) return;
+      moverSeccion(item.getAttribute("data-seccion-item"), subir ? -1 : 1);
+    });
   }
 
   document.querySelectorAll("[data-grupo-btn]").forEach(function (boton) {
@@ -175,5 +234,6 @@
     if (data.tipo === "seleccionar") elegirBloque(data.clave, true);
   });
 
+  actualizarFlechas();
   pintar();
 })();

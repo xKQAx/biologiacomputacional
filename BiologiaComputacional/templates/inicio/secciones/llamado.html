@@ -1,0 +1,17 @@
+{% load paginas %}
+{% if modo_editor or not user.is_authenticated %}
+<section class="cta-section py-5" {% vista_attrs "visitante" %} data-seccion="llamado">
+  <div class="container text-center">
+    <h2 class="cta-title mb-3" {% edit_attrs "cta_titulo" %}>{{ bloques.cta_titulo.contenido }}</h2>
+    <p class="cta-subtitle mb-4" {% edit_attrs "cta_subtitulo" %}>{{ bloques.cta_subtitulo.contenido }}</p>
+    <div class="d-flex gap-3 justify-content-center flex-wrap">
+      <a href="{{ bloques.cta_cuenta.enlace }}" class="btn cta-btn-primary" {% edit_attrs "cta_cuenta" %}>
+        <span data-edit-texto>{{ bloques.cta_cuenta.contenido }}</span>
+      </a>
+      <a href="{{ bloques.cta_contacto.enlace }}" class="btn cta-btn-outline" {% edit_attrs "cta_contacto" %}>
+        <span data-edit-texto>{{ bloques.cta_contacto.contenido }}</span>
+      </a>
+    </div>
+  </div>
+</section>
+{% endif %}

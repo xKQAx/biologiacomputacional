@@ -1,0 +1,182 @@
+{% load static paginas %}
+<nav
+  class="navbar-custom navbar navbar-expand-lg"
+  id="navbar"
+  data-bs-theme="light"
+  aria-label="Navegación principal"
+>
+  <div class="navbar-inner">
+    <a
+      href="{% url 'inicio' %}"
+      class="navbar-brand"
+      data-bs-toggle="tooltip"
+      data-bs-placement="right"
+      data-bs-title="Inicio"
+      aria-label="Inicio - Biología Computacional"
+    >
+      <img
+        src="{% static 'images/logo.png' %}"
+        width="40"
+        height="40"
+        alt="Logo BioCOM"
+      />
+    </a>
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#menu-desplegable"
+      aria-controls="menu-desplegable"
+      aria-expanded="false"
+      aria-label="Abrir menú de navegación"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="menu-desplegable">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+          <a
+            class="nav-link{% if request.path == bloques.nav_inicio.enlace %} active{% endif %}"
+            href="{{ bloques.nav_inicio.enlace }}"
+            {% edit_attrs "nav_inicio" %}
+            ><span data-edit-texto>{{ bloques.nav_inicio.contenido }}</span></a
+          >
+        </li>
+        <li class="nav-item">
+          <a
+            class="nav-link{% if bloques.nav_profesionales.enlace in request.path %} active{% endif %}"
+            href="{{ bloques.nav_profesionales.enlace }}"
+            {% edit_attrs "nav_profesionales" %}
+            ><span data-edit-texto>{{ bloques.nav_profesionales.contenido }}</span></a
+          >
+        </li>
+        <li class="nav-item">
+          <a
+            class="nav-link{% if bloques.nav_investigacion.enlace in request.path %} active{% endif %}"
+            href="{{ bloques.nav_investigacion.enlace }}"
+            {% edit_attrs "nav_investigacion" %}
+            ><span data-edit-texto>{{ bloques.nav_investigacion.contenido }}</span></a
+          >
+        </li>
+        <li class="nav-item">
+          <a
+            class="nav-link{% if bloques.nav_servicios.enlace in request.path %} active{% endif %}"
+            href="{{ bloques.nav_servicios.enlace }}"
+            {% edit_attrs "nav_servicios" %}
+            ><span data-edit-texto>{{ bloques.nav_servicios.contenido }}</span></a
+          >
+        </li>
+        <li class="nav-item">
+          <a
+            class="nav-link{% if bloques.nav_contacto.enlace in request.path %} active{% endif %}"
+            href="{{ bloques.nav_contacto.enlace }}"
+            {% edit_attrs "nav_contacto" %}
+            ><span data-edit-texto>{{ bloques.nav_contacto.contenido }}</span></a
+          >
+        </li>
+
+        {% if modo_editor or not user.is_authenticated %}
+        <li class="nav-item nav-auth" {% if modo_editor %}{% vista_attrs "visitante" %}{% endif %}>
+          <a
+            class="btn btn-white rounded-pill"
+            href="{{ bloques.nav_registro.enlace }}"
+            role="button"
+            {% edit_attrs "nav_registro" %}
+          >
+            <span class="button-text" data-edit-texto>{{ bloques.nav_registro.contenido }}</span>
+            <i class="fa-regular fa-user" aria-hidden="true"></i>
+          </a>
+
+          <a
+            class="btn btn-warning rounded-pill shadow-sm"
+            href="{{ bloques.nav_sesion.enlace }}"
+            role="button"
+            {% edit_attrs "nav_sesion" %}
+          >
+            <span class="button-text" data-edit-texto>{{ bloques.nav_sesion.contenido }}</span>
+            <i
+              class="fa-solid fa-arrow-right-to-bracket"
+              aria-hidden="true"
+            ></i>
+          </a>
+        </li>
+        {% endif %}
+        {% if modo_editor or user.is_authenticated %}
+        <li class="nav-item dropdown user-menu" {% if modo_editor %}{% vista_attrs "sesion" %}{% endif %}>
+          <button
+            class="btn btn-white text-capitalize"
+            type="button"
+            data-bs-toggle="dropdown"
+            data-bs-display="static"
+            data-bs-auto-close="outside"
+            aria-expanded="false"
+            aria-label="Menú de usuario: {{ user.first_name }}"
+          >
+            {{ user.first_name }}
+            <img
+              src="{{ user.profileadditionalinfo.image.url }}"
+              class="rounded-circle border border-black avatar-xs"
+              alt="Foto de perfil de {{ user.first_name }}"
+            />
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end shadow">
+            <li>
+              <div
+                class="col-sm-12 px-2 d-flex flex-column justify-content-center"
+              >
+                <strong class="dropdown-header text-capitalize"
+                  >{{ user.first_name }} {{ user.last_name }}
+                  <p class="text-lowercase fw-light mb-0">
+                    {{ user.email }}
+                  </p>
+                </strong>
+              </div>
+            </li>
+            <li>
+              <hr class="dropdown-divider" />
+            </li>
+            <li>
+              <a class="dropdown-item px-4" href="{{ bloques.nav_perfil.enlace }}" {% edit_attrs "nav_perfil" %}
+                ><i
+                  class="fa-solid fa-circle-info px-2 text-secondary"
+                  aria-hidden="true"
+                ></i>
+                <span data-edit-texto>{{ bloques.nav_perfil.contenido }}</span></a
+              >
+            </li>
+            <li>
+              <a
+                class="dropdown-item px-4"
+                href="{{ bloques.nav_clave.enlace }}"
+                {% edit_attrs "nav_clave" %}
+                ><i
+                  class="fa-solid fa-key px-2 text-secondary"
+                  aria-hidden="true"
+                ></i>
+                <span data-edit-texto>{{ bloques.nav_clave.contenido }}</span></a
+              >
+            </li>
+            {% if user.is_superuser or user.is_staff %}
+            <li>
+              <a
+                class="dropdown-item px-4"
+                href="{{ bloques.nav_gestion.enlace }}"
+                {% edit_attrs "nav_gestion" %}
+                ><i
+                  class="fa-solid fa-user-gear px-2 text-secondary"
+                  aria-hidden="true"
+                ></i>
+                <span data-edit-texto>{{ bloques.nav_gestion.contenido }}</span></a
+              >
+            </li>
+            {% endif %}
+            <li>
+              {% include "identity/includes/logout_form.html" with form_class="w-100" button_class="dropdown-item px-4 text-danger" icon_class="px-2" %}
+            </li>
+          </ul>
+        </li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>

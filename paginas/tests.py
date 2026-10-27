@@ -46,6 +46,13 @@ class EditorInicioTests(TestCase):
         self.assertContains(editor, 'Publicar')
         self.assertContains(editor, 'Descartar')
         self.assertContains(editor, self.lienzo)
+        self.assertContains(editor, 'Encabezado · Título')
+        self.assertContains(editor, 'Barra de navegación · Inicio')
+        self.assertContains(editor, 'Pie de página · Teléfono')
+        self.assertContains(
+            editor,
+            'value="encabezado,instituciones,caracteristicas,encontrar,nosotros,beneficios,llamado"',
+        )
 
         lienzo = self.client.get(self.lienzo)
         self.assertContains(lienzo, 'data-edit-id="hero_titulo"')
@@ -226,6 +233,138 @@ class EditorInicioTests(TestCase):
         portada = self.client.get('/')
         self.assertContains(portada, 'Línea uno<br>&lt;b&gt;Línea dos&lt;/b&gt;')
         self.assertNotContains(portada, '<b>Línea dos</b>')
+
+    def _posicion(self, html, marca):
+        posicion = html.find(marca)
+        self.assertGreater(posicion, -1, marca)
+        return posicion
+
+    def test_sin_publicado_se_conservan_barra_pie_y_orden(self):
+        portada = self.client.get('/')
+        self.assertContains(portada, 'Registrarme')
+        self.assertContains(portada, 'Términos de Servicio')
+        self.assertContains(portada, 'Campus Universitario Lagos del Cacique')
+        self.assertContains(portada, 'href="#"')
+        self.assertNotContains(portada, 'data-edit-id')
+        html = portada.content.decode()
+        anterior = -1
+        for seccion in (
+            'encabezado', 'instituciones', 'caracteristicas', 'encontrar',
+            'nosotros', 'beneficios', 'llamado',
+        ):
+            posicion = self._posicion(html, f'data-seccion="{seccion}"')
+            self.assertGreater(posicion, anterior)
+            anterior = posicion
+
+        otra = self.client.get('/politicas_privacidad/')
+        self.assertContains(otra, 'Registrarme')
+        self.assertContains(otra, 'PBX: +57 607 6516500')
+        self.assertNotContains(otra, 'data-edit-id')
+
+    def test_el_orden_del_borrador_no_cambia_la_portada_hasta_publicar(self):
+        borrador = 'nosotros,encabezado,instituciones,caracteristicas,encontrar,beneficios,llamado'
+        self.client.force_login(self.staff)
+        self.client.post(self.editor, {'accion': 'guardar', 'orden_secciones': borrador})
+        editor = self.client.get(self.editor).content.decode()
+        self.assertLess(
+            self._posicion(editor, 'data-seccion-item="nosotros"'),
+            self._posicion(editor, 'data-seccion-item="encabezado"'),
+        )
+        lienzo = self.client.get(self.lienzo).content.decode()
+        self.assertLess(
+            self._posicion(lienzo, 'data-seccion="nosotros"'),
+            self._posicion(lienzo, 'data-seccion="encabezado"'),
+        )
+        self.client.logout()
+        portada = self.client.get('/').content.decode()
+        self.assertLess(
+            self._posicion(portada, 'data-seccion="encabezado"'),
+            self._posicion(portada, 'data-seccion="nosotros"'),
+        )
+
+        self.client.force_login(self.staff)
+        self.client.post(self.editor, {'accion': 'publicar', 'orden_secciones': borrador})
+        self.client.logout()
+        publicada = self.client.get('/').content.decode()
+        self.assertLess(
+            self._posicion(publicada, 'data-seccion="nosotros"'),
+            self._posicion(publicada, 'data-seccion="encabezado"'),
+        )
+
+    def test_descartar_vuelve_al_orden_publicado(self):
+        publicado = 'beneficios,encabezado,instituciones,caracteristicas,encontrar,nosotros,llamado'
+        borrador = 'llamado,encabezado,instituciones,caracteristicas,encontrar,nosotros,beneficios'
+        self.client.force_login(self.staff)
+        self.client.post(self.editor, {'accion': 'publicar', 'orden_secciones': publicado})
+        self.client.post(self.editor, {'accion': 'guardar', 'orden_secciones': borrador})
+        self.client.post(self.editor, {'accion': 'descartar'})
+        lienzo = self.client.get(self.lienzo).content.decode()
+        self.assertLess(
+            self._posicion(lienzo, 'data-seccion="beneficios"'),
+            self._posicion(lienzo, 'data-seccion="encabezado"'),
+        )
+        self.assertLess(
+            self._posicion(lienzo, 'data-seccion="nosotros"'),
+            self._posicion(lienzo, 'data-seccion="llamado"'),
+        )
+        self.client.logout()
+        portada = self.client.get('/').content.decode()
+        self.assertLess(
+            self._posicion(portada, 'data-seccion="beneficios"'),
+            self._posicion(portada, 'data-seccion="encabezado"'),
+        )
+
+    def test_un_orden_que_mezcla_la_barra_no_se_publica(self):
+        self.client.force_login(self.staff)
+        respuesta = self.client.post(self.editor, {
+            'accion': 'publicar',
+            'orden_secciones': 'barra,encabezado,pie',
+            'texto__hero_titulo': 'No debe publicarse por el orden',
+        })
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(respuesta, 'no es válido')
+        self.assertFalse(
+            BloquePortada.objects.filter(texto='No debe publicarse por el orden').exists()
+        )
+        self.client.logout()
+        portada = self.client.get('/').content.decode()
+        self.assertNotIn('No debe publicarse por el orden', portada)
+        self.assertLess(
+            self._posicion(portada, 'data-seccion="encabezado"'),
+            self._posicion(portada, 'data-seccion="instituciones"'),
+        )
+
+    def test_barra_y_pie_publicados_se_ven_en_otra_pagina_y_el_borrador_no(self):
+        self.client.force_login(self.staff)
+        self.client.post(self.editor, {
+            'accion': 'publicar',
+            'texto__nav_contacto': 'Escríbenos ya',
+            'texto__pie_telefono': 'PBX: +57 607 0000000',
+            'enlace__pie_legal_terminos': 'https://example.com/terminos',
+        })
+        self.client.post(self.editor, {
+            'accion': 'guardar',
+            'texto__nav_contacto': 'Borrador de la barra',
+            'texto__pie_telefono': 'Teléfono que no debe verse',
+            'enlace__pie_facebook': 'https://example.com/borrador-red',
+        })
+        lienzo = self.client.get(self.lienzo)
+        self.assertContains(lienzo, 'Borrador de la barra')
+        self.assertContains(lienzo, 'Teléfono que no debe verse')
+        self.assertContains(lienzo, 'https://example.com/borrador-red')
+        self.assertContains(lienzo, 'data-edit-id="nav_contacto"')
+        self.assertContains(lienzo, 'data-edit-id="pie_telefono"')
+        self.client.logout()
+
+        for url in ('/', '/politicas_privacidad/', '/contacto/'):
+            pagina = self.client.get(url)
+            self.assertContains(pagina, 'Escríbenos ya')
+            self.assertContains(pagina, 'PBX: +57 607 0000000')
+            self.assertContains(pagina, 'https://example.com/terminos')
+            self.assertNotContains(pagina, 'Borrador de la barra')
+            self.assertNotContains(pagina, 'Teléfono que no debe verse')
+            self.assertNotContains(pagina, 'borrador-red')
+            self.assertNotContains(pagina, 'data-edit-id')
 
     def test_publicar_sin_cambios_conserva_el_subtitulo(self):
         self.client.force_login(self.staff)

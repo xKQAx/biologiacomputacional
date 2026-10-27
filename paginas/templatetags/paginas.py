@@ -2,8 +2,21 @@ from django import template
 from django.utils.html import format_html_join
 
 from paginas.catalogo import IMAGEN, POR_CLAVE
+from paginas.contenido import resolver
 
 register = template.Library()
+
+
+@register.simple_tag(takes_context=True)
+def asegurar_bloques(context):
+    """Deja en el contexto la barra y el pie que ve el visitante.
+
+    Si la vista ya pasó bloques (portada publicada o lienzo con borrador),
+    no los pisa: el borrador solo vive en ese lienzo.
+    """
+    if context.get('bloques') is None:
+        context['bloques'] = resolver(preferir_borrador=False)
+    return ''
 
 
 @register.simple_tag(takes_context=True)

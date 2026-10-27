@@ -1,0 +1,62 @@
+{% load paginas %}
+<section
+  class="inicio d-flex flex-column justify-content-center align-items-center"
+  data-seccion="encabezado"
+>
+  <div class="container text-center">
+    <div class="mb-4">
+      <span class="hero-badge" {% edit_attrs "hero_etiqueta" %}>
+        <i class="fa-solid fa-dna me-2" aria-hidden="true"></i>
+        <span data-edit-texto>{{ bloques.hero_etiqueta.contenido }}</span>
+      </span>
+    </div>
+
+    <h1 class="hero-title fw-bold mb-3">
+      <span {% edit_attrs "hero_titulo" %}>
+        <span data-edit-texto>{{ bloques.hero_titulo.contenido }}</span>
+      </span>
+      <br />
+      <span class="hero-title-accent" {% edit_attrs "hero_titulo_acento" %}>
+        <span data-edit-texto>{{ bloques.hero_titulo_acento.contenido }}</span>
+      </span>
+    </h1>
+
+    {% if modo_editor or not user.is_authenticated %}
+    <p class="inicio-subtitle fw-light fs-5" {% edit_attrs "hero_subtitulo_visitante" %} {% vista_attrs "visitante" %}>
+      {{ bloques.hero_subtitulo_visitante.contenido }}
+    </p>
+    {% if modo_editor %}
+    <template id="rico-hero_subtitulo_visitante">{{ bloques.hero_subtitulo_visitante.html_rico }}</template>
+    {% endif %}
+    <div class="hero-cta" {% vista_attrs "visitante" %}>
+      <a href="{{ bloques.hero_cta_registro.enlace }}" class="btn hero-btn-primary" {% edit_attrs "hero_cta_registro" %}>
+        <i class="fa-solid fa-user-plus me-2" aria-hidden="true"></i>
+        <span data-edit-texto>{{ bloques.hero_cta_registro.contenido }}</span>
+      </a>
+      <a href="{{ bloques.hero_cta_sesion.enlace }}" class="btn hero-btn-outline" {% edit_attrs "hero_cta_sesion" %}>
+        <span data-edit-texto>{{ bloques.hero_cta_sesion.contenido }}</span>
+        <i class="fa-solid fa-arrow-right ms-2" aria-hidden="true"></i>
+      </a>
+    </div>
+    {% endif %}
+    {% if modo_editor or user.is_authenticated %}
+    <p class="inicio-subtitle fw-light fs-5" {% edit_attrs "hero_subtitulo_sesion" %} {% vista_attrs "sesion" %}>
+      {{ bloques.hero_subtitulo_sesion.contenido }}
+    </p>
+    <div class="hero-cta" {% vista_attrs "sesion" %}>
+      <a href="{{ bloques.hero_cta_contacto.enlace }}" class="btn hero-btn-primary" {% edit_attrs "hero_cta_contacto" %}>
+        <i class="fa-solid fa-paper-plane me-2" aria-hidden="true"></i>
+        <span data-edit-texto>{{ bloques.hero_cta_contacto.contenido }}</span>
+      </a>
+      <a href="{{ bloques.hero_cta_profesionales.enlace }}" class="btn hero-btn-outline" {% edit_attrs "hero_cta_profesionales" %}>
+        <span data-edit-texto>{{ bloques.hero_cta_profesionales.contenido }}</span>
+        <i class="fa-solid fa-arrow-right ms-2" aria-hidden="true"></i>
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="hero-scroll-indicator" aria-hidden="true">
+    <div class="scroll-dot"></div>
+  </div>
+</section>
