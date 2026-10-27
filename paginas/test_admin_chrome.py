@@ -45,8 +45,11 @@ class AdminLaboratorioTests(TestCase):
             "/admin/pagina/servicios/",
             "/admin/pagina/bases-de-datos/",
             "/admin/pagina/contacto/",
+            "/admin/cuentas/",
         ):
             self.assertContains(indice, ruta)
+        self.assertContains(indice, "Usuarios del laboratorio: correo, acceso de personal")
+        self._sin_filas_de_cuentas(indice)
         self.assertNotContains(indice, "Carrusel")
         self.assertNotContains(indice, "Investigaciones")
         self.assertNotContains(indice, "Artículos")
@@ -68,9 +71,12 @@ class AdminLaboratorioTests(TestCase):
         self.assertLess(html.find(">Profesionales<"), html.find(">Servicios<"))
         self.assertLess(html.find(">Servicios<"), html.find(">Bases de datos<"))
         self.assertLess(html.find(">Bases de datos<"), html.find(">Contacto<"))
-        self.assertLess(html.find(">Contacto<"), html.find(">Cuentas<"))
+        # La barra también dice Cuentas; el orden se mira en el contenido.
+        contenido = html[html.find('id="content"'):]
+        self.assertLess(contenido.find(">Contacto<"), contenido.find(">Cuentas<"))
         self.assertContains(indice, "Portada del sitio, con el editor en vivo.")
-        self.assertContains(indice, "Perfiles")
+        self.assertContains(indice, "/admin/cuentas/")
+        self._sin_filas_de_cuentas(indice)
         self.assertNotContains(indice, "Carrusel")
         self.assertNotContains(indice, "Investigaciones")
         self.assertNotContains(indice, "Artículos")
@@ -115,3 +121,34 @@ class AdminLaboratorioTests(TestCase):
         grupos = agrupar_indice([sesion], superuser)
         self.assertEqual([grupo["name"] for grupo in grupos], ["Sistema"])
         self.assertEqual(grupos[0]["models"][0]["admin_url"], "/admin/sessions/session/")
+
+    def test_un_anonimo_no_abre_la_gestion_de_cuentas(self):
+        for ruta in ("/admin/cuentas/", "/admin/cuentas/nueva/", "/admin/cuentas/1/"):
+            respuesta = self.client.get(ruta)
+            self.assertEqual(respuesta.status_code, 302, ruta)
+            self.assertIn("/admin/login/", respuesta.url)
+
+    def test_el_login_del_admin_sigue_entrando(self):
+        User.objects.create_user(
+            "gestor_login_admin",
+            "loginadmin@example.com",
+            "ClaveSegura1",
+            is_staff=True,
+        )
+        respuesta = self.client.post("/admin/login/", {
+            "username": "gestor_login_admin",
+            "password": "ClaveSegura1",
+            "next": "/admin/",
+        })
+        self.assertRedirects(respuesta, "/admin/")
+
+    def _sin_filas_de_cuentas(self, indice):
+        for ruta in (
+            "/admin/auth/user/",
+            "/admin/auth/group/",
+            "/admin/identity/profileadditionalinfo/",
+        ):
+            self.assertNotContains(indice, ruta)
+        self.assertNotContains(indice, ">Perfiles<")
+        self.assertNotContains(indice, ">Grupos<")
+        self.assertNotContains(indice, ">Usuarios<")

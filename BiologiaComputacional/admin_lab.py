@@ -1,7 +1,8 @@
 """Agrupa lo que queda del índice del admin, debajo de las páginas del sitio.
 
-Investigación, profesionales y servicios se editan en sus páginas, no aquí.
-Cuentas queda en un grupo secundario. Las tablas internas, al final y solo
+Investigación, profesionales y servicios se editan en sus páginas.
+Las cuentas tienen su pantalla; usuarios, grupos y perfiles no vuelven
+como filas de Añadir/Modificar. Las tablas internas, al final y solo
 para un superusuario.
 """
 
@@ -19,12 +20,9 @@ NOMBRES = {
 }
 
 # Orden dentro de cada grupo. Lo que no esté aquí va al final, por nombre.
-ORDEN = {
-    "cuentas": ("user", "group", "profileadditionalinfo"),
-}
+ORDEN = {}
 
 SECCIONES = (
-    ("cuentas", "Cuentas"),
     ("sistema", "Sistema"),
 )
 
@@ -60,13 +58,12 @@ def aplicar_nombres():
 
 
 def destino_de(app_label, model_name):
-    if app_label in APPS_FUERA_DEL_INDICE:
+    if app_label in APPS_FUERA_DEL_INDICE or app_label in APPS_CUENTAS:
+        # Siguen registrados: el login del admin no depende de estas filas.
         return None
     clave = (app_label, model_name)
     if clave in INTERNOS or app_label in APPS_SISTEMA or app_label == "paginas":
         return "sistema"
-    if app_label in APPS_CUENTAS:
-        return "cuentas"
     return "sistema"
 
 

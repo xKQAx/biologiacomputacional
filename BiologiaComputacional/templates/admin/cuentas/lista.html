@@ -1,0 +1,54 @@
+{% extends "admin/base_site.html" %}
+
+{% block bodyclass %}{{ block.super }} cuentas{% endblock %}
+
+{% block content %}
+<div id="content-main" class="admin-lab-cuentas">
+  <p class="admin-lab-intro">
+    Usuarios del laboratorio. Desde aquí se crea una cuenta o se actualiza
+    su correo, si es personal y si puede entrar.
+    La foto y el teléfono siguen en el perfil de cada persona.
+  </p>
+  <p><a class="admin-lab-boton" href="{% url 'admin:cuentas_nueva' %}">Nueva cuenta</a></p>
+
+  <div class="admin-lab-tabla-wrap">
+    <table class="admin-lab-cuentas-tabla">
+      <caption class="admin-lab-sr">Cuentas del laboratorio</caption>
+      <thead>
+        <tr>
+          <th scope="col">Usuario</th>
+          <th scope="col">Correo</th>
+          <th scope="col">Personal</th>
+          <th scope="col">Activa</th>
+          <th scope="col"><span class="admin-lab-sr">Acciones</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for fila in filas %}
+        <tr>
+          <th scope="row">{{ fila.username }}</th>
+          <td>{% if fila.email %}{{ fila.email }}{% else %}—{% endif %}</td>
+          <td>{% if fila.is_staff %}Sí{% else %}No{% endif %}</td>
+          <td>{% if fila.is_active %}Sí{% else %}No{% endif %}</td>
+          <td>
+            {% if fila.puede_editar %}
+            <a href="{% url 'admin:cuentas_editar' fila.pk %}">Editar</a>
+            {% else %}
+            —
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5">Todavía no hay cuentas.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if not es_superusuario %}
+  <p class="admin-lab-nota">El personal edita las cuentas que no son de personal. Dar o quitar ese acceso lo hace un superusuario.</p>
+  {% endif %}
+</div>
+{% endblock %}

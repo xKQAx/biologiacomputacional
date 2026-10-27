@@ -9,6 +9,7 @@
       <a href="{{ editor.url }}">{{ editor.titulo }}</a>
       {% endif %}
     {% endfor %}
+    <a href="{% url 'admin:cuentas' %}">Cuentas</a>
   </div>
   <input type="search" id="nav-filter"
          placeholder="{% translate 'Start typing to filter…' %}"

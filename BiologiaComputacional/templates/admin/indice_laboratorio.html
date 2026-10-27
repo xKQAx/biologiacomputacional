@@ -19,6 +19,17 @@
     </div>
   </section>
 
+  <section class="admin-lab-paginas-indice" id="cuentas" aria-label="Cuentas">
+    <h2>Cuentas</h2>
+    <div class="admin-lab-tarjetas">
+      <a class="admin-lab-tarjeta" href="{% url 'admin:cuentas' %}" aria-label="Cuentas">
+        <span class="admin-lab-tarjeta-accion">Gestionar</span>
+        <span class="admin-lab-tarjeta-nombre">Cuentas</span>
+        <span class="admin-lab-nota">Usuarios del laboratorio: correo, acceso de personal y si pueden entrar.</span>
+      </a>
+    </div>
+  </section>
+
   {% if app_list %}
   <div class="admin-lab-secundario">
     {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}

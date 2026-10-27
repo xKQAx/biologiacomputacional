@@ -21,11 +21,15 @@ def normalize_email(value):
     return (value or "").strip().lower()
 
 
-def username_taken(username):
+def username_taken(username, exclude_pk=None):
+    """True si otra cuenta ya usa ese nombre, sin distinguir mayúsculas."""
     username = normalize_username(username)
     if not username:
         return False
-    return User.objects.filter(username__iexact=username).exists()
+    matches = User.objects.filter(username__iexact=username)
+    if exclude_pk:
+        matches = matches.exclude(pk=exclude_pk)
+    return matches.exists()
 
 
 def email_taken(email, exclude_pk=None):

@@ -1,0 +1,35 @@
+{% extends "admin/base_site.html" %}
+
+{% block bodyclass %}{{ block.super }} cuentas{% endblock %}
+
+{% block content %}
+<div id="content-main" class="admin-lab-cuentas">
+  <p class="admin-lab-volver"><a href="{% url volver %}">Volver al listado</a></p>
+  <form method="post" class="admin-lab-formulario" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+    <p class="errornote">{{ form.non_field_errors }}</p>
+    {% endif %}
+    {% for field in form %}
+      {% if field.field.widget.input_type == "checkbox" %}
+      <div class="form-row admin-lab-check">
+        {{ field }}
+        {{ field.label_tag }}
+        {% if field.help_text %}<p class="help">{{ field.help_text }}</p>{% endif %}
+        {{ field.errors }}
+      </div>
+      {% else %}
+      <div class="form-row">
+        {{ field.label_tag }}
+        {{ field }}
+        {% if field.help_text %}<div class="help">{{ field.help_text }}</div>{% endif %}
+        {{ field.errors }}
+      </div>
+      {% endif %}
+    {% endfor %}
+    <div class="submit-row">
+      <input type="submit" value="Guardar">
+    </div>
+  </form>
+</div>
+{% endblock %}
