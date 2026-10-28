@@ -1,0 +1,45 @@
+{% extends "admin/mensajes/base.html" %}
+
+{% block content %}
+{# Misma tabla del panel que Cuentas: no hace falta otro estilo de listado. #}
+<div id="content-main" class="admin-lab-cuentas">
+  <p class="admin-lab-intro">
+    Mensajes del formulario público. El correo se sigue intentando;
+    si no sale, el texto queda aquí igual.
+  </p>
+
+  <div class="admin-lab-tabla-wrap">
+    <table class="admin-lab-cuentas-tabla">
+      <caption class="admin-lab-sr">Mensajes de contacto</caption>
+      <thead>
+        <tr>
+          <th scope="col">Fecha</th>
+          <th scope="col">Nombre</th>
+          <th scope="col">Correo</th>
+          <th scope="col">Teléfono</th>
+          <th scope="col">Extracto</th>
+          <th scope="col">Leído</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for mensaje in mensajes %}
+        <tr{% if not mensaje.leido %} class="admin-lab-no-leido"{% endif %}>
+          <td>{{ mensaje.creado|date:"d/m/Y H:i" }}</td>
+          <th scope="row">
+            <a href="{% url 'admin:mensajes_detalle' mensaje.pk %}">{{ mensaje.nombre_completo }}</a>
+          </th>
+          <td>{{ mensaje.email }}</td>
+          <td>{{ mensaje.telefono }}</td>
+          <td>{% if mensaje.extracto %}{{ mensaje.extracto }}{% else %}—{% endif %}</td>
+          <td>{% if mensaje.leido %}Leído{% else %}No leído{% endif %}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6">Todavía no hay mensajes.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

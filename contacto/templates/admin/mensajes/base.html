@@ -1,0 +1,17 @@
+{% extends "admin/base_site.html" %}
+
+{% block bodyclass %}{{ block.super }} mensajes{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">Inicio</a>
+  <span class="admin-lab-miga-sep" aria-hidden="true">›</span>
+  {% if title == "Mensajes de contacto" %}
+  <span aria-current="page">Mensajes de contacto</span>
+  {% else %}
+  <a href="{% url 'admin:mensajes' %}">Mensajes de contacto</a>
+  <span class="admin-lab-miga-sep" aria-hidden="true">›</span>
+  <span aria-current="page">{{ title }}</span>
+  {% endif %}
+</div>
+{% endblock %}

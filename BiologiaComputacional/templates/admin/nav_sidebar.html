@@ -6,6 +6,7 @@
          aria-label="Filtrar el menú">
   {% editores_sitio as editores %}
   {% url 'admin:cuentas' as url_cuentas %}
+  {% url 'admin:mensajes' as url_mensajes %}
   <div class="admin-lab-nav-grupo admin-lab-nav-paginas">
     <p id="nav-titulo-paginas" class="admin-lab-nav-titulo">Páginas</p>
     <table>
@@ -29,6 +30,19 @@
         <tr{% if url_cuentas in request.path %} class="current-model"{% endif %}>
           <th scope="row">
             <a class="admin-lab-nav-enlace" href="{{ url_cuentas }}"{% if url_cuentas in request.path %} aria-current="page"{% endif %}>Cuentas</a>
+          </th>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="admin-lab-nav-grupo admin-lab-nav-mensajes">
+    <p id="nav-titulo-mensajes" class="admin-lab-nav-titulo">Mensajes</p>
+    <table>
+      <caption class="admin-lab-sr">Mensajes</caption>
+      <tbody>
+        <tr{% if url_mensajes in request.path %} class="current-model"{% endif %}>
+          <th scope="row">
+            <a class="admin-lab-nav-enlace" href="{{ url_mensajes }}"{% if url_mensajes in request.path %} aria-current="page"{% endif %}>Mensajes de contacto</a>
           </th>
         </tr>
       </tbody>

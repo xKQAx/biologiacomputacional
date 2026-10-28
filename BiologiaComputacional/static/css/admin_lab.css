@@ -232,6 +232,10 @@ body.admin-lab.dashboard .admin-lab-bloque-usuarios {
   background: #f4f7fb;
 }
 
+body.admin-lab.dashboard .admin-lab-bloque-mensajes {
+  border-top: 4px solid var(--primary-dark);
+}
+
 body.admin-lab.dashboard .admin-lab-bloque h2 {
   margin: 0;
   font-size: 1.2rem;
@@ -247,6 +251,10 @@ body.admin-lab.dashboard .admin-lab-bloque-texto {
 
 body.admin-lab.dashboard .admin-lab-bloque-usuarios .admin-lab-tarjeta {
   border-top-color: var(--primary-blue);
+}
+
+body.admin-lab.dashboard .admin-lab-bloque-mensajes .admin-lab-tarjeta {
+  border-top-color: var(--primary-dark);
 }
 
 body.admin-lab.dashboard .admin-lab-tarjetas {
@@ -493,6 +501,40 @@ body.admin-lab #nav-sidebar .admin-lab-nav-titulo {
 
 body.admin-lab #nav-sidebar .admin-lab-nav-usuarios .admin-lab-nav-titulo {
   color: var(--primary-blue);
+}
+
+body.admin-lab #nav-sidebar .admin-lab-nav-mensajes .admin-lab-nav-titulo {
+  color: var(--primary-dark);
+}
+
+body.admin-lab tr.admin-lab-no-leido th a {
+  font-weight: 700;
+}
+
+body.admin-lab .admin-lab-detalle {
+  max-width: 40rem;
+  margin: 0;
+}
+
+body.admin-lab .admin-lab-detalle div {
+  margin: 0 0 0.9rem;
+}
+
+body.admin-lab .admin-lab-detalle dt {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+body.admin-lab .admin-lab-detalle dd {
+  margin: 0.2rem 0 0;
+}
+
+body.admin-lab .admin-lab-mensaje {
+  white-space: pre-wrap;
+  line-height: 1.45;
 }
 
 body.admin-lab #nav-sidebar .admin-lab-nav-grupo table,

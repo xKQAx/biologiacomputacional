@@ -39,6 +39,18 @@ por el ModelAdmin. Sin eso el cuadro solo decía «Ninguno disponible».
     </div>
   </section>
 
+  <section class="admin-lab-bloque admin-lab-bloque-mensajes" id="mensajes-de-contacto" aria-labelledby="titulo-mensajes">
+    <h2 id="titulo-mensajes">Mensajes</h2>
+    <p class="admin-lab-bloque-texto">Lo que llega del formulario público.</p>
+    <div class="admin-lab-tarjetas">
+      <a class="admin-lab-tarjeta" href="{% url 'admin:mensajes' %}" aria-label="Mensajes de contacto">
+        <span class="admin-lab-tarjeta-accion">Leer</span>
+        <span class="admin-lab-tarjeta-nombre">Mensajes de contacto</span>
+        <span class="admin-lab-nota">Nombre, correo y texto. Si el correo no sale, el mensaje sigue aquí.</span>
+      </a>
+    </div>
+  </section>
+
   {% if app_list %}
   <div class="admin-lab-secundario">
     {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
