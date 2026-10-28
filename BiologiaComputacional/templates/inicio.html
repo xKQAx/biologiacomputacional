@@ -2,6 +2,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/inicio.css' %}" />
 {% endblock %} {% block content %}
+{% include "avisos.html" %}
 <div id="contenido-inicio">
   {% for seccion in secciones %}
     {% include seccion %}

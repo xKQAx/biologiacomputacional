@@ -9,26 +9,52 @@ from django.contrib.auth.forms import UserChangeForm
 import re
 from investigacion.models import CategoriaI, Investigacion
 
-# Formulario de contacto
+# Una sola frase para la regla que ya anuncia la ayuda: 10 dígitos.
+MENSAJE_TELEFONO = (
+    'El teléfono debe tener 10 dígitos, sin espacios ni otros caracteres.'
+)
 
 
 class FormularioContacto(forms.Form):
-    nombres = forms.CharField(widget=forms.TextInput(
-        attrs={'class': 'form-control', 'placeholder': 'Nombres'}))
-    apellidos = forms.CharField(widget=forms.TextInput(
-        attrs={'class': 'form-control', 'placeholder': 'Apellidos'}))
-    email = forms.EmailField(widget=forms.EmailInput(
-        attrs={'class': 'form-control', 'placeholder': 'Email'}))
+    nombres = forms.CharField(
+        error_messages={'required': 'Indica tus nombres.'},
+        widget=forms.TextInput(
+            attrs={'class': 'form-control', 'placeholder': 'Nombres'}),
+    )
+    apellidos = forms.CharField(
+        error_messages={'required': 'Indica tus apellidos.'},
+        widget=forms.TextInput(
+            attrs={'class': 'form-control', 'placeholder': 'Apellidos'}),
+    )
+    email = forms.EmailField(
+        error_messages={
+            'required': 'Indica tu correo electrónico.',
+            'invalid': 'Introduce un correo electrónico válido.',
+        },
+        widget=forms.EmailInput(
+            attrs={'class': 'form-control', 'placeholder': 'Email'}),
+    )
     telefono = forms.CharField(
-        max_length=10, help_text='Introduce tu número de teléfono (10 dígitos)')
-    opiniones = forms.CharField(widget=forms.TextInput(
-        attrs={'class': 'form-control', 'placeholder': 'Opiniones'}))
+        min_length=10,
+        max_length=10,
+        help_text='Introduce tu número de teléfono (10 dígitos)',
+        error_messages={
+            'required': 'Indica tu número de teléfono.',
+            'min_length': MENSAJE_TELEFONO,
+            'max_length': MENSAJE_TELEFONO,
+        },
+    )
+    opiniones = forms.CharField(
+        error_messages={'required': 'Escribe tu mensaje.'},
+        widget=forms.TextInput(
+            attrs={'class': 'form-control', 'placeholder': 'Opiniones'}),
+    )
 
     def clean_telefono(self):
-        telefono = self.cleaned_data.get('telefono')
+        # La longitud ya la limita el campo; aquí solo se rechazan letras y símbolos.
+        telefono = self.cleaned_data.get('telefono') or ''
         if not telefono.isdigit():
-            raise forms.ValidationError(
-                'El número de teléfono solo debe contener dígitos.')
+            raise forms.ValidationError(MENSAJE_TELEFONO)
         return telefono
 
 # Formulario para un Usuario nuevo

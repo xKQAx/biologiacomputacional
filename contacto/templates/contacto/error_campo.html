@@ -1,0 +1,8 @@
+{% load paginas %}
+{% if errores %}
+  {% for error in errores %}
+  <div class="invalid-feedback d-block"{% if forloop.first and identificador %} id="{{ identificador }}"{% endif %}>{{ error }}</div>
+  {% endfor %}
+{% else %}
+  <div class="invalid-feedback" {% edit_attrs "cto_obligatorio" %}>{{ bloques.cto_obligatorio.contenido }}</div>
+{% endif %}

@@ -73,46 +73,55 @@
           <div class="row g-2">
             <div class="col-md">
               <div class="form-floating has-validation mb-2">
-                <input type="text" class="form-control" name="nombres"
-                  id="validationCustomName" placeholder="" required
-                  autocomplete="given-name">
+                <input type="text" name="nombres" id="validationCustomName"
+                  class="form-control{% if form.nombres.errors %} is-invalid{% endif %}"
+                  value="{{ form.nombres.value|default_if_none:'' }}"
+                  placeholder="" required autocomplete="given-name"
+                  {% if form.nombres.errors %}aria-invalid="true" aria-describedby="error-nombres"{% endif %}>
                 <label for="validationCustomName" {% edit_attrs "cto_nombres" %}>{{ bloques.cto_nombres.contenido }}</label>
-                <div class="invalid-feedback" {% edit_attrs "cto_obligatorio" %}>{{ bloques.cto_obligatorio.contenido }}</div>
+                {% include "contacto/error_campo.html" with errores=form.nombres.errors identificador="error-nombres" %}
               </div>
             </div>
             <div class="col-md">
               <div class="form-floating has-validation mb-2">
-                <input type="text" class="form-control" name="apellidos"
-                  id="validationCustomLast_name" placeholder="" required
-                  autocomplete="family-name">
+                <input type="text" name="apellidos" id="validationCustomLast_name"
+                  class="form-control{% if form.apellidos.errors %} is-invalid{% endif %}"
+                  value="{{ form.apellidos.value|default_if_none:'' }}"
+                  placeholder="" required autocomplete="family-name"
+                  {% if form.apellidos.errors %}aria-invalid="true" aria-describedby="error-apellidos"{% endif %}>
                 <label for="validationCustomLast_name" {% edit_attrs "cto_apellidos" %}>{{ bloques.cto_apellidos.contenido }}</label>
-                <div class="invalid-feedback" {% edit_attrs "cto_obligatorio" %}>{{ bloques.cto_obligatorio.contenido }}</div>
+                {% include "contacto/error_campo.html" with errores=form.apellidos.errors identificador="error-apellidos" %}
               </div>
             </div>
           </div>
 
           <div class="form-floating has-validation mb-2">
-            <input type="email" class="form-control" name="email"
-              id="validationCustomEmail" placeholder="" required
-              autocomplete="email">
+            <input type="email" name="email" id="validationCustomEmail"
+              class="form-control{% if form.email.errors %} is-invalid{% endif %}"
+              value="{{ form.email.value|default_if_none:'' }}"
+              placeholder="" required autocomplete="email"
+              {% if form.email.errors %}aria-invalid="true" aria-describedby="error-email"{% endif %}>
             <label for="validationCustomEmail" {% edit_attrs "cto_email" %}>{{ bloques.cto_email.contenido }}</label>
-            <div class="invalid-feedback" {% edit_attrs "cto_obligatorio" %}>{{ bloques.cto_obligatorio.contenido }}</div>
+            {% include "contacto/error_campo.html" with errores=form.email.errors identificador="error-email" %}
           </div>
 
           <div class="form-floating has-validation mb-2">
-            <input type="tel" class="form-control" name="telefono"
-              id="validationCustomPhone" placeholder="" required
-              autocomplete="tel">
+            <input type="tel" name="telefono" id="validationCustomPhone"
+              class="form-control{% if form.telefono.errors %} is-invalid{% endif %}"
+              value="{{ form.telefono.value|default_if_none:'' }}"
+              placeholder="" required autocomplete="tel"
+              {% if form.telefono.errors %}aria-invalid="true" aria-describedby="error-telefono"{% endif %}>
             <label for="validationCustomPhone" {% edit_attrs "cto_telefono" %}>{{ bloques.cto_telefono.contenido }}</label>
-            <div class="invalid-feedback" {% edit_attrs "cto_obligatorio" %}>{{ bloques.cto_obligatorio.contenido }}</div>
+            {% include "contacto/error_campo.html" with errores=form.telefono.errors identificador="error-telefono" %}
           </div>
 
           <div class="form-floating has-validation mb-4">
-            <textarea class="form-control" placeholder="" name="opiniones"
-              id="validationCustomOpinions" required
-              style="height: 130px;"></textarea>
+            <textarea name="opiniones" id="validationCustomOpinions"
+              class="form-control{% if form.opiniones.errors %} is-invalid{% endif %}"
+              placeholder="" required style="height: 130px;"
+              {% if form.opiniones.errors %}aria-invalid="true" aria-describedby="error-opiniones"{% endif %}>{{ form.opiniones.value|default_if_none:'' }}</textarea>
             <label for="validationCustomOpinions" {% edit_attrs "cto_mensaje" %}>{{ bloques.cto_mensaje.contenido }}</label>
-            <div class="invalid-feedback" {% edit_attrs "cto_obligatorio" %}>{{ bloques.cto_obligatorio.contenido }}</div>
+            {% include "contacto/error_campo.html" with errores=form.opiniones.errors identificador="error-opiniones" %}
           </div>
 
           <button class="btn btn-primary-custom w-100" type="submit" {% edit_attrs "cto_enviar" %}>
@@ -126,48 +135,7 @@
   </div>
 </div>
 
-<!-- Notificaciones Toast -->
-{% for message in messages %}
-{% if message.tags == 'error' %}
-<div class="toast align-items-center bg-danger text-white border-0"
-  role="alert" aria-live="assertive" aria-atomic="true"
-  id="errorToast"
-  style="position: fixed; top: 80px; right: 10px; z-index: 1050;">
-  <div class="d-flex">
-    <div class="toast-body">
-      <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
-      {{ message }}
-    </div>
-    <button type="button" class="btn-close me-2 m-auto"
-      data-bs-dismiss="toast" aria-label="Cerrar"></button>
-  </div>
-</div>
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    new bootstrap.Toast(document.getElementById('errorToast')).show();
-  });
-</script>
-{% elif message.tags == 'success' %}
-<div class="toast align-items-center bg-success text-white border-0"
-  role="alert" aria-live="assertive" aria-atomic="true"
-  id="successToast"
-  style="position: fixed; top: 80px; right: 10px; z-index: 1050;">
-  <div class="d-flex">
-    <div class="toast-body">
-      <i class="fa-solid fa-check" aria-hidden="true"></i>
-      {{ message }}
-    </div>
-    <button type="button" class="btn-close me-2 m-auto"
-      data-bs-dismiss="toast" aria-label="Cerrar"></button>
-  </div>
-</div>
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    new bootstrap.Toast(document.getElementById('successToast')).show();
-  });
-</script>
-{% endif %}
-{% endfor %}
+{% include "avisos.html" %}
 
 <script src="{% static 'js/contacto.js' %}"></script>
 {% endblock %}

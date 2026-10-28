@@ -1,0 +1,30 @@
+{# Mismo toast del sitio. El contacto redirige al inicio y el aviso tiene que seguir ahí. #}
+{% for message in messages %}
+{% if message.tags == 'error' or message.tags == 'success' %}
+<div class="toast align-items-center text-white border-0 {% if message.tags == 'error' %}bg-danger{% else %}bg-success{% endif %}"
+  role="alert" aria-live="assertive" aria-atomic="true"
+  id="aviso-{{ forloop.counter }}"
+  style="position: fixed; top: 80px; right: 10px; z-index: 1050;">
+  <div class="d-flex">
+    <div class="toast-body">
+      {% if message.tags == 'error' %}
+      <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+      {% else %}
+      <i class="fa-solid fa-check" aria-hidden="true"></i>
+      {% endif %}
+      {{ message }}
+    </div>
+    <button type="button" class="btn-close me-2 m-auto"
+      data-bs-dismiss="toast" aria-label="Cerrar"></button>
+  </div>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var aviso = document.getElementById('aviso-{{ forloop.counter }}');
+    if (aviso) {
+      new bootstrap.Toast(aviso).show();
+    }
+  });
+</script>
+{% endif %}
+{% endfor %}
