@@ -2,6 +2,7 @@
 Una ficha por investigación, sea cual sea la categoría.
 Cry11 conserva la imagen a la izquierda; el resto, el texto.
 {% endcomment %}
+{% load paginas %}
 <section class="min-vh-100 pb-5">
     <div class="container">
         <div class="row align-items-start gy-4">
@@ -10,7 +11,7 @@ Cry11 conserva la imagen a la izquierda; el resto, el texto.
                     <h4 class="mb-3">{{ investigacion.nombre }}</h4>
                     <hr class="border border-2 shadow opacity-75 ms-0 {% if categoria.nombre_categoria == 'Alpha' %}border-warning{% elif categoria.nombre_categoria == 'Cry11' %}border-primary{% elif categoria.nombre_categoria == 'Otros' %}border-danger{% else %}border-secondary{% endif %}"
                         style="width: 40px;">
-                    <p>{{ investigacion.descrip|linebreaks }}</p>
+                    <div class="texto-corrido">{{ investigacion.descrip|html_o_parrafos }}</div>
 
                     <p class="text-center mt-5">Resultados para {{ investigacion.nombre }}</p>
                     <hr class="border border-dark border-2 shadow opacity-75 mx-auto" style="width: 40px;">

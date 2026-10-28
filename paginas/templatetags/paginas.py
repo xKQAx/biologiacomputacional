@@ -1,8 +1,10 @@
 from django import template
+from django.template.defaultfilters import linebreaks
 from django.utils.html import format_html_join
 
 from paginas.catalogo import BLOQUE, ENLACE, IMAGEN, PLANO, POR_CLAVE
 from paginas.contenido import resolver
+from paginas.saneo import html_para_plantilla
 
 register = template.Library()
 
@@ -55,6 +57,19 @@ def edit_attrs(context, clave):
         partes.append(('data-edit-rico', clave))
         partes.append(('data-edit-predeterminado', definicion.texto))
     return format_html_join(' ', '{}="{}"', partes)
+
+
+@register.filter
+def html_o_parrafos(texto):
+    """Pinta una ficha. Con la marca de HTML usa el saneo; si no, párrafos.
+
+    El mismo saneo de los bloques: un enlace http se conserva y el resto
+    de esquemas no entra. El texto plano antiguo sigue escapado.
+    """
+    seguro = html_para_plantilla(texto, BLOQUE)
+    if seguro is not None:
+        return seguro
+    return linebreaks(texto)
 
 
 @register.simple_tag
