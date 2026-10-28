@@ -49,7 +49,7 @@ Correo de activación (registro) y de contacto:
 5. Si Google no ofrece contraseñas de aplicación (Workspace, menor de edad o 2FA avanzado), usa un SMTP transaccional como Brevo o Resend.
 6. Para probar solo en local: deja `EMAIL_HOST_USER` vacío, reinicia y copia el enlace de activación que sale en la terminal.
 
-El formulario de contacto envía a `CONTACT_EMAIL` (por defecto `biocomp@udes.edu.co`).
+El formulario de contacto envía a `CONTACT_EMAIL` (por defecto `lab.biomol.udes@gmail.com`).
 
 ## Notas
 

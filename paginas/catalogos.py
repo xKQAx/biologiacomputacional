@@ -152,7 +152,7 @@ CATALOGO_CONTACTO = con_orden((
     _b('cto_tel_etiqueta', 'datos', 'Teléfono: etiqueta', 'Teléfono'),
     _b('cto_tel', 'datos', 'Teléfono', 'PBX: +57 607 6516500', formato=PLANO),
     _b('cto_correo_etiqueta', 'datos', 'Correo: etiqueta', 'Correo electrónico'),
-    _b('cto_correo', 'datos', 'Correo', 'biocomp@udes.edu.co', formato=PLANO),
+    _b('cto_correo', 'datos', 'Correo', 'lab.biomol.udes@gmail.com', formato=PLANO),
     _b('cto_lugar_etiqueta', 'datos', 'Ubicación: etiqueta', 'Ubicación'),
     _b(
         'cto_lugar', 'datos', 'Ubicación',

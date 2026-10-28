@@ -194,7 +194,7 @@ EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '').strip()
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 EMAIL_USE_TLS = env_bool('EMAIL_USE_TLS', default=True)
 # Destino del formulario de contacto. La página pública muestra este mismo buzón.
-CONTACT_EMAIL = os.environ.get('CONTACT_EMAIL', 'biocomp@udes.edu.co').strip() or 'biocomp@udes.edu.co'
+CONTACT_EMAIL = os.environ.get('CONTACT_EMAIL', 'lab.biomol.udes@gmail.com').strip() or 'lab.biomol.udes@gmail.com'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER or 'webmaster@localhost'
 
 # En local, sin usuario SMTP, el correo sale por consola y el arranque no falla.
