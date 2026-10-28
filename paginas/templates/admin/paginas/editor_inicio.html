@@ -11,6 +11,7 @@
 
 {% block extrahead %}
 {{ block.super }}
+<script src="{% static 'paginas/saneo.js' %}" defer></script>
 <script src="{% static 'paginas/editor.js' %}" defer></script>
 {% endblock %}
 
@@ -150,6 +151,41 @@
               <p class="editor-nota">Si no eliges otra, se conserva la imagen actual.</p>
               <p class="error-campo" id="error-imagen-{{ bloque.clave }}" data-error-imagen{% if bloque.errores.imagen %} role="alert"{% endif %}>{{ bloque.errores.imagen }}</p>
               {% endif %}
+              {% if bloque.perfil != "plano" %}
+              <div class="editor-formato" data-formato="{{ bloque.perfil }}">
+                <label id="etiqueta-texto-{{ bloque.clave }}">{{ bloque.etiqueta_texto }}</label>
+                <div class="editor-formato-barra" role="toolbar" aria-label="Formato del texto">
+                  <button type="button" data-fmt="strong" title="Negrita (Ctrl+B)" aria-keyshortcuts="Control+B Meta+B" aria-pressed="false"><strong>Negrita</strong></button>
+                  <button type="button" data-fmt="em" title="Cursiva (Ctrl+I)" aria-keyshortcuts="Control+I Meta+I" aria-pressed="false"><em>Cursiva</em></button>
+                  <button type="button" data-fmt="u" title="Subrayado (Ctrl+U)" aria-keyshortcuts="Control+U Meta+U" aria-pressed="false"><u>Subrayado</u></button>
+                  {% if bloque.perfil == "bloque" %}
+                  <button type="button" data-fmt="ul" title="Lista con viñetas" aria-pressed="false">Lista</button>
+                  <button type="button" data-fmt="ol" title="Lista numerada" aria-pressed="false">Numerada</button>
+                  {% endif %}
+                  <button type="button" data-fmt="enlace" title="Enlace http, https o mailto">Enlace</button>
+                  <button type="button" data-fmt="limpiar" title="Quitar negrita, cursiva, subrayado, listas y enlace">Quitar formato</button>
+                </div>
+                <div
+                  id="texto-{{ bloque.clave }}"
+                  class="editor-formato-campo{% if bloque.perfil == "linea" %} es-linea{% endif %}{% if bloque.area %} es-multilinea{% endif %}"
+                  contenteditable="true"
+                  role="textbox"
+                  aria-multiline="{% if bloque.perfil == "bloque" or bloque.area %}true{% else %}false{% endif %}"
+                  aria-labelledby="etiqueta-texto-{{ bloque.clave }}"
+                  data-campo="texto-rico"
+                  {% if bloque.errores.texto %}aria-invalid="true" aria-describedby="error-texto-{{ bloque.clave }}"{% endif %}
+                ></div>
+                <p class="editor-nota">
+                  Atajos: Ctrl+B negrita, Ctrl+I cursiva y Ctrl+U subrayado. En Mac, Cmd.
+                  {% if bloque.perfil == "bloque" %}
+                  En un párrafo también hay lista con viñetas y lista numerada.
+                  {% else %}
+                  En un título o un botón solo cabe el formato en línea.
+                  {% endif %}
+                </p>
+                <textarea name="texto__{{ bloque.clave }}" data-campo="texto" hidden>{{ bloque.texto }}</textarea>
+              </div>
+              {% else %}
               <label for="texto-{{ bloque.clave }}">{{ bloque.etiqueta_texto }}</label>
               {% if bloque.area and bloque.tipo != "imagen" %}
               <textarea
@@ -168,6 +204,7 @@
                 value="{{ bloque.texto }}"
                 {% if bloque.errores.texto %}aria-invalid="true" aria-describedby="error-texto-{{ bloque.clave }}"{% endif %}
               >
+              {% endif %}
               {% endif %}
               {% if bloque.errores.texto %}
               <p class="error-campo" id="error-texto-{{ bloque.clave }}" data-error-texto role="alert">{{ bloque.errores.texto }}</p>

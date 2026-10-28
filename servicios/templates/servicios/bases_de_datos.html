@@ -13,7 +13,7 @@
 <div class="container mt-5">
     <h5 class="fw-bold mb-3" {% edit_attrs "db_titulo" %}>{{ bloques.db_titulo.contenido }}</h5>
     <hr class="border border-primary border-2 shadow opacity-75 ms-0" style="width: 40px;">
-    <p class="fw-light" {% edit_attrs "db_intro" %}>{{ bloques.db_intro.contenido }}</p>
+    <div class="fw-light mb-3 texto-corrido" {% edit_attrs "db_intro" %}>{{ bloques.db_intro.contenido }}</div>
 </div>
 
 <!-- Contenido entre herramientas y bases de datos -->
@@ -31,7 +31,7 @@
                             <span class="visually-hidden" data-edit-texto aria-hidden="true">{{ bloques.db_herr_tooltip.texto }}</span>
                         </span>
                     </div>
-                    <p class="mb-1" {% edit_attrs "db_herr_texto" %}>{{ bloques.db_herr_texto.contenido }}</p>
+                    <div class="mb-1 texto-corrido" {% edit_attrs "db_herr_texto" %}>{{ bloques.db_herr_texto.contenido }}</div>
                 </a>
 
                 <div class="list-group-item list-group-item-secondary" aria-current="page">
@@ -44,7 +44,7 @@
                             <span class="visually-hidden" data-edit-texto aria-hidden="true">{{ bloques.db_db_tooltip.texto }}</span>
                         </span>
                     </div>
-                    <p class="mb-1" {% edit_attrs "db_db_texto" %}>{{ bloques.db_db_texto.contenido }}</p>
+                    <div class="mb-1 texto-corrido" {% edit_attrs "db_db_texto" %}>{{ bloques.db_db_texto.contenido }}</div>
                 </div>
             </div>
 
@@ -72,9 +72,9 @@
                 <p class="fw-light" {% if not form_submitted %}hidden{% endif %}>{{ cantidad_db_buscadas }} <span {% edit_attrs "db_resultados" %}>{{ bloques.db_resultados.contenido }}</span> <strong
                         class="fw-bold">{{ request.GET.q }}</strong><a href="{% url 'database' %}" type="button"
                         class="btn btn-outline-white custom-color ms-1" data-bs-toggle="tooltip"
-                        data-bs-placement="right" data-bs-title="{{ bloques.db_restablecer.texto }}"
+                        data-bs-placement="right" data-bs-title="{{ bloques.db_restablecer.plano }}"
                         {% edit_attrs "db_restablecer" %}><i
-                            class="fa-solid fa-xmark"></i><span class="visually-hidden" data-edit-texto>{{ bloques.db_restablecer.texto }}</span></a></p>
+                            class="fa-solid fa-xmark"></i><span class="visually-hidden" data-edit-texto>{{ bloques.db_restablecer.contenido }}</span></a></p>
                 {% endif %}
             </div>
 

@@ -19,7 +19,7 @@
       </span>
     </div>
     <h1 class="page-hero-title" {% edit_attrs "prof_titulo" %}>{{ bloques.prof_titulo.contenido }}</h1>
-    <p class="page-hero-subtitle" {% edit_attrs "prof_subtitulo" %}>{{ bloques.prof_subtitulo.contenido }}</p>
+    <div class="page-hero-subtitle texto-corrido" {% edit_attrs "prof_subtitulo" %}>{{ bloques.prof_subtitulo.contenido }}</div>
   </div>
 </section>
 
@@ -27,7 +27,7 @@
 
   <!-- Sección de introducción -->
   <div class="profesionales-intro-section mb-5">
-    <p class="fw-light profesionales-intro-card" {% edit_attrs "prof_intro" %}>{{ bloques.prof_intro.contenido }}</p>
+    <div class="fw-light profesionales-intro-card mb-3 texto-corrido" {% edit_attrs "prof_intro" %}>{{ bloques.prof_intro.contenido }}</div>
     <div class="d-flex justify-content-center">
       <img
         src="{{ bloques.prof_imagen.enlace }}"
@@ -75,7 +75,7 @@
       <a
         class="view-button"
         href="id={{ profesional.id }}"
-        aria-label="{{ bloques.prof_ver_perfil.texto }} de {{ profesional.nombre }} {{ profesional.apellido }}"
+        aria-label="{{ bloques.prof_ver_perfil.plano }} de {{ profesional.nombre }} {{ profesional.apellido }}"
       >
         <span data-edit-texto {% edit_attrs "prof_ver_perfil" %}>{{ bloques.prof_ver_perfil.contenido }}</span>
         <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>

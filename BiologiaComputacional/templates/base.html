@@ -128,6 +128,7 @@
     <!-- JS específico por página -->
     {% block extra_js %}{% endblock %}
     {% if modo_editor %}
+    <script src="{% static 'paginas/saneo.js' %}"></script>
     <script src="{% static 'paginas/lienzo.js' %}"></script>
     {% endif %}
   </body>

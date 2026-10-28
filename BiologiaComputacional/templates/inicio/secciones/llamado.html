@@ -3,7 +3,7 @@
 <section class="cta-section py-5" {% vista_attrs "visitante" %} data-seccion="llamado">
   <div class="container text-center">
     <h2 class="cta-title mb-3" {% edit_attrs "cta_titulo" %}>{{ bloques.cta_titulo.contenido }}</h2>
-    <p class="cta-subtitle mb-4" {% edit_attrs "cta_subtitulo" %}>{{ bloques.cta_subtitulo.contenido }}</p>
+    <div class="cta-subtitle mb-4 texto-corrido" {% edit_attrs "cta_subtitulo" %}>{{ bloques.cta_subtitulo.contenido }}</div>
     <div class="d-flex gap-3 justify-content-center flex-wrap">
       <a href="{{ bloques.cta_cuenta.enlace }}" class="btn cta-btn-primary" {% edit_attrs "cta_cuenta" %}>
         <span data-edit-texto>{{ bloques.cta_cuenta.contenido }}</span>

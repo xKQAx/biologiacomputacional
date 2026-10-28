@@ -26,6 +26,7 @@ from paginas.imagenes import (
 )
 from paginas.models import BloquePortada
 from paginas.registro import INICIO, INDICES
+from paginas.saneo import PLANO, html_para_plantilla, preparar_texto, sin_marcas
 
 MAX_TEXTO = 4000
 MAX_ALT = 200
@@ -50,18 +51,33 @@ class BloqueVista:
         self.texto = texto
         self.enlace = enlace
         self.predeterminado = definicion.texto
+        self.perfil = definicion.perfil
+        self.enriquecido = definicion.perfil != PLANO
         self.usa_rico = bool(definicion.rico and texto == definicion.texto)
         self.html_rico = html_subtitulo_visitante() if definicion.rico else ''
         self.errores = {}
 
     @property
     def contenido(self):
-        """HTML del bloque. El texto del editor se escapa; solo el subtítulo de fábrica trae marcas propias."""
+        """HTML del bloque.
+
+        El subtítulo de fábrica conserva sus marcas. El texto enriquecido
+        solo se pinta si salió de sanear_html. Lo demás se escapa: un «<»
+        antiguo sigue viéndose como texto.
+        """
         if self.usa_rico:
             return self.html_rico
+        seguro = html_para_plantilla(self.texto, self.perfil)
+        if seguro is not None:
+            return seguro
         if self.area or '\n' in self.texto:
             return linebreaksbr(self.texto)
         return self.texto
+
+    @property
+    def plano(self):
+        """Texto sin etiquetas, para aria-label, tooltip o placeholder."""
+        return sin_marcas(self.texto, self.perfil)
 
     @property
     def etiqueta_texto(self):
@@ -250,7 +266,12 @@ def leer_valores(post, archivos=None, pagina=INICIO):
         nombre = nombre_legible(definicion, indice.nombres)
         clave_texto = f'texto__{definicion.clave}'
         if clave_texto in post:
-            texto = _normalizar_texto(post.get(clave_texto))
+            bruto = post.get(clave_texto)
+            # El perfil del bloque elige la lista blanca. Alt, teléfono y correo siguen planos.
+            if definicion.perfil == PLANO:
+                texto = _normalizar_texto(bruto)
+            else:
+                texto = preparar_texto(bruto, definicion.perfil)
             if definicion.tipo == IMAGEN and len(texto) > MAX_ALT:
                 _anotar(
                     errores, por_campo, definicion.clave, 'texto',

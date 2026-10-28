@@ -971,3 +971,39 @@ textarea:focus {
     padding-right: 0.75rem !important;
   }
 }
+
+/* El párrafo enriquecido deja de ser <p> para poder incluir listas. */
+.texto-corrido ul,
+.texto-corrido ol {
+  margin: 0.35rem 0 0.35rem 1.25rem;
+  padding: 0;
+}
+
+.texto-corrido a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+}
+
+/* El subrayado y el enlace del texto enriquecido se ven en títulos y botones.
+   El color y el tamaño siguen siendo los del sitio. */
+u {
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+}
+
+a a,
+h1 a,
+h2 a,
+h3 a,
+h4 a,
+h5 a,
+h6 a,
+.cardbox a a,
+footer a a,
+.nav-link a,
+.dropdown-item a,
+.btn a {
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+}

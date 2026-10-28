@@ -1,7 +1,7 @@
 from django import template
 from django.utils.html import format_html_join
 
-from paginas.catalogo import ENLACE, IMAGEN, POR_CLAVE
+from paginas.catalogo import BLOQUE, ENLACE, IMAGEN, PLANO, POR_CLAVE
 from paginas.contenido import resolver
 
 register = template.Library()
@@ -39,9 +39,12 @@ def edit_attrs(context, clave):
         return ''
 
     partes = [('data-edit-id', clave), ('data-edit-grupo', definicion.grupo)]
-    # El área de texto admite saltos de línea; el lienzo tiene que pintarlos.
-    if definicion.area:
+    # El párrafo admite saltos aunque el texto de fábrica sea corto.
+    # Un título en línea no: una lista no cabe y un salto partiría el encabezado.
+    if definicion.area or definicion.perfil == BLOQUE:
         partes.append(('data-edit-multilinea', '1'))
+    if definicion.perfil != PLANO:
+        partes.append(('data-edit-html', definicion.perfil))
     # El href solo se mueve si el bloque es un enlace. Un texto puesto sobre
     # un botón (ver perfil, restablecer) no debe vaciar su dirección.
     if definicion.tipo == ENLACE:

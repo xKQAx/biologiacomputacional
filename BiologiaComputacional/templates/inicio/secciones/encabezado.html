@@ -22,9 +22,9 @@
     </h1>
 
     {% if modo_editor or not user.is_authenticated %}
-    <p class="inicio-subtitle fw-light fs-5" {% edit_attrs "hero_subtitulo_visitante" %} {% vista_attrs "visitante" %}>
+    <div class="inicio-subtitle fw-light fs-5 texto-corrido" {% edit_attrs "hero_subtitulo_visitante" %} {% vista_attrs "visitante" %}>
       {{ bloques.hero_subtitulo_visitante.contenido }}
-    </p>
+    </div>
     {% if modo_editor %}
     <template id="rico-hero_subtitulo_visitante">{{ bloques.hero_subtitulo_visitante.html_rico }}</template>
     {% endif %}
@@ -40,9 +40,9 @@
     </div>
     {% endif %}
     {% if modo_editor or user.is_authenticated %}
-    <p class="inicio-subtitle fw-light fs-5" {% edit_attrs "hero_subtitulo_sesion" %} {% vista_attrs "sesion" %}>
+    <div class="inicio-subtitle fw-light fs-5 texto-corrido" {% edit_attrs "hero_subtitulo_sesion" %} {% vista_attrs "sesion" %}>
       {{ bloques.hero_subtitulo_sesion.contenido }}
-    </p>
+    </div>
     <div class="hero-cta" {% vista_attrs "sesion" %}>
       <a href="{{ bloques.hero_cta_contacto.enlace }}" class="btn hero-btn-primary" {% edit_attrs "hero_cta_contacto" %}>
         <i class="fa-solid fa-paper-plane me-2" aria-hidden="true"></i>

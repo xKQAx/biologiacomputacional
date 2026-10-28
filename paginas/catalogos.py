@@ -5,7 +5,7 @@ No define secciones nuevas: cada clave es un texto, enlace o imagen de la planti
 
 from dataclasses import replace
 
-from paginas.catalogo import ENLACE, IMAGEN, _b
+from paginas.catalogo import BLOQUE, ENLACE, IMAGEN, PLANO, _b
 
 _INTRO_SERVICIOS = (
     'Bienvenido a nuestra sección de servicios. Aquí encontrarás una variedad de '
@@ -37,6 +37,7 @@ CATALOGO_INVESTIGACION = con_orden((
         'del proyecto de investigación titulado Docking molecular en la búsqueda de '
         'inhibidores potenciales de la oligomerización de α-sinucleina en la enfermedad '
         'de Parkinson y otras investigaciones.',
+        formato=BLOQUE,
     ),
     _b(
         'inv_ver_mas', 'introduccion', 'Botón', 'Ver más',
@@ -54,6 +55,7 @@ CATALOGO_INVESTIGACION = con_orden((
         'de Bacillus thuringiensis ofrece proteínas insecticidas que desempeñan un papel '
         'vital en el control de plagas agrícolas, especialmente mosquitos transmisores de '
         'enfermedades como el dengue y la malaria.',
+        formato=BLOQUE,
     ),
     _b(
         'inv_contenidos_imagen', 'contenidos', 'Imagen', 'Imagen de investigación',
@@ -69,6 +71,7 @@ CATALOGO_PROFESIONALES = con_orden((
         'prof_subtitulo', 'encabezado', 'Introducción',
         'Investigadores, científicos e ingenieros unidos por la biología computacional. '
         'Explora sus perfiles y contribuciones.',
+        formato=BLOQUE,
     ),
     _b(
         'prof_intro', 'introduccion', 'Texto',
@@ -82,7 +85,7 @@ CATALOGO_PROFESIONALES = con_orden((
         'campo. Desde el diseño de algoritmos hasta el análisis de datos biológicos '
         'y la creación de modelos computacionales, nuestros profesionales impulsan '
         'el avance de la ciencia. Te invitamos a explorar sus perfiles.',
-        multilinea=True,
+        multilinea=True, formato=BLOQUE,
     ),
     _b(
         'prof_imagen', 'introduccion', 'Imagen', 'Profesionales de biología computacional',
@@ -94,15 +97,15 @@ CATALOGO_PROFESIONALES = con_orden((
 
 CATALOGO_SERVICIOS = con_orden((
     _b('srv_titulo', 'intro', 'Título', 'Servicios'),
-    _b('srv_intro', 'intro', 'Introducción', _INTRO_SERVICIOS),
+    _b('srv_intro', 'intro', 'Introducción', _INTRO_SERVICIOS, formato=BLOQUE),
     _b('srv_herr_titulo', 'menu', 'Herramientas: título', 'Herramientas'),
-    _b('srv_herr_texto', 'menu', 'Herramientas: texto', _TEXTO_HERRAMIENTAS),
-    _b('srv_herr_tooltip', 'menu', 'Herramientas: ayuda', 'Herramientas disponibles'),
+    _b('srv_herr_texto', 'menu', 'Herramientas: texto', _TEXTO_HERRAMIENTAS, formato=BLOQUE),
+    _b('srv_herr_tooltip', 'menu', 'Herramientas: ayuda', 'Herramientas disponibles', formato=PLANO),
     _b('srv_db_titulo', 'menu', 'Bases de datos: título', 'Bases de datos'),
-    _b('srv_db_texto', 'menu', 'Bases de datos: texto', _TEXTO_BASES),
-    _b('srv_db_tooltip', 'menu', 'Bases de datos: ayuda', 'Bases de datos disponibles'),
+    _b('srv_db_texto', 'menu', 'Bases de datos: texto', _TEXTO_BASES, formato=BLOQUE),
+    _b('srv_db_tooltip', 'menu', 'Bases de datos: ayuda', 'Bases de datos disponibles', formato=PLANO),
     _b('srv_lista_titulo', 'busqueda', 'Título del listado', 'Herramientas disponibles'),
-    _b('srv_buscar', 'busqueda', 'Placeholder de búsqueda', 'Buscar'),
+    _b('srv_buscar', 'busqueda', 'Placeholder de búsqueda', 'Buscar', formato=PLANO),
     _b('srv_buscar_etiqueta', 'busqueda', 'Etiqueta de búsqueda', 'Buscar herramientas'),
     _b('srv_buscar_boton', 'busqueda', 'Botón de búsqueda', 'Buscar'),
     _b('srv_resultados', 'busqueda', 'Resultados', 'fuentes encontradas para'),
@@ -116,15 +119,15 @@ CATALOGO_SERVICIOS = con_orden((
 
 CATALOGO_BASES = con_orden((
     _b('db_titulo', 'intro', 'Título', 'Servicios'),
-    _b('db_intro', 'intro', 'Introducción', _INTRO_SERVICIOS),
+    _b('db_intro', 'intro', 'Introducción', _INTRO_SERVICIOS, formato=BLOQUE),
     _b('db_herr_titulo', 'menu', 'Herramientas: título', 'Herramientas'),
-    _b('db_herr_texto', 'menu', 'Herramientas: texto', _TEXTO_HERRAMIENTAS),
-    _b('db_herr_tooltip', 'menu', 'Herramientas: ayuda', 'Herramientas disponibles'),
+    _b('db_herr_texto', 'menu', 'Herramientas: texto', _TEXTO_HERRAMIENTAS, formato=BLOQUE),
+    _b('db_herr_tooltip', 'menu', 'Herramientas: ayuda', 'Herramientas disponibles', formato=PLANO),
     _b('db_db_titulo', 'menu', 'Bases de datos: título', 'Bases de datos'),
-    _b('db_db_texto', 'menu', 'Bases de datos: texto', _TEXTO_BASES),
-    _b('db_db_tooltip', 'menu', 'Bases de datos: ayuda', 'Bases de datos disponibles'),
+    _b('db_db_texto', 'menu', 'Bases de datos: texto', _TEXTO_BASES, formato=BLOQUE),
+    _b('db_db_tooltip', 'menu', 'Bases de datos: ayuda', 'Bases de datos disponibles', formato=PLANO),
     _b('db_lista_titulo', 'busqueda', 'Título del listado', 'Bases de datos disponibles'),
-    _b('db_buscar', 'busqueda', 'Placeholder de búsqueda', 'Buscar'),
+    _b('db_buscar', 'busqueda', 'Placeholder de búsqueda', 'Buscar', formato=PLANO),
     _b('db_buscar_etiqueta', 'busqueda', 'Etiqueta de búsqueda', 'Buscar bases de datos'),
     _b('db_buscar_boton', 'busqueda', 'Botón de búsqueda', 'Buscar'),
     _b('db_resultados', 'busqueda', 'Resultados', 'fuentes encontradas para'),
@@ -139,6 +142,7 @@ CATALOGO_BASES = con_orden((
 CATALOGO_CONTACTO = con_orden((
     _b('cto_etiqueta', 'presentacion', 'Etiqueta', 'Contáctanos'),
     _b('cto_titulo', 'presentacion', 'Título', '¿Cómo podemos ayudarte?'),
+    # Vive dentro de un <p> de la plantilla, que no se modifica: solo formato en línea.
     _b(
         'cto_subtitulo', 'presentacion', 'Introducción',
         '¿Tienes alguna pregunta, comentario o sugerencia? '
@@ -146,9 +150,9 @@ CATALOGO_CONTACTO = con_orden((
     ),
     _b('cto_info_titulo', 'datos', 'Título', 'Información de contacto'),
     _b('cto_tel_etiqueta', 'datos', 'Teléfono: etiqueta', 'Teléfono'),
-    _b('cto_tel', 'datos', 'Teléfono', 'PBX: +57 607 6516500'),
+    _b('cto_tel', 'datos', 'Teléfono', 'PBX: +57 607 6516500', formato=PLANO),
     _b('cto_correo_etiqueta', 'datos', 'Correo: etiqueta', 'Correo electrónico'),
-    _b('cto_correo', 'datos', 'Correo', 'biocomp@udes.edu.co'),
+    _b('cto_correo', 'datos', 'Correo', 'biocomp@udes.edu.co', formato=PLANO),
     _b('cto_lugar_etiqueta', 'datos', 'Ubicación: etiqueta', 'Ubicación'),
     _b(
         'cto_lugar', 'datos', 'Ubicación',
@@ -156,11 +160,11 @@ CATALOGO_CONTACTO = con_orden((
         multilinea=True,
     ),
     _b('cto_form_titulo', 'formulario', 'Título', 'Envíanos un mensaje'),
-    _b('cto_nombres', 'formulario', 'Nombres', 'Nombres'),
-    _b('cto_apellidos', 'formulario', 'Apellidos', 'Apellidos'),
-    _b('cto_email', 'formulario', 'Correo electrónico', 'Correo electrónico'),
-    _b('cto_telefono', 'formulario', 'Teléfono', 'Teléfono'),
-    _b('cto_mensaje', 'formulario', 'Mensaje', 'Mensaje'),
-    _b('cto_obligatorio', 'formulario', 'Campo obligatorio', 'Este campo es obligatorio.'),
+    _b('cto_nombres', 'formulario', 'Nombres', 'Nombres', formato=PLANO),
+    _b('cto_apellidos', 'formulario', 'Apellidos', 'Apellidos', formato=PLANO),
+    _b('cto_email', 'formulario', 'Correo electrónico', 'Correo electrónico', formato=PLANO),
+    _b('cto_telefono', 'formulario', 'Teléfono', 'Teléfono', formato=PLANO),
+    _b('cto_mensaje', 'formulario', 'Mensaje', 'Mensaje', formato=PLANO),
+    _b('cto_obligatorio', 'formulario', 'Campo obligatorio', 'Este campo es obligatorio.', formato=PLANO),
     _b('cto_enviar', 'formulario', 'Botón de envío', 'Enviar mensaje'),
 ))

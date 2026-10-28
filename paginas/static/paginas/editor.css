@@ -237,6 +237,97 @@ body.editor-portada #content {
   display: none !important;
 }
 
+/* Barra de párrafo, al estilo de un editor de texto. El lienzo vive en el iframe. */
+.editor-formato-barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.45rem 0 0;
+  padding: 0.4rem;
+  border: 1px solid #b7c3cc;
+  border-bottom: 0;
+  border-radius: 6px 6px 0 0;
+  background: #f3f6f8;
+}
+
+.editor-formato-barra button {
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  border: 1px solid #9aafbd;
+  background: #fff;
+  color: #1c2830;
+  border-radius: 4px;
+  padding: 0.38rem 0.65rem;
+  min-height: 2rem;
+}
+
+.editor-formato-barra button:hover,
+.editor-formato-barra button:focus-visible {
+  background: #e5f2f8;
+  border-color: var(--secondary, #417690);
+  outline: 2px solid var(--secondary, #417690);
+  outline-offset: 1px;
+}
+
+.editor-formato-barra button.activa {
+  background: #d6ebf5;
+  border-color: var(--secondary, #417690);
+}
+
+.editor-formato-barra [data-fmt="limpiar"] {
+  margin-left: 0.2rem;
+}
+
+.editor-formato-campo {
+  min-height: 6.5rem;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid #b7c3cc;
+  border-radius: 0 0 6px 6px;
+  background: #fff;
+  color: #1c2830;
+  overflow: auto;
+  line-height: 1.45;
+}
+
+.editor-formato-campo.es-linea {
+  min-height: 2.75rem;
+}
+
+.editor-formato-campo.es-linea.es-multilinea {
+  min-height: 4.75rem;
+}
+
+.editor-formato-campo:focus {
+  outline: 2px solid var(--secondary, #417690);
+  outline-offset: 1px;
+}
+
+.editor-formato-campo :is(p, ul, ol, li, a, strong, em, u) {
+  font-size: inherit;
+  font-family: inherit;
+  line-height: inherit;
+  color: inherit;
+  background: transparent;
+}
+
+.editor-formato-campo a,
+.editor-formato-campo u {
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+}
+
+.editor-formato-campo ul,
+.editor-formato-campo ol {
+  margin: 0.25rem 0 0.25rem 1.2rem;
+  padding: 0;
+}
+
 .editor-lienzo {
   min-width: 0;
   min-height: 0;

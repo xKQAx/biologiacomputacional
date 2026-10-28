@@ -93,7 +93,7 @@
                 <div class="card-body text-center">
                     <h4 class="mb-3" {% edit_attrs "inv_titulo" %}>{{ bloques.inv_titulo.contenido }}</h4>
                     <hr class="border border-primary border-2 shadow opacity-75 mx-auto" style="width: 40px;">
-                    <p {% edit_attrs "inv_texto" %}>{{ bloques.inv_texto.contenido }}</p>
+                    <div class="mb-3 texto-corrido" {% edit_attrs "inv_texto" %}>{{ bloques.inv_texto.contenido }}</div>
                     <a class="btn btn-outline-primary mt-2 shadow" href="{{ bloques.inv_ver_mas.enlace }}" role="button" {% edit_attrs "inv_ver_mas" %}><span data-edit-texto>{{ bloques.inv_ver_mas.contenido }}</span></a>
                     {% if not diapositivas %}
                     {% if not modo_editor %}
@@ -140,7 +140,7 @@
             <div class="col-12 col-md-6">
                 <div class="card-body text-center text-white">
                     <h4 class="mb-3" {% edit_attrs "inv_contenidos_titulo" %}>{{ bloques.inv_contenidos_titulo.contenido }}</h4>
-                    <p {% edit_attrs "inv_contenidos_texto" %}>{{ bloques.inv_contenidos_texto.contenido }}</p>
+                    <div class="mb-3 texto-corrido" {% edit_attrs "inv_contenidos_texto" %}>{{ bloques.inv_contenidos_texto.contenido }}</div>
                 </div>
                 <div class="card-body text-white mt-5">
                     <div class="row d-flex gap-3 justify-content-center  text-center">

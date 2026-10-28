@@ -14,7 +14,7 @@
 <div class="container mt-5" >
     <h5 class="fw-bold mb-3 mt-5" {% edit_attrs "srv_titulo" %}>{{ bloques.srv_titulo.contenido }}</h5>
     <hr class="border border-primary border-2 shadow opacity-75 ms-0" style="width: 40px;">
-    <p class="fw-light" {% edit_attrs "srv_intro" %}>{{ bloques.srv_intro.contenido }}</p>
+    <div class="fw-light mb-3 texto-corrido" {% edit_attrs "srv_intro" %}>{{ bloques.srv_intro.contenido }}</div>
 </div>
 
 <!-- Contenido entre herramientas y bases de datos -->
@@ -33,7 +33,7 @@
                             <span class="visually-hidden" data-edit-texto aria-hidden="true">{{ bloques.srv_herr_tooltip.texto }}</span>
                         </span>
                     </div>
-                    <p class="mb-1" {% edit_attrs "srv_herr_texto" %}>{{ bloques.srv_herr_texto.contenido }}</p>
+                    <div class="mb-1 texto-corrido" {% edit_attrs "srv_herr_texto" %}>{{ bloques.srv_herr_texto.contenido }}</div>
                 </div>
 
                 <a href="{% url 'database' %}" class="list-group-item list-group-item-action">
@@ -46,7 +46,7 @@
                             <span class="visually-hidden" data-edit-texto aria-hidden="true">{{ bloques.srv_db_tooltip.texto }}</span>
                         </span>
                     </div>
-                    <p class="mb-1" {% edit_attrs "srv_db_texto" %}>{{ bloques.srv_db_texto.contenido }}</p>
+                    <div class="mb-1 texto-corrido" {% edit_attrs "srv_db_texto" %}>{{ bloques.srv_db_texto.contenido }}</div>
                 </a>
             </div>
 
@@ -74,9 +74,9 @@
                 <p class="fw-light" {% if not form_submitted %}hidden{% endif %}>{{ cantidad_herramientas_buscadas }} <span {% edit_attrs "srv_resultados" %}>{{ bloques.srv_resultados.contenido }}</span> <strong
                         class="fw-bold">{{ request.GET.q }}</strong><a href="{% url 'servicios' %}" type="button"
                         class="btn btn-outline-white custom-color ms-1" data-bs-toggle="tooltip"
-                        data-bs-placement="right" data-bs-title="{{ bloques.srv_restablecer.texto }}"
+                        data-bs-placement="right" data-bs-title="{{ bloques.srv_restablecer.plano }}"
                         {% edit_attrs "srv_restablecer" %}><i
-                            class="fa-solid fa-xmark"></i><span class="visually-hidden" data-edit-texto>{{ bloques.srv_restablecer.texto }}</span></a></p>
+                            class="fa-solid fa-xmark"></i><span class="visually-hidden" data-edit-texto>{{ bloques.srv_restablecer.contenido }}</span></a></p>
                 {% endif %}
             </div>
 

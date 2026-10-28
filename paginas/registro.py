@@ -27,8 +27,14 @@ _AYUDA = (
     'Pasa el cursor por el lienzo: lo que se puede editar se resalta. '
     'Haz clic para ver aquí su nombre y cambiar el texto al momento.'
 )
+_AYUDA_FORMATO = (
+    ' En el texto que se lee, la barra admite negrita, cursiva, subrayado y enlace. '
+    'En un párrafo o una introducción, también lista con viñetas y lista numerada.'
+)
+_AYUDA_TEXTO = _AYUDA + _AYUDA_FORMATO
 _AYUDA_FOTO = (
     _AYUDA + ' En una foto puedes subir otra imagen y escribir su texto alternativo.'
+    + _AYUDA_FORMATO
 )
 _AYUDA_INICIO = (
     _AYUDA_FOTO + ' Sube o baja las secciones; la barra y el pie se quedan en su sitio.'
@@ -219,6 +225,7 @@ _registrar(Pagina(
     ),
     CATALOGO_SERVICIOS,
     datos=_datos_servicios,
+    ayuda=_AYUDA_TEXTO,
     aviso_publicado=_aviso('Página de servicios'),
 ))
 
@@ -235,6 +242,7 @@ _registrar(Pagina(
     ),
     CATALOGO_BASES,
     datos=_datos_bases,
+    ayuda=_AYUDA_TEXTO,
     aviso_publicado=_aviso('Página de bases de datos'),
 ))
 
@@ -250,6 +258,7 @@ _registrar(Pagina(
         ('formulario', 'Formulario'),
     ),
     CATALOGO_CONTACTO,
+    ayuda=_AYUDA + _AYUDA_FORMATO,
     aviso_publicado=_aviso('Página de contacto'),
 ))
 

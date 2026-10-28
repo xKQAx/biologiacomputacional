@@ -25,6 +25,38 @@
     return limpio;
   }
 
+  function textoAtributo(texto) {
+    var saneo = window.BiocomSaneo;
+    if (!saneo || String(texto || "").indexOf(saneo.PREFIJO) !== 0) {
+      return texto == null ? "" : String(texto);
+    }
+    return saneo.sinMarcas(String(texto).slice(saneo.PREFIJO.length));
+  }
+
+  function perfilHtml(el) {
+    var perfil = el.getAttribute("data-edit-html");
+    if (perfil === "linea" || perfil === "bloque") return perfil;
+    return "";
+  }
+
+  function esHtmlEnriquecido(el, texto) {
+    return (
+      !!perfilHtml(el) &&
+      window.BiocomSaneo &&
+      String(texto || "").indexOf(window.BiocomSaneo.PREFIJO) === 0
+    );
+  }
+
+  function pintarHtml(destino, texto, perfil) {
+    var limpio = window.BiocomSaneo.sanear(
+      String(texto).slice(window.BiocomSaneo.PREFIJO.length),
+      perfil
+    );
+    var plantilla = document.createElement("template");
+    plantilla.innerHTML = limpio;
+    destino.replaceChildren(plantilla.content);
+  }
+
   function escribir(destino, texto, multilinea) {
     if (!multilinea) {
       destino.textContent = texto;
@@ -53,12 +85,13 @@
 
   function aplicarUno(el, data) {
     var enlace = enlacePermitido(data.enlace);
-    if (el.hasAttribute("aria-label")) el.setAttribute("aria-label", data.texto);
-    if (el.hasAttribute("data-bs-title")) el.setAttribute("data-bs-title", data.texto);
-    if (el.hasAttribute("placeholder")) el.setAttribute("placeholder", data.texto);
+    var atributo = textoAtributo(data.texto);
+    if (el.hasAttribute("aria-label")) el.setAttribute("aria-label", atributo);
+    if (el.hasAttribute("data-bs-title")) el.setAttribute("data-bs-title", atributo);
+    if (el.hasAttribute("placeholder")) el.setAttribute("placeholder", atributo);
 
     if (el.getAttribute("data-edit-imagen") === "1") {
-      el.alt = data.texto == null ? "" : data.texto;
+      el.alt = atributo;
       if (!data.conservarImagen && enlace) el.src = enlace;
       return;
     }
@@ -69,6 +102,9 @@
     var plantilla = document.getElementById("rico-" + el.getAttribute("data-edit-rico"));
     if (plantilla && data.texto === predeterminado) {
       destino.replaceChildren(plantilla.content.cloneNode(true));
+    } else if (esHtmlEnriquecido(el, data.texto)) {
+      // El fragmento se arma en el iframe del sitio: no hereda el CSS del admin.
+      pintarHtml(destino, data.texto, perfilHtml(el));
     } else {
       escribir(destino, data.texto, el.hasAttribute("data-edit-multilinea"));
     }

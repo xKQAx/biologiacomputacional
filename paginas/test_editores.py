@@ -1,3 +1,5 @@
+import re
+
 from django.contrib.auth.models import User
 from django.test import TestCase
 
@@ -226,6 +228,32 @@ class EditorContactoTests(_EditorDePagina, TestCase):
     url_publica = '/contacto/'
     clave = 'cto_titulo'
     texto_fabrica = '¿Cómo podemos ayudarte?'
+
+    def test_el_formulario_de_contacto_sigue_sin_barra_de_formato(self):
+        self.client.force_login(self.staff)
+        html = self.client.get(self.editor).content.decode()
+        titulo = self._fieldset(html, 'cto_titulo')
+        self.assertIn('data-formato="linea"', titulo)
+        self.assertIn('>Subrayado<', titulo)
+        self.assertNotIn('data-fmt="ul"', titulo)
+        self.assertNotIn('data-fmt="ol"', titulo)
+        envio = self._fieldset(html, 'cto_enviar')
+        self.assertIn('data-formato="linea"', envio)
+        self.assertNotIn('data-fmt="ul"', envio)
+        for clave in (
+            'cto_nombres', 'cto_apellidos', 'cto_email', 'cto_telefono',
+            'cto_mensaje', 'cto_obligatorio', 'cto_tel', 'cto_correo',
+        ):
+            self.assertNotIn('data-formato', self._fieldset(html, clave), clave)
+
+    def _fieldset(self, html, clave):
+        coincidencia = re.search(
+            rf'<fieldset[^>]*data-clave="{re.escape(clave)}".*?</fieldset>',
+            html,
+            flags=re.S,
+        )
+        self.assertIsNotNone(coincidencia, clave)
+        return coincidencia.group(0)
 
     def test_el_formulario_sigue_en_la_pagina(self):
         pagina = self.client.get(self.url_publica)

@@ -44,6 +44,129 @@
     return form.querySelector('fieldset[data-clave="' + CSS.escape(clave) + '"]');
   }
 
+  function campoVisible(fs) {
+    return fs.querySelector("[data-campo=texto-rico]") || fs.querySelector("[data-campo=texto]");
+  }
+
+  function perfilDe(nodo) {
+    var caja = nodo.closest ? nodo.closest("[data-formato]") : null;
+    return caja && caja.getAttribute("data-formato") === "linea" ? "linea" : "bloque";
+  }
+
+  function escribirValor(caja) {
+    if (!window.BiocomSaneo) return;
+    var campo = caja.querySelector("[data-campo=texto-rico]");
+    var oculto = caja.querySelector("[data-campo=texto]");
+    if (!campo || !oculto) return;
+    oculto.value = window.BiocomSaneo.valorDesdeDom(campo, caja.getAttribute("data-formato"));
+  }
+
+  function pintarCampo(campo, valor) {
+    var saneo = window.BiocomSaneo;
+    var perfil = perfilDe(campo);
+    campo.replaceChildren();
+    if (saneo && String(valor || "").indexOf(saneo.PREFIJO) === 0) {
+      var plantilla = document.createElement("template");
+      plantilla.innerHTML = saneo.sanear(String(valor).slice(saneo.PREFIJO.length), perfil);
+      campo.appendChild(plantilla.content);
+      return;
+    }
+    String(valor || "").split("\n").forEach(function (linea, indice) {
+      if (indice) campo.appendChild(document.createElement("br"));
+      campo.appendChild(document.createTextNode(linea));
+    });
+  }
+
+  function publicarCampo(campo) {
+    var caja = campo.closest("[data-formato]");
+    var fs = campo.closest("fieldset[data-clave]");
+    if (caja) escribirValor(caja);
+    editado = true;
+    refrescarAvisoPendiente();
+    if (listo && fs) post(mensajeCampo(fs));
+  }
+
+  function aplicarEnlace() {
+    var escrito = window.prompt(
+      "Dirección del enlace. Solo http, https o mailto. Déjala vacía para quitarlo.",
+      "https://"
+    );
+    if (escrito === null || !window.BiocomSaneo) return;
+    if (!String(escrito).trim()) {
+      document.execCommand("unlink");
+      return;
+    }
+    var href = window.BiocomSaneo.hrefSeguro(escrito);
+    if (!href) {
+      window.alert("Ese enlace no se puede usar. Escribe uno que empiece por http://, https:// o mailto:.");
+      return;
+    }
+    document.execCommand("createLink", false, href);
+  }
+
+  function quitarFormato(campo, perfil) {
+    document.execCommand("removeFormat");
+    document.execCommand("unlink");
+    if (perfil === "bloque") {
+      Array.prototype.slice.call(campo.querySelectorAll("li")).reverse().forEach(function (li) {
+        var parrafo = document.createElement("p");
+        while (li.firstChild) parrafo.appendChild(li.firstChild);
+        li.replaceWith(parrafo);
+      });
+      campo.querySelectorAll("ul, ol").forEach(function (lista) {
+        var padre = lista.parentNode;
+        while (lista.firstChild) padre.insertBefore(lista.firstChild, lista);
+        lista.remove();
+      });
+    }
+    if (window.BiocomSaneo) campo.innerHTML = window.BiocomSaneo.sanear(campo.innerHTML, perfil);
+  }
+
+  function refrescarBarra(campo) {
+    var caja = campo.closest("[data-formato]");
+    if (!caja) return;
+    var mapa = {
+      strong: "bold",
+      em: "italic",
+      u: "underline",
+      ul: "insertUnorderedList",
+      ol: "insertOrderedList",
+    };
+    caja.querySelectorAll("[data-fmt]").forEach(function (boton) {
+      var comando = mapa[boton.getAttribute("data-fmt")];
+      if (!comando) return;
+      var activo = false;
+      try {
+        activo = document.queryCommandState(comando);
+      } catch (error) {
+        activo = false;
+      }
+      boton.classList.toggle("activa", activo);
+      boton.setAttribute("aria-pressed", activo ? "true" : "false");
+    });
+  }
+
+  function aplicarFormato(campo, fmt) {
+    var perfil = perfilDe(campo);
+    /* Estrategia del perfil: en un título el botón de lista no hace nada. */
+    if ((fmt === "ul" || fmt === "ol") && perfil !== "bloque") return;
+    campo.focus();
+    try {
+      document.execCommand("styleWithCSS", false, false);
+    } catch (error) {
+      /* El navegador sigue el comando aunque no acepte este ajuste. */
+    }
+    if (fmt === "strong") document.execCommand("bold");
+    else if (fmt === "em") document.execCommand("italic");
+    else if (fmt === "u") document.execCommand("underline");
+    else if (fmt === "ul") document.execCommand("insertUnorderedList");
+    else if (fmt === "ol") document.execCommand("insertOrderedList");
+    else if (fmt === "enlace") aplicarEnlace();
+    else if (fmt === "limpiar") quitarFormato(campo, perfil);
+    publicarCampo(campo);
+    refrescarBarra(campo);
+  }
+
   function post(mensaje) {
     if (!listo || !marco.contentWindow) {
       cola.push(mensaje);
@@ -198,7 +321,7 @@
       desplazar: !desdeLienzo,
     });
     if (desdeLienzo) {
-      var campo = fs.querySelector("[data-campo=texto]");
+      var campo = campoVisible(fs);
       if (campo) campo.focus();
       fs.scrollIntoView({ block: "nearest" });
     }
@@ -240,7 +363,67 @@
     return "";
   }
 
+  form.addEventListener("mousedown", function (event) {
+    if (event.target.closest("[data-fmt]")) event.preventDefault();
+  });
+
+  form.addEventListener("click", function (event) {
+    var boton = event.target.closest("[data-fmt]");
+    if (!boton) return;
+    event.preventDefault();
+    var caja = boton.closest("[data-formato]");
+    var campo = caja && caja.querySelector("[data-campo=texto-rico]");
+    if (!campo) return;
+    aplicarFormato(campo, boton.getAttribute("data-fmt"));
+  });
+
+  form.addEventListener("keydown", function (event) {
+    var campo = event.target.closest && event.target.closest("[data-campo=texto-rico]");
+    if (!campo) return;
+    if (event.key === "Enter" && campo.getAttribute("aria-multiline") !== "true") {
+      event.preventDefault();
+      return;
+    }
+    if (event.altKey || !(event.ctrlKey || event.metaKey)) return;
+    var tecla = String(event.key || "").toLowerCase();
+    var fmt = tecla === "b" ? "strong" : tecla === "i" ? "em" : tecla === "u" ? "u" : "";
+    if (!fmt) return;
+    event.preventDefault();
+    aplicarFormato(campo, fmt);
+  });
+
+  form.addEventListener("keyup", function (event) {
+    var campo = event.target.closest && event.target.closest("[data-campo=texto-rico]");
+    if (campo) refrescarBarra(campo);
+  });
+
+  form.addEventListener("mouseup", function (event) {
+    var campo = event.target.closest && event.target.closest("[data-campo=texto-rico]");
+    if (campo) refrescarBarra(campo);
+  });
+
+  document.addEventListener("selectionchange", function () {
+    var seleccion = document.getSelection();
+    if (!seleccion || !seleccion.anchorNode) return;
+    var nodo = seleccion.anchorNode.nodeType === 1 ? seleccion.anchorNode : seleccion.anchorNode.parentElement;
+    var campo = nodo && nodo.closest && nodo.closest("[data-campo=texto-rico]");
+    if (campo && form.contains(campo)) refrescarBarra(campo);
+  });
+
+  form.addEventListener("paste", function (event) {
+    var campo = event.target.closest && event.target.closest("[data-campo=texto-rico]");
+    if (!campo || !window.BiocomSaneo || !event.clipboardData) return;
+    event.preventDefault();
+    var html = event.clipboardData.getData("text/html");
+    var plano = event.clipboardData.getData("text/plain");
+    if (html) document.execCommand("insertHTML", false, window.BiocomSaneo.sanear(html, perfilDe(campo)));
+    else document.execCommand("insertText", false, plano || "");
+    publicarCampo(campo);
+  });
+
   form.addEventListener("input", function (event) {
+    var caja = event.target.closest("[data-formato]");
+    if (caja) escribirValor(caja);
     var fs = event.target.closest("fieldset[data-clave]");
     if (!fs || event.target.getAttribute("data-campo") === "imagen") return;
     editado = true;
@@ -303,6 +486,7 @@
   }
 
   form.addEventListener("submit", function (event) {
+    form.querySelectorAll("[data-formato]").forEach(escribirValor);
     var boton = event.submitter;
     if (boton && boton.value === "descartar") {
       if (!window.confirm("¿Descartar el borrador? Lo publicado no cambia.")) {
@@ -351,6 +535,12 @@
     if (data.tipo === "seleccionar") elegirBloque(data.clave, true);
   });
 
+  form.querySelectorAll("[data-formato]").forEach(function (caja) {
+    var oculto = caja.querySelector("[data-campo=texto]");
+    var campo = caja.querySelector("[data-campo=texto-rico]");
+    if (oculto && campo) pintarCampo(campo, oculto.value);
+  });
+
   actualizarFlechas();
   pintar();
 
@@ -362,7 +552,7 @@
     var fsError = primerError.closest("fieldset[data-clave]");
     if (fsError) {
       elegirBloque(fsError.getAttribute("data-clave"), false);
-      var destino = fsError.querySelector("[data-campo=texto]");
+      var destino = campoVisible(fsError);
       if (primerError.hasAttribute("data-error-imagen")) {
         destino = fsError.querySelector("[data-campo=imagen]");
       } else if (primerError.hasAttribute("data-error-enlace")) {

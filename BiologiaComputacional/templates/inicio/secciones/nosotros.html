@@ -10,8 +10,8 @@
           <span data-edit-texto>{{ bloques.nosotros_etiqueta.contenido }}</span>
         </div>
         <h2 class="nosotros-title mb-4" {% edit_attrs "nosotros_titulo" %}>{{ bloques.nosotros_titulo.contenido }}</h2>
-        <p class="fw-light" {% edit_attrs "nosotros_parrafo_1" %}>{{ bloques.nosotros_parrafo_1.contenido }}</p>
-        <p class="fw-light" {% edit_attrs "nosotros_parrafo_2" %}>{{ bloques.nosotros_parrafo_2.contenido }}</p>
+        <div class="fw-light mb-3 texto-corrido" {% edit_attrs "nosotros_parrafo_1" %}>{{ bloques.nosotros_parrafo_1.contenido }}</div>
+        <div class="fw-light mb-3 texto-corrido" {% edit_attrs "nosotros_parrafo_2" %}>{{ bloques.nosotros_parrafo_2.contenido }}</div>
         {% if modo_editor or not user.is_authenticated %}
         <a href="{{ bloques.nosotros_cta_visitante.enlace }}" class="btn btn-primary-custom mt-3" {% edit_attrs "nosotros_cta_visitante" %} {% vista_attrs "visitante" %}>
           <span data-edit-texto>{{ bloques.nosotros_cta_visitante.contenido }}</span>

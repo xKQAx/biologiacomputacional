@@ -10,6 +10,8 @@ from django.templatetags.static import static
 from django.urls import reverse
 from django.utils.html import format_html
 
+from paginas.saneo import BLOQUE, LINEA, PLANO
+
 TEXTO = 'texto'
 ENLACE = 'enlace'
 IMAGEN = 'imagen'
@@ -78,12 +80,26 @@ class DefinicionBloque:
     vista: str = COMUN
     multilinea: bool = False
     rico: bool = False
+    # Vacío: línea para lo que se lee. plano: alt, teléfono, correo, placeholder.
+    # bloque: párrafo e introducción, con listas. La imagen vacía queda en plano.
+    formato: str = ''
     orden: int = 0
 
     @property
     def area(self):
         """Párrafos largos usan un área de texto; el resto, un campo corto."""
         return self.multilinea or len(self.texto) > 80
+
+    @property
+    def perfil(self):
+        """Estrategia de saneo. El editor, guardar y pintar leen este valor."""
+        if self.formato in (PLANO, LINEA, BLOQUE):
+            return self.formato
+        if self.formato:
+            raise RuntimeError(f'Perfil desconocido en {self.clave}.')
+        if self.tipo == IMAGEN:
+            return PLANO
+        return LINEA
 
 
 def html_subtitulo_visitante():
@@ -109,7 +125,7 @@ _BASE = (
     _b('hero_titulo_acento', 'encabezado', 'Título destacado', 'al alcance de todos'),
     _b(
         'hero_subtitulo_visitante', 'encabezado', 'Subtítulo del visitante',
-        TEXTO_SUBTITULO_VISITANTE, vista=VISITANTE, rico=True,
+        TEXTO_SUBTITULO_VISITANTE, vista=VISITANTE, rico=True, formato=BLOQUE,
     ),
     _b(
         'hero_cta_registro', 'encabezado', 'Botón de registro', 'Regístrate gratis',
@@ -123,7 +139,7 @@ _BASE = (
         'hero_subtitulo_sesion', 'encabezado', 'Subtítulo de quien ya entró',
         '¿Tienes alguna pregunta, comentario o sugerencia?\n'
         'Estamos siempre disponibles y listos para atenderte.',
-        vista=SESION, multilinea=True,
+        vista=SESION, multilinea=True, formato=BLOQUE,
     ),
     _b(
         'hero_cta_contacto', 'encabezado', 'Botón de contacto', 'Contáctanos',
@@ -147,7 +163,7 @@ _BASE = (
     _b('highlight_comunidad_titulo', 'caracteristicas', 'Comunidad: título', 'Comunidad activa'),
     _b(
         'highlight_comunidad_texto', 'caracteristicas', 'Comunidad: texto',
-        'Investigadores, académicos y estudiantes colaborando.',
+        'Investigadores, académicos y estudiantes colaborando.', formato=BLOQUE,
     ),
     _b(
         'highlight_investigacion_titulo', 'caracteristicas', 'Investigación: título',
@@ -155,22 +171,23 @@ _BASE = (
     ),
     _b(
         'highlight_investigacion_texto', 'caracteristicas', 'Investigación: texto',
-        'Publicaciones en genómica, proteómica y más.',
+        'Publicaciones en genómica, proteómica y más.', formato=BLOQUE,
     ),
     _b('highlight_datos_titulo', 'caracteristicas', 'Datos: título', 'Herramientas y datos'),
     _b(
         'highlight_datos_texto', 'caracteristicas', 'Datos: texto',
-        'Bases de datos y software para tu trabajo.',
+        'Bases de datos y software para tu trabajo.', formato=BLOQUE,
     ),
     _b('highlight_acceso_titulo', 'caracteristicas', 'Acceso: título', 'Acceso libre'),
     _b(
         'highlight_acceso_texto', 'caracteristicas', 'Acceso: texto',
-        'Recursos disponibles para toda la comunidad.',
+        'Recursos disponibles para toda la comunidad.', formato=BLOQUE,
     ),
     _b('encontrar_titulo', 'encontrar', 'Título de la sección', '¿Qué puedo encontrar en BioCOM?'),
     _b(
         'encontrar_subtitulo', 'encontrar', 'Subtítulo de la sección',
         'Todo lo que necesitas para tu investigación en un solo lugar',
+        formato=BLOQUE,
     ),
     _b(
         'tarjeta_profesionales_imagen', 'encontrar', 'Profesionales: imagen', 'Profesionales',
@@ -183,6 +200,7 @@ _BASE = (
     _b(
         'tarjeta_profesionales_texto', 'encontrar', 'Profesionales: texto',
         'Investigadores, científicos e ingenieros unidos por la biología computacional.',
+        formato=BLOQUE,
     ),
     _b(
         'tarjeta_investigacion_imagen', 'encontrar', 'Investigación: imagen', 'Investigación',
@@ -195,6 +213,7 @@ _BASE = (
     _b(
         'tarjeta_investigacion_texto', 'encontrar', 'Investigación: texto',
         'Resultados en genómica, proteómica y biología de sistemas disponibles para todos.',
+        formato=BLOQUE,
     ),
     _b(
         'tarjeta_servicios_imagen', 'encontrar', 'Servicios: imagen', 'Servicios',
@@ -207,6 +226,7 @@ _BASE = (
     _b(
         'tarjeta_servicios_texto', 'encontrar', 'Servicios: texto',
         'Herramientas y bases de datos especializadas para el análisis de datos biológicos.',
+        formato=BLOQUE,
     ),
     _b('nosotros_etiqueta', 'nosotros', 'Etiqueta', 'Quiénes somos'),
     _b('nosotros_titulo', 'nosotros', 'Título', 'Conectando Ciencia e Innovación'),
@@ -216,11 +236,13 @@ _BASE = (
         'biología y la informática. Nuestra plataforma nació para brindar un '
         'espacio inclusivo donde profesionales, investigadores y entusiastas '
         'pueden reunirse, colaborar y acceder a recursos especializados.',
+        formato=BLOQUE,
     ),
     _b(
         'nosotros_parrafo_2', 'nosotros', 'Segundo párrafo',
         'Con enfoque en la innovación científica, trabajamos para proporcionar '
         'herramientas de vanguardia e investigaciones actualizadas.',
+        formato=BLOQUE,
     ),
     _b(
         'nosotros_cta_visitante', 'nosotros', 'Botón del visitante', 'Únete a la comunidad',
@@ -236,11 +258,13 @@ _BASE = (
     _b(
         'beneficio_acceso_texto', 'beneficios', 'Acceso: texto',
         'Recursos y herramientas especializadas disponibles en un solo lugar.',
+        formato=BLOQUE,
     ),
     _b('beneficio_comunidad_titulo', 'beneficios', 'Comunidad: título', 'Comunidad activa'),
     _b(
         'beneficio_comunidad_texto', 'beneficios', 'Comunidad: texto',
         'Profesionales y expertos para colaboración y networking científico.',
+        formato=BLOQUE,
     ),
     _b(
         'beneficio_investigacion_titulo', 'beneficios', 'Investigación: título',
@@ -249,11 +273,13 @@ _BASE = (
     _b(
         'beneficio_investigacion_texto', 'beneficios', 'Investigación: texto',
         'Acceso a las últimas investigaciones y desarrollos en el campo.',
+        formato=BLOQUE,
     ),
     _b('beneficio_soporte_titulo', 'beneficios', 'Soporte: título', 'Soporte personalizado'),
     _b(
         'beneficio_soporte_texto', 'beneficios', 'Soporte: texto',
         'Servicios adaptados a las necesidades específicas de cada usuario.',
+        formato=BLOQUE,
     ),
     _b(
         'cta_titulo', 'llamado', 'Título', '¿Listo para comenzar?', vista=VISITANTE,
@@ -262,7 +288,7 @@ _BASE = (
         'cta_subtitulo', 'llamado', 'Subtítulo',
         'Únete a nuestra comunidad de investigadores y accede a todos los recursos '
         'del laboratorio.',
-        vista=VISITANTE,
+        vista=VISITANTE, formato=BLOQUE,
     ),
     _b(
         'cta_cuenta', 'llamado', 'Botón de crear cuenta', 'Crear cuenta gratuita',
@@ -347,7 +373,7 @@ _BASE = (
     _b('pie_direccion_1', 'pie', 'Dirección', 'Campus Universitario Lagos del Cacique'),
     _b('pie_direccion_2', 'pie', 'Calle', 'Calle 70 No. 55-210'),
     _b('pie_direccion_3', 'pie', 'Ciudad', 'Bucaramanga, Colombia'),
-    _b('pie_telefono', 'pie', 'Teléfono', 'PBX: +57 607 6516500'),
+    _b('pie_telefono', 'pie', 'Teléfono', 'PBX: +57 607 6516500', formato=PLANO),
 )
 
 CATALOGO = tuple(

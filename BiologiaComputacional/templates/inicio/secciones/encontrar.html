@@ -3,7 +3,7 @@
   <div class="container">
     <div class="section-header text-center mb-5">
       <h2 class="section-title" {% edit_attrs "encontrar_titulo" %}>{{ bloques.encontrar_titulo.contenido }}</h2>
-      <p class="section-subtitle" {% edit_attrs "encontrar_subtitulo" %}>{{ bloques.encontrar_subtitulo.contenido }}</p>
+      <div class="section-subtitle texto-corrido" {% edit_attrs "encontrar_subtitulo" %}>{{ bloques.encontrar_subtitulo.contenido }}</div>
     </div>
 
     <div class="row g-4 justify-content-center">
@@ -23,7 +23,7 @@
           <a href="{{ bloques.tarjeta_profesionales_titulo.enlace }}" {% edit_attrs "tarjeta_profesionales_titulo" %}>
             <h5 class="mt-2 mb-3" data-edit-texto>{{ bloques.tarjeta_profesionales_titulo.contenido }}</h5>
           </a>
-          <p class="fw-light" {% edit_attrs "tarjeta_profesionales_texto" %}>{{ bloques.tarjeta_profesionales_texto.contenido }}</p>
+          <div class="fw-light mb-3 texto-corrido" {% edit_attrs "tarjeta_profesionales_texto" %}>{{ bloques.tarjeta_profesionales_texto.contenido }}</div>
         </div>
       </div>
 
@@ -43,7 +43,7 @@
           <a href="{{ bloques.tarjeta_investigacion_titulo.enlace }}" {% edit_attrs "tarjeta_investigacion_titulo" %}>
             <h5 class="mt-2 mb-3" data-edit-texto>{{ bloques.tarjeta_investigacion_titulo.contenido }}</h5>
           </a>
-          <p class="fw-light" {% edit_attrs "tarjeta_investigacion_texto" %}>{{ bloques.tarjeta_investigacion_texto.contenido }}</p>
+          <div class="fw-light mb-3 texto-corrido" {% edit_attrs "tarjeta_investigacion_texto" %}>{{ bloques.tarjeta_investigacion_texto.contenido }}</div>
         </div>
       </div>
 
@@ -63,7 +63,7 @@
           <a href="{{ bloques.tarjeta_servicios_titulo.enlace }}" {% edit_attrs "tarjeta_servicios_titulo" %}>
             <h5 class="mt-2 mb-3" data-edit-texto>{{ bloques.tarjeta_servicios_titulo.contenido }}</h5>
           </a>
-          <p class="fw-light" {% edit_attrs "tarjeta_servicios_texto" %}>{{ bloques.tarjeta_servicios_texto.contenido }}</p>
+          <div class="fw-light mb-3 texto-corrido" {% edit_attrs "tarjeta_servicios_texto" %}>{{ bloques.tarjeta_servicios_texto.contenido }}</div>
         </div>
       </div>
     </div>

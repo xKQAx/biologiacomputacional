@@ -692,3 +692,210 @@ class EditorInicioTests(TestCase):
         self.assertIn('hayCambios', script)
         self.assertNotIn('accion=descartar', script)
         self.assertNotIn("value = \"descartar\"", script)
+        self.assertIn('ctrlKey', script)
+        self.assertIn('metaKey', script)
+        self.assertIn('tecla === "u"', script)
+        self.assertIn('underline', script)
+        self.assertIn('insertOrderedList', script)
+        self.assertIn('removeFormat', script)
+
+    def _fieldset(self, html, clave):
+        coincidencia = re.search(
+            rf'<fieldset[^>]*data-clave="{re.escape(clave)}".*?</fieldset>',
+            html,
+            flags=re.S,
+        )
+        self.assertIsNotNone(coincidencia, clave)
+        return coincidencia.group(0)
+
+    def test_la_barra_depende_del_tipo_de_texto(self):
+        self.client.force_login(self.staff)
+        html = self.client.get(self.editor).content.decode()
+        parrafo = self._fieldset(html, 'nosotros_parrafo_1')
+        self.assertIn('data-formato="bloque"', parrafo)
+        self.assertIn('role="toolbar"', parrafo)
+        for boton in ('Negrita', 'Cursiva', 'Subrayado', 'Lista', 'Numerada', 'Enlace', 'Quitar formato'):
+            self.assertIn(f'>{boton}<', parrafo)
+        self.assertIn('data-fmt="ul"', parrafo)
+        self.assertIn('data-fmt="ol"', parrafo)
+        self.assertIn('Ctrl+B', parrafo)
+        self.assertIn('Ctrl+I', parrafo)
+        self.assertIn('Ctrl+U', parrafo)
+        for clave in ('hero_titulo', 'nav_inicio', 'hero_cta_registro', 'pie_descripcion'):
+            linea = self._fieldset(html, clave)
+            self.assertIn('data-formato="linea"', linea, clave)
+            self.assertIn('>Subrayado<', linea, clave)
+            self.assertIn('>Quitar formato<', linea, clave)
+            self.assertNotIn('data-fmt="ul"', linea, clave)
+            self.assertNotIn('data-fmt="ol"', linea, clave)
+        for clave in ('pie_telefono', 'tarjeta_profesionales_imagen'):
+            self.assertNotIn('data-formato', self._fieldset(html, clave), clave)
+
+    def test_se_guardan_los_formatos_permitidos(self):
+        from paginas.saneo import PREFIJO_HTML
+
+        self.client.force_login(self.staff)
+        marcado = (
+            PREFIJO_HTML
+            + '<p>Hola <strong>negrita</strong> y <em>cursiva</em></p>'
+            + '<ul><li>uno</li></ul>'
+            + '<p><a href="https://example.com/lab">sitio</a> '
+            + '<a href="mailto:lab@example.com">correo</a></p>'
+        )
+        respuesta = self.client.post(self.editor, {
+            'accion': 'publicar',
+            'texto__nosotros_parrafo_1': marcado,
+        })
+        self.assertRedirects(respuesta, self.editor)
+        fila = BloquePortada.objects.get(
+            pagina='inicio', clave='nosotros_parrafo_1',
+            estado=BloquePortada.Estado.PUBLICADO,
+        )
+        self.assertIn('<strong>negrita</strong>', fila.texto)
+        self.assertIn('<em>cursiva</em>', fila.texto)
+        self.assertIn('<ul><li>uno</li></ul>', fila.texto)
+        self.assertIn('href="https://example.com/lab"', fila.texto)
+        self.assertIn('href="mailto:lab@example.com"', fila.texto)
+        self.client.logout()
+        portada = self.client.get('/')
+        self.assertContains(portada, '<strong>negrita</strong>')
+        self.assertContains(portada, '<em>cursiva</em>')
+        self.assertContains(portada, '<ul><li>uno</li></ul>')
+        self.assertContains(portada, 'href="https://example.com/lab"')
+        self.assertContains(portada, 'href="mailto:lab@example.com"')
+        self.assertNotContains(portada, PREFIJO_HTML)
+        self.assertNotContains(portada, 'admin/css/')
+
+    def test_se_elimina_un_script_o_un_enlace_javascript(self):
+        from paginas.saneo import PREFIJO_HTML
+
+        self.client.force_login(self.staff)
+        sucio = (
+            PREFIJO_HTML
+            + '<p>Visible</p><script>alert(1)</script>'
+            + '<a href="javascript:alert(1)">malo</a>'
+            + '<a href="JavaScript:alert(2)">otro</a>'
+            + '<a href="data:text/html,hi">dato</a>'
+            + '<a href="//evil.example">relativo</a>'
+            + '<a href="https://seguro.example">bueno</a>'
+        )
+        self.client.post(self.editor, {
+            'accion': 'publicar',
+            'texto__nosotros_parrafo_1': sucio,
+        })
+        fila = BloquePortada.objects.get(
+            pagina='inicio', clave='nosotros_parrafo_1',
+            estado=BloquePortada.Estado.PUBLICADO,
+        )
+        self.assertNotIn('<script', fila.texto.lower())
+        self.assertNotIn('javascript:', fila.texto.lower())
+        self.assertNotIn('data:', fila.texto.lower())
+        self.assertNotIn('evil.example', fila.texto)
+        self.assertIn('https://seguro.example', fila.texto)
+        self.client.logout()
+        portada = self.client.get('/')
+        self.assertContains(portada, 'Visible')
+        self.assertContains(portada, 'href="https://seguro.example"')
+        self.assertNotContains(portada, '<script>alert(1)</script>')
+        self.assertNotContains(portada, 'javascript:')
+        self.assertNotContains(portada, 'data:text/html')
+        self.assertNotContains(portada, 'evil.example')
+
+    def test_el_texto_plano_viejo_no_se_interpreta_como_html(self):
+        from paginas.saneo import PREFIJO_HTML
+
+        fila = BloquePortada.objects.get(
+            pagina='inicio', clave='nosotros_parrafo_1',
+            estado=BloquePortada.Estado.PUBLICADO,
+        )
+        fila.texto = 'Precio < 10 <script>alert(1)</script>'
+        fila.save(update_fields=['texto'])
+        portada = self.client.get('/')
+        self.assertContains(portada, 'Precio &lt; 10 &lt;script&gt;alert(1)&lt;/script&gt;')
+        self.assertNotContains(portada, '<script>alert(1)</script>')
+        self.assertNotContains(portada, PREFIJO_HTML)
+
+        self.client.force_login(self.staff)
+        self.client.post(self.editor, {
+            'accion': 'publicar',
+            'texto__pie_telefono': PREFIJO_HTML + '<strong>No</strong>',
+        })
+        self.client.logout()
+        portada = self.client.get('/')
+        self.assertContains(portada, '&lt;strong&gt;No&lt;/strong&gt;')
+        self.assertNotContains(portada, '<strong>No</strong>')
+
+    def test_el_titulo_guarda_formato_en_linea_y_descarta_la_lista(self):
+        from paginas.saneo import PREFIJO_HTML
+
+        self.client.force_login(self.staff)
+        marcado = (
+            PREFIJO_HTML
+            + '<strong>Hola</strong> <em>mundo</em> <u>raya</u> '
+            + '<a href="https://example.com/lab">web</a>'
+            + '<ul><li>no</li></ul>'
+            + '<script>alert(1)</script>'
+            + '<a href="javascript:alert(1)">malo</a>'
+        )
+        self.client.post(self.editor, {
+            'accion': 'publicar',
+            'texto__hero_titulo': marcado,
+        })
+        fila = BloquePortada.objects.get(
+            pagina='inicio', clave='hero_titulo',
+            estado=BloquePortada.Estado.PUBLICADO,
+        )
+        self.assertIn('<strong>Hola</strong>', fila.texto)
+        self.assertIn('<em>mundo</em>', fila.texto)
+        self.assertIn('<u>raya</u>', fila.texto)
+        self.assertIn('href="https://example.com/lab"', fila.texto)
+        self.assertNotIn('<ul', fila.texto)
+        self.assertNotIn('<li', fila.texto)
+        self.assertNotIn('script', fila.texto.lower())
+        self.assertNotIn('javascript:', fila.texto.lower())
+        self.client.logout()
+        portada = self.client.get('/')
+        self.assertContains(portada, '<strong>Hola</strong>')
+        self.assertContains(portada, '<em>mundo</em>')
+        self.assertContains(portada, '<u>raya</u>')
+        self.assertContains(portada, 'href="https://example.com/lab"')
+        self.assertNotContains(portada, '<ul><li>no</li></ul>')
+        self.assertNotContains(portada, '<script>alert(1)</script>')
+        self.assertNotContains(portada, 'javascript:')
+        self.assertNotContains(portada, PREFIJO_HTML)
+
+    def test_el_parrafo_guarda_subrayado_y_lista_numerada(self):
+        from paginas.saneo import PREFIJO_HTML
+
+        self.client.force_login(self.staff)
+        marcado = PREFIJO_HTML + '<p>Hay <u>subrayado</u></p><ol><li>dos</li></ol>'
+        self.client.post(self.editor, {
+            'accion': 'publicar',
+            'texto__nosotros_parrafo_1': marcado,
+        })
+        fila = BloquePortada.objects.get(
+            pagina='inicio', clave='nosotros_parrafo_1',
+            estado=BloquePortada.Estado.PUBLICADO,
+        )
+        self.assertIn('<u>subrayado</u>', fila.texto)
+        self.assertIn('<ol><li>dos</li></ol>', fila.texto)
+        self.client.logout()
+        portada = self.client.get('/')
+        self.assertContains(portada, '<u>subrayado</u>')
+        self.assertContains(portada, '<ol><li>dos</li></ol>')
+        self.assertNotContains(portada, PREFIJO_HTML)
+
+    def test_un_anonimo_no_ve_el_borrador_enriquecido(self):
+        from paginas.saneo import PREFIJO_HTML
+
+        self.client.force_login(self.staff)
+        self.client.post(self.editor, {
+            'accion': 'guardar',
+            'texto__nosotros_parrafo_1': PREFIJO_HTML + '<p><strong>Borrador secreto rico</strong></p>',
+        })
+        lienzo = self.client.get(self.lienzo)
+        self.assertContains(lienzo, '<strong>Borrador secreto rico</strong>')
+        self.client.logout()
+        portada = self.client.get('/')
+        self.assertNotContains(portada, 'Borrador secreto rico')
+        self.assertContains(portada, 'En Biología Computacional')
