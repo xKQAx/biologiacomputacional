@@ -5,7 +5,11 @@
 {% include "avisos.html" %}
 <div id="contenido-inicio">
   {% for seccion in secciones %}
-    {% include seccion %}
+    {% if seccion.libre %}
+      {% include seccion.plantilla with pieza=seccion %}
+    {% else %}
+      {% include seccion.plantilla %}
+    {% endif %}
   {% endfor %}
 </div>
 {% endblock %} {% block extra_js %}

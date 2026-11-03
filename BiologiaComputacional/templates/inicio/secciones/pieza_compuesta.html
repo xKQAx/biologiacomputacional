@@ -1,0 +1,16 @@
+{% load paginas %}
+{# Rejilla fija: una columna apila las piezas; dos columnas las reparte en el orden de la lista. #}
+<section class="py-5" data-seccion="{{ pieza.id }}" data-columnas="{{ pieza.columnas }}">
+  {% if modo_editor and pieza.oculta %}
+  <p class="pieza-oculta-aviso">Oculta para los visitantes. Sigue en el borrador.</p>
+  {% endif %}
+  <div class="container">
+    <div class="{% if pieza.columnas == 2 %}pieza-rejilla-2{% else %}pieza-rejilla{% endif %}">
+      {% for celda in pieza.celdas %}
+      <div class="pieza-celda{% if celda.tipo == 'encabezado' or celda.tipo == 'boton' %} text-center{% endif %}{% if celda.tipo == 'imagen' and pieza.columnas != 2 %} col-lg-8 mx-auto{% endif %}">
+        {% include celda.plantilla with campos=celda.campos diapositivas=celda.diapositivas ancla=celda.ancla %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>

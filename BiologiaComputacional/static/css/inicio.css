@@ -651,3 +651,29 @@
     transition: none;
   }
 }
+
+.pieza-imagen {
+  max-height: 28rem;
+  object-fit: contain;
+  background: #f4f7f8;
+}
+
+/* Dos opciones fijas. El orden del HTML es el de la lista: impar a la izquierda, par a la derecha. */
+.pieza-rejilla {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.pieza-rejilla-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem 2rem;
+  align-items: start;
+}
+
+@media (max-width: 767.98px) {
+  .pieza-rejilla-2 {
+    grid-template-columns: 1fr;
+  }
+}

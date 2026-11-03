@@ -1,0 +1,9 @@
+{% load paginas %}
+<section class="py-5" data-seccion="{{ pieza.id }}">
+  {% if modo_editor and pieza.oculta %}
+  <p class="pieza-oculta-aviso">Oculta para los visitantes. Sigue en el borrador.</p>
+  {% endif %}
+  <div class="container">
+    {% include "inicio/secciones/fragmentos/carrusel.html" with diapositivas=pieza.diapositivas ancla=pieza.id %}
+  </div>
+</section>

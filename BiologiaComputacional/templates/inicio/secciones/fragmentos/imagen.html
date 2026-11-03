@@ -1,0 +1,7 @@
+{% load paginas %}
+<img
+  class="img-fluid rounded pieza-imagen"
+  alt="{{ campos.foto.texto }}"
+  {% if campos.foto.enlace %}src="{{ campos.foto.enlace }}"{% endif %}
+  {% edit_attrs campos.foto.clave %}
+>

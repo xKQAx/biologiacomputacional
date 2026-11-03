@@ -84,6 +84,11 @@ class DefinicionBloque:
     # bloque: párrafo e introducción, con listas. La imagen vacía queda en plano.
     formato: str = ''
     orden: int = 0
+    # El enlace opcional de una diapositiva no tiene texto propio.
+    solo_enlace: bool = False
+    dia: str = ''
+    # Vacío en la plantilla. En una pieza interna, el id dentro de la sección agregada.
+    trozo: str = ''
 
     @property
     def area(self):

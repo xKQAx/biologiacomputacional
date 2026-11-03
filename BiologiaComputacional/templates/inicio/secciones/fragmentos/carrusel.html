@@ -1,0 +1,45 @@
+{% load paginas %}
+{% if modo_editor %}
+  {% for dia in diapositivas %}
+  <figure class="mb-4 col-lg-8 mx-auto">
+    <a href="{{ dia.destino.enlace|default:'#' }}" {% edit_attrs dia.destino.clave %}>
+      <img
+        class="img-fluid rounded pieza-imagen"
+        alt="{{ dia.foto.texto }}"
+        {% if dia.foto.enlace %}src="{{ dia.foto.enlace }}"{% endif %}
+        {% edit_attrs dia.foto.clave %}
+      >
+    </a>
+  </figure>
+  {% endfor %}
+{% else %}
+<div id="carrusel-{{ ancla }}" class="carousel slide" data-bs-ride="carousel">
+  <div class="carousel-inner">
+    {% for dia in diapositivas %}
+    <div class="carousel-item{% if forloop.first %} active{% endif %}">
+      {% if dia.destino.enlace %}
+      <a href="{{ dia.destino.enlace }}">
+      {% endif %}
+      <img
+        class="d-block w-100 pieza-imagen"
+        alt="{{ dia.foto.texto }}"
+        {% if dia.foto.enlace %}src="{{ dia.foto.enlace }}"{% endif %}
+      >
+      {% if dia.destino.enlace %}
+      </a>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% if diapositivas|length > 1 %}
+  <button class="carousel-control-prev" type="button" data-bs-target="#carrusel-{{ ancla }}" data-bs-slide="prev">
+    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+    <span class="visually-hidden">Anterior</span>
+  </button>
+  <button class="carousel-control-next" type="button" data-bs-target="#carrusel-{{ ancla }}" data-bs-slide="next">
+    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+    <span class="visually-hidden">Siguiente</span>
+  </button>
+  {% endif %}
+</div>
+{% endif %}

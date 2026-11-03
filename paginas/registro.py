@@ -1,7 +1,8 @@
 """Páginas públicas que reutilizan el editor de inicio.
 
-Cada entrada describe textos que la plantilla ya pinta. No crea secciones nuevas.
-La barra y el pie solo se editan en la portada.
+Cada entrada describe textos que la plantilla ya pinta.
+En la portada se pueden agregar secciones del catálogo de piezas.
+La barra y el pie solo se editan en la portada y no se reordenan.
 """
 
 from django.urls import reverse
@@ -37,7 +38,13 @@ _AYUDA_FOTO = (
     + _AYUDA_FORMATO
 )
 _AYUDA_INICIO = (
-    _AYUDA_FOTO + ' Sube o baja las secciones; la barra y el pie se quedan en su sitio.'
+    _AYUDA_FOTO
+    + ' Sube o baja las secciones; la barra y el pie se quedan en su sitio.'
+    + ' Puedes agregar un encabezado, un texto, una imagen, un botón o un carrusel,'
+    + ' ocultar una sección o quitar una que hayas agregado.'
+    + ' En una sección agregada puedes sumar texto, imagen, carrusel o botón'
+    + ' y elegir una o dos columnas.'
+    + ' Nada de eso cambia la página pública hasta que publiques.'
 )
 _AVISO_GUARDADO = 'Borrador guardado. La página pública no cambió.'
 _AVISO_DESCARTADO = 'Borrador descartado. Lo publicado sigue igual.'
@@ -53,7 +60,7 @@ class Pagina:
         secciones=(), plantillas=None, datos=None, ayuda=_AYUDA,
         aviso_guardado=_AVISO_GUARDADO, aviso_publicado, aviso_descartado=_AVISO_DESCARTADO,
         estado_borrador=_ESTADO_BORRADOR, estado_limpio=_ESTADO_LIMPIO,
-        enlace_relacionado=None,
+        enlace_relacionado=None, permite_piezas=False,
     ):
         self.slug = slug
         self.titulo = titulo
@@ -72,6 +79,7 @@ class Pagina:
         self.estado_borrador = estado_borrador
         self.estado_limpio = estado_limpio
         self.enlace_relacionado = enlace_relacionado
+        self.permite_piezas = permite_piezas
         self.nombres = dict(self.grupos)
         self.por_clave = {item.clave: item for item in self.catalogo}
         if len(self.por_clave) != len(self.catalogo):
@@ -98,6 +106,8 @@ class Pagina:
                     raise RuntimeError(f'Sección desconocida en {slug}: {seccion}.')
         elif self.plantillas:
             raise RuntimeError(f'{slug} no reordena secciones.')
+        if self.permite_piezas and not self.secciones:
+            raise RuntimeError(f'{slug} agrega secciones y necesita un orden.')
         self.hay_vistas = any(item.vista != COMUN for item in self.catalogo)
 
     def url_editor(self):
@@ -168,6 +178,7 @@ _registrar(Pagina(
     secciones=SECCIONES,
     plantillas=PLANTILLA_SECCION,
     ayuda=_AYUDA_INICIO,
+    permite_piezas=True,
     aviso_guardado='Borrador guardado. La portada pública no cambió.',
     aviso_publicado='Página de inicio publicada. Los visitantes ya ven estos cambios.',
     aviso_descartado='Borrador descartado. La portada publicada sigue igual.',

@@ -1,0 +1,11 @@
+{% load paginas %}
+<section class="py-5" data-seccion="{{ pieza.id }}">
+  {% if modo_editor and pieza.oculta %}
+  <p class="pieza-oculta-aviso">Oculta para los visitantes. Sigue en el borrador.</p>
+  {% endif %}
+  <div class="container">
+    <div class="col-lg-8 mx-auto">
+      {% include "inicio/secciones/fragmentos/imagen.html" with campos=pieza.campos %}
+    </div>
+  </div>
+</section>
