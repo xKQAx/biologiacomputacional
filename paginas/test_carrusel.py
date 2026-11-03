@@ -7,6 +7,7 @@ import tempfile
 from pathlib import Path
 
 from django.contrib.auth.models import User
+from django.contrib.staticfiles import finders
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from PIL import Image
@@ -54,8 +55,11 @@ class CarruselSeccionTests(TestCase):
         self.client.post(self.editor, {'accion': 'agregar', 'tipo_pieza': 'carrusel'})
         pieza = self._id()
         editor = self.client.get(self.editor)
-        self.assertContains(editor, f'value="dia-agregar:{pieza}"')
+        self.assertContains(editor, f'dia-agregar:{pieza}')
         self.assertContains(editor, 'Agregar diapositiva')
+        self.assertContains(editor, 'data-asa-dia')
+        self.assertNotContains(editor, 'Subir diapositiva')
+        self.assertNotContains(editor, 'Bajar diapositiva')
         self.client.logout()
         portada = self.client.get('/')
         self.assertNotContains(portada, f'data-seccion="{pieza}"')
@@ -66,6 +70,7 @@ class CarruselSeccionTests(TestCase):
         self.client.post(self.editor, {'accion': 'agregar', 'tipo_pieza': 'carrusel'})
         pieza = self._id()
         self.client.post(self.editor, {'accion': f'dia-agregar:{pieza}'})
+        self.client.post(self.editor, {'accion': f'dia-agregar:{pieza}'})
         self.client.post(self.editor, {
             'accion': 'guardar',
             f'imagen__{pieza}-d01': _png('blue'),
@@ -73,6 +78,8 @@ class CarruselSeccionTests(TestCase):
             f'enlace__{pieza}-r01': 'https://example.com/primera',
             f'imagen__{pieza}-d02': _png('green'),
             f'texto__{pieza}-d02': 'Alt de la segunda',
+            f'imagen__{pieza}-d03': _png('red'),
+            f'texto__{pieza}-d03': 'Alt de la tercera',
         })
         self.client.logout()
         portada = self.client.get('/')
@@ -81,7 +88,13 @@ class CarruselSeccionTests(TestCase):
         self.assertNotContains(portada, 'example.com/primera')
 
         self.client.force_login(self.staff)
-        self.client.post(self.editor, {'accion': f'dia-subir:{pieza}:02'})
+        self.client.post(self.editor, {'accion': f'dia-orden:{pieza}:02,01,03'})
+        lienzo = self.client.get(self.lienzo).content.decode()
+        self.assertIn('data-carrusel', lienzo)
+        self.assertIn('carrusel-pista', lienzo)
+        self.assertIn('>Anterior<', lienzo)
+        self.assertNotIn('mb-4 col-lg-8 mx-auto', lienzo)
+        self.assertNotIn('form-portada', lienzo)
         self.client.post(self.editor, {'accion': 'publicar'})
         self.assertEqual(Carrusel.objects.count(), 0)
         self.client.logout()
@@ -91,11 +104,64 @@ class CarruselSeccionTests(TestCase):
             publicada.find('alt="Alt de la primera"'),
         )
         self.assertIn('href="https://example.com/primera"', publicada)
-        self.assertIn('Anterior', publicada)
-        self.assertIn('Siguiente', publicada)
+        self.assertIn('data-carrusel', publicada)
+        self.assertIn('carrusel-pista', publicada)
+        self.assertIn('data-carrusel-anterior', publicada)
+        self.assertIn('data-carrusel-punto', publicada)
+        self.assertIn('>Anterior<', publicada)
+        self.assertIn('>Siguiente<', publicada)
+        self.assertNotIn('mb-4 col-lg-8 mx-auto', publicada)
+        self.assertIn('data-carrusel-visibles="3"', publicada)
+        self.assertNotIn('swiper', publicada.lower())
+        self.assertNotIn('slick', publicada.lower())
+        pista = publicada.split('carrusel-pista', 1)[1].split('carrusel-controles', 1)[0]
+        self.assertGreaterEqual(pista.count('carrusel-dia'), 3)
+        self.assertLess(pista.find('alt="Alt de la segunda"'), pista.find('alt="Alt de la primera"'))
+        self.assertLess(pista.find('alt="Alt de la primera"'), pista.find('alt="Alt de la tercera"'))
+        self.assertIn('alt="Alt de la segunda"', pista)
+        self.assertIn('alt="Alt de la primera"', pista)
+        css = Path(finders.find('css/inicio.css')).read_text(encoding='utf-8')
+        self.assertIn('--carrusel-visibles: 3', css)
+        self.assertIn('--carrusel-visibles: 1', css)
+        self.assertNotIn('flex: 0 0 100%', css)
         servicios = self.client.get('/servicios/')
         self.assertNotContains(servicios, 'Alt de la primera')
         self.assertNotContains(servicios, 'example.com/primera')
+
+    def test_el_orden_por_arrastre_queda_en_el_borrador_y_el_lienzo(self):
+        self.client.post(self.editor, {'accion': 'agregar', 'tipo_pieza': 'carrusel'})
+        pieza = self._id()
+        self.client.post(self.editor, {'accion': f'dia-agregar:{pieza}'})
+        self.client.post(self.editor, {
+            'accion': 'guardar',
+            f'texto__{pieza}-d01': 'Alt de la primera',
+            f'texto__{pieza}-d02': 'Alt de la segunda',
+        })
+        respuesta = self.client.post(
+            self.editor,
+            {'accion': f'dia-orden:{pieza}:02,01'},
+            HTTP_X_EDITOR_VIVO='1',
+            HTTP_ACCEPT='application/json',
+        )
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertNotIn('form-portada', respuesta.content.decode())
+        self.assertNotIn('<!DOCTYPE', respuesta.content.decode())
+        datos = respuesta.json()
+        self.assertTrue(datos['ok'])
+        self.assertLess(
+            datos['html_lienzo'].find('alt="Alt de la segunda"'),
+            datos['html_lienzo'].find('alt="Alt de la primera"'),
+        )
+        self.assertIn('carrusel-pista', datos['html_lienzo'])
+        self.assertIn('data-carrusel-visibles="3"', datos['html_lienzo'])
+        fila = BloquePortada.objects.get(
+            pagina='inicio', clave='composicion', estado=BloquePortada.Estado.BORRADOR,
+        )
+        self.assertEqual(json.loads(fila.texto)['piezas'][0]['diapositivas'], ['02', '01'])
+        self.client.logout()
+        portada = self.client.get('/')
+        self.assertNotContains(portada, 'Alt de la primera')
+        self.assertNotContains(portada, 'Alt de la segunda')
 
     def test_un_enlace_javascript_no_se_guarda_y_el_alt_no_se_ejecuta(self):
         self.client.post(self.editor, {'accion': 'agregar', 'tipo_pieza': 'carrusel'})

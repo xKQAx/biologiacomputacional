@@ -43,7 +43,7 @@ _AYUDA_INICIO = (
     + ' Puedes agregar un encabezado, un texto, una imagen, un botón o un carrusel,'
     + ' ocultar una sección o quitar una que hayas agregado.'
     + ' En una sección agregada puedes sumar texto, imagen, carrusel o botón'
-    + ' y elegir una o dos columnas.'
+    + ' y elegir un diseño: una columna, dos iguales, imagen y texto o tres tarjetas.'
     + ' Nada de eso cambia la página pública hasta que publiques.'
 )
 _AVISO_GUARDADO = 'Borrador guardado. La página pública no cambió.'

@@ -408,15 +408,23 @@ class SeccionesAgregablesTests(TestCase):
         self.assertIn('>Eliminar<', datos['html_item'])
         self.assertIn('data-asa', datos['html_item'])
         self.assertNotIn('<textarea', datos['html_item'])
-        self.assertIn('Una columna', datos['html_campos'])
-        self.assertIn('Dos columnas', datos['html_campos'])
+        self.assertIn('Cuadrícula', datos['html_campos'])
+        self.assertIn('1 columna', datos['html_campos'])
+        self.assertIn('2 columnas', datos['html_campos'])
+        self.assertIn('3 columnas', datos['html_campos'])
+        self.assertIn('Casilla 1', datos['html_campos'])
+        self.assertIn('data-asa-pieza', datos['html_campos'])
+        self.assertNotIn('Dos columnas iguales', datos['html_campos'])
+        self.assertNotIn('Tres columnas (tarjetas)', datos['html_campos'])
+        self.assertNotIn('Imagen a la izquierda y texto a la derecha', datos['html_campos'])
+        self.assertNotIn('editor-disenos', datos['html_campos'])
         self.assertIn('Agregar pieza', datos['html_campos'])
         self.assertIn('Editando la sección', datos['html_campos'])
         self.assertIn(
             'Agrega un texto, una imagen, un carrusel o un botón.',
             datos['html_campos'],
         )
-        self.assertIn('la primera queda a la izquierda', datos['html_campos'])
+        self.assertIn('Una casilla vacía no rompe la página.', datos['html_campos'])
         self.assertIn(f'data-seccion="{pieza}"', datos['html_lienzo'])
         self.client.logout()
         self.assertNotContains(self.client.get('/'), f'data-seccion="{pieza}"')
@@ -452,8 +460,15 @@ class SeccionesAgregablesTests(TestCase):
         self.assertIn('data-pieza="b01"', campos)
         self.assertIn('>Quitar<', campos)
         self.assertIn(f'name="texto__{pieza}-b01-foto"', campos)
-        self.assertIn('la primera queda a la izquierda', campos)
+        self.assertIn('Una casilla vacía no rompe la página.', campos)
+        self.assertIn('data-asa-pieza', campos)
+        self.assertIn('Casilla 1', campos)
+        self.assertIn('Subir imagen', campos)
+        self.assertIn('type="file"', campos)
+        self.assertIn('accept="image/jpeg,image/png,image/gif,image/webp"', campos)
+        self.assertIn('editor-archivo-nativo', campos)
         self.assertNotIn('data-columnas="nosotros"', campos)
+        self.assertNotIn('data-diseno="nosotros"', campos)
         self.assertIn(f'data-seccion="{pieza}"', datos['html_lienzo'])
         self.assertIn(f'data-edit-id="{pieza}-b01-foto"', datos['html_lienzo'])
         self.assertNotIn('form-portada', datos['html_lienzo'])
@@ -495,7 +510,7 @@ class SeccionesAgregablesTests(TestCase):
         self.assertEqual(self._piezas()[0]['nombre'], 'Nota interna del laboratorio')
         self.assertEqual(self._piezas()[0]['columnas'], 2)
         lienzo = self.client.get(self.lienzo).content.decode()
-        self.assertIn('pieza-rejilla-2', lienzo)
+        self.assertIn('pieza-diseno-dos', lienzo)
         self.assertIn('Texto de la primera columna', lienzo)
         self.assertIn('Alt de la pieza interna', lienzo)
         self.assertLess(lienzo.find('Texto de la primera columna'), lienzo.find('Alt de la pieza interna'))
@@ -504,13 +519,13 @@ class SeccionesAgregablesTests(TestCase):
         self.assertNotContains(portada, 'Texto de la primera columna')
         self.assertNotContains(portada, 'Alt de la pieza interna')
         self.assertNotContains(portada, 'Nota interna del laboratorio')
-        self.assertNotContains(portada, 'pieza-rejilla-2')
+        self.assertNotContains(portada, 'pieza-diseno-dos')
 
         self.client.force_login(self.staff)
         self.client.post(self.editor, {'accion': 'publicar'})
         self.client.logout()
         publicada = self.client.get('/').content.decode()
-        self.assertIn('pieza-rejilla-2', publicada)
+        self.assertIn('pieza-diseno-dos', publicada)
         self.assertIn('Texto de la primera columna', publicada)
         self.assertIn('Alt de la pieza interna', publicada)
         self.assertLess(
@@ -531,14 +546,15 @@ class SeccionesAgregablesTests(TestCase):
         self.assertNotIn('form-portada', respuesta.content.decode())
         datos = respuesta.json()
         self.assertTrue(datos['ok'])
-        self.assertIn('pieza-rejilla-2', datos['html_lienzo'])
+        self.assertIn('pieza-diseno-dos', datos['html_lienzo'])
+        self.assertIn('data-columnas="2"', datos['html_lienzo'])
         self.assertEqual(self._piezas()[0]['columnas'], 2)
         lienzo = self.client.get(self.lienzo)
-        self.assertContains(lienzo, 'pieza-rejilla-2')
+        self.assertContains(lienzo, 'pieza-diseno-dos')
         self.assertContains(lienzo, f'data-seccion="{pieza}"')
         self.assertNotContains(lienzo, 'form-portada')
         self.client.logout()
-        self.assertNotContains(self.client.get('/'), 'pieza-rejilla-2')
+        self.assertNotContains(self.client.get('/'), 'pieza-diseno-dos')
 
     def test_la_plantilla_no_gana_columnas_ni_piezas(self):
         respuesta = self.client.post(self.editor, {'accion': 'columnas:nosotros:2'})
@@ -549,6 +565,108 @@ class SeccionesAgregablesTests(TestCase):
         portada = self.client.get('/')
         self.assertContains(portada, 'data-seccion="nosotros"')
         self.assertNotContains(portada, 'pieza-rejilla')
+        self.assertNotContains(portada, 'pieza-diseno')
+
+    def test_tres_columnas_reparten_lo_que_ya_hay_sin_publicar(self):
+        self.client.post(self.editor, {'accion': 'agregar', 'tipo_pieza': 'texto'})
+        pieza = self._id()
+        self.client.post(self.editor, {'accion': f'pieza-agregar:{pieza}:imagen'})
+        self.client.post(self.editor, {'accion': f'pieza-agregar:{pieza}:boton'})
+        self.client.post(self.editor, {
+            'accion': 'guardar',
+            f'texto__{pieza}-cuerpo': 'Texto que ya estaba',
+            f'imagen__{pieza}-b01-foto': _png('blue'),
+            f'texto__{pieza}-b01-foto': 'Alt que ya estaba',
+            f'texto__{pieza}-b02-boton': 'Botón que ya estaba',
+        })
+        tres = self.client.post(
+            self.editor,
+            {'accion': f'columnas:{pieza}:3'},
+            HTTP_X_EDITOR_VIVO='1',
+            HTTP_ACCEPT='application/json',
+        )
+        self.assertEqual(tres.status_code, 200)
+        self.assertNotIn('form-portada', tres.content.decode())
+        self.assertNotIn('<!DOCTYPE', tres.content.decode())
+        datos = tres.json()
+        self.assertTrue(datos['ok'])
+        html = datos['html_lienzo']
+        self.assertIn('pieza-diseno-tres', html)
+        self.assertIn('data-columnas="3"', html)
+        celdas = self._celdas(html)
+        self.assertEqual(sorted(celdas), ['0', '1', '2'])
+        self.assertIn(f'data-edit-id="{pieza}-cuerpo"', celdas['0'])
+        self.assertIn(f'data-edit-id="{pieza}-b01-foto"', celdas['1'])
+        self.assertIn(f'data-edit-id="{pieza}-b02-boton"', celdas['2'])
+        self.assertNotIn('pieza-diseno-imagen-texto', html)
+        self.assertEqual(self._piezas()[0]['columnas'], 3)
+        self.client.logout()
+        self.assertNotContains(self.client.get('/'), 'pieza-diseno-tres')
+        self.assertNotContains(self.client.get('/'), 'Texto que ya estaba')
+
+        self.client.force_login(self.staff)
+        self.client.post(self.editor, {'accion': 'publicar'})
+        self.client.logout()
+        publicada = self.client.get('/').content.decode()
+        self.assertIn('pieza-diseno-tres', publicada)
+        self.assertIn('Texto que ya estaba', publicada)
+        publicadas = self._celdas(publicada)
+        self.assertIn('Texto que ya estaba', publicadas['0'])
+        self.assertIn('Alt que ya estaba', publicadas['1'])
+        self.assertIn('Botón que ya estaba', publicadas['2'])
+
+    def test_mover_una_pieza_entre_casillas_queda_en_el_borrador(self):
+        self.client.post(self.editor, {'accion': 'agregar', 'tipo_pieza': 'texto'})
+        pieza = self._id()
+        self.client.post(self.editor, {'accion': f'pieza-agregar:{pieza}:imagen'})
+        self.client.post(self.editor, {'accion': f'pieza-agregar:{pieza}:boton'})
+        self.client.post(self.editor, {'accion': f'columnas:{pieza}:3'})
+        respuesta = self.client.post(
+            self.editor,
+            {'accion': f'pieza-ubicar:{pieza}:b02:0:1'},
+            HTTP_X_EDITOR_VIVO='1',
+            HTTP_ACCEPT='application/json',
+        )
+        self.assertNotIn('<!DOCTYPE', respuesta.content.decode())
+        datos = respuesta.json()
+        self.assertTrue(datos['ok'])
+        celdas = self._celdas(datos['html_lienzo'])
+        self.assertIn(f'data-edit-id="{pieza}-cuerpo"', celdas['0'])
+        self.assertIn(f'data-edit-id="{pieza}-b02-boton"', celdas['0'])
+        self.assertIn(f'data-edit-id="{pieza}-b01-foto"', celdas['1'])
+        self.assertNotIn('b02', celdas['2'])
+        puestos = self._piezas()[0]['puestos']
+        self.assertEqual(puestos[0]['celda'], 0)
+        self.assertNotIn('ref', puestos[0])
+        self.assertEqual(puestos[1], {'ref': 'b02', 'celda': 0})
+        self.assertEqual(puestos[2], {'ref': 'b01', 'celda': 1})
+        self.client.logout()
+        self.assertNotContains(self.client.get('/'), f'data-seccion="{pieza}"')
+
+    def test_un_borrador_antiguo_de_dos_columnas_sigue_en_el_lienzo(self):
+        self.client.post(self.editor, {'accion': 'agregar', 'tipo_pieza': 'texto'})
+        fila = BloquePortada.objects.get(
+            pagina='inicio', clave='composicion', estado=BloquePortada.Estado.BORRADOR,
+        )
+        datos = json.loads(fila.texto)
+        datos['piezas'][0]['columnas'] = 2
+        datos['piezas'][0].pop('diseno', None)
+        fila.texto = json.dumps(datos)
+        fila.save()
+        lienzo = self.client.get(self.lienzo)
+        self.assertContains(lienzo, 'pieza-diseno-dos')
+        self.client.logout()
+        self.assertNotContains(self.client.get('/'), 'pieza-diseno-dos')
+
+    def _celdas(self, html):
+        import re
+
+        partes = re.split(r'data-celda="(\d+)"', html)
+        celdas = {}
+        datos = partes[1:]
+        for indice in range(0, len(datos) - 1, 2):
+            celdas[datos[indice]] = datos[indice + 1].split('data-celda=', 1)[0]
+        return celdas
 
     def _composicion(self, estado=BloquePortada.Estado.BORRADOR):
         fila = BloquePortada.objects.get(pagina='inicio', clave='composicion', estado=estado)

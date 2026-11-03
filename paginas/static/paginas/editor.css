@@ -203,7 +203,6 @@ body.editor-portada #content {
 .editor-seccion-acciones,
 .editor-seccion-comandos,
 .editor-agregar-fila,
-.editor-distribucion,
 .editor-piezas li {
   display: flex;
   gap: 0.25rem;
@@ -260,7 +259,7 @@ body.editor-portada #content {
   margin-top: 0.35rem;
 }
 
-.editor-distribucion,
+.editor-cuadricula,
 .editor-piezas {
   margin: 0;
   padding: 0.7rem 0.75rem;
@@ -269,21 +268,129 @@ body.editor-portada #content {
   background: var(--body-bg, #fff);
 }
 
-.editor-distribucion {
+.editor-cuadricula-columnas {
+  display: flex;
   flex-wrap: wrap;
-  gap: 0.45rem 0.85rem;
+  gap: 0.4rem;
 }
 
-.editor-distribucion label,
+.editor-cuadricula-columnas button {
+  min-height: 2.15rem;
+  font-weight: 600;
+}
+
+.editor-cuadricula-columnas button[aria-pressed="true"] {
+  border-color: var(--primary-blue, #0352a6);
+  background: var(--selected-bg, #e7eef8);
+  color: var(--primary-dark, #022d7c);
+  box-shadow: inset 0 -2px 0 var(--accent-gold, #efb810);
+}
+
+.editor-casillas {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-top: 0.55rem;
+}
+
+.editor-casilla {
+  padding: 0.4rem 0.45rem 0.5rem;
+  border: 1px dashed var(--border-color, #d5dbe3);
+  border-radius: 8px;
+  background: var(--bg-subtle, #f8f9fa);
+}
+
+.editor-casilla.hueco-casilla {
+  border-style: solid;
+  border-color: var(--primary-blue, #0352a6);
+  background: var(--selected-bg, #e7eef8);
+}
+
+.editor-casilla ul,
+.editor-casilla [data-casilla-lista] {
+  list-style: none;
+  margin: 0.35rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-height: 0.4rem;
+}
+
+.editor-casilla li {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0.3rem;
+  border: 1px solid var(--border-color, #d5dbe3);
+  border-left: 3px solid var(--primary-blue, #0352a6);
+  border-radius: 6px;
+  background: var(--body-bg, #fff);
+}
+
+.editor-casilla [data-pieza-btn] {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.editor-casilla [data-pieza-btn].activa {
+  border-color: var(--primary-dark, #022d7c);
+  font-weight: 600;
+  background: var(--selected-bg, #e7eef8);
+  box-shadow: inset 3px 0 0 var(--accent-gold, #efb810);
+}
+
+#propiedades legend {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+#propiedades fieldset.hueco-dia,
+#propiedades fieldset.arrastrando-dia {
+  background: var(--selected-bg, #e7eef8);
+}
+
+.editor-casilla .asa,
+#propiedades legend .asa {
+  flex: 0 0 auto;
+  width: 1.6rem;
+  padding: 0.35rem 0;
+  border: 0;
+  background: transparent;
+  color: var(--body-quiet-color, #666);
+  font: inherit;
+  line-height: 1;
+  letter-spacing: -0.12em;
+  text-align: center;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.editor-casilla .asa:active,
+#propiedades legend .asa:active {
+  cursor: grabbing;
+}
+
+.editor-casilla .asa:focus-visible,
+#propiedades legend .asa:focus-visible {
+  outline: 2px solid var(--primary-blue, #0352a6);
+  outline-offset: 1px;
+  border-radius: 4px;
+}
+
+.editor-cuadricula .editor-nota {
+  margin-top: 0.45rem;
+}
+
 .editor-piezas label {
   display: flex;
   align-items: center;
   gap: 0.35rem;
   margin: 0;
-}
-
-.editor-distribucion .editor-nota {
-  flex-basis: 100%;
 }
 
 .editor-piezas [data-pieza-btn] {
@@ -323,7 +430,7 @@ body.editor-portada #content {
 
 .editor-rotulo,
 .editor-agregar > .editor-rotulo,
-.editor-distribucion > .editor-rotulo,
+.editor-cuadricula > .editor-rotulo,
 .editor-piezas > .editor-rotulo,
 .editor-agregar-fila > .editor-rotulo {
   display: block;
@@ -507,7 +614,7 @@ body.editor-portada #content {
   font-size: 0.8rem;
 }
 
-#propiedades input:not([type="radio"]):not([type="checkbox"]):not([type="hidden"]),
+#propiedades input:not([type="radio"]):not([type="checkbox"]):not([type="hidden"]):not([type="file"]),
 #propiedades textarea,
 #propiedades select,
 .editor-agregar select,
@@ -563,18 +670,67 @@ body.editor-portada #content {
 .editor-agregar-fila button:focus-visible,
 .editor-piezas button:focus-visible,
 .editor-seccion-acciones button:focus-visible,
+.editor-archivo-boton:focus-visible,
+.editor-archivo-nativo:focus-visible + .editor-archivo-boton,
 .editor-secciones .editor-nombre:focus-visible {
   outline: 2px solid var(--primary-blue, #0352a6);
   outline-offset: 2px;
   border-color: var(--primary-blue, #0352a6);
 }
 
-#propiedades input[type="file"] {
-  width: 100%;
-  min-height: 0;
-  padding: 0.25rem 0;
+.editor-archivo {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.65rem;
+  margin-top: 0.35rem;
+}
+
+#propiedades .editor-archivo input.editor-archivo-nativo[type="file"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
   border: 0;
-  background: transparent;
+  min-height: 0;
+}
+
+#propiedades .editor-archivo-boton {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  min-height: 2.15rem;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--primary-blue, #0352a6);
+  background: var(--body-bg, #fff);
+  color: var(--primary-dark, #022d7c);
+  border-radius: 4px;
+  padding: 0.25rem 0.55rem;
+}
+
+#propiedades .editor-archivo-boton:hover {
+  background: var(--selected-bg, #e7eef8);
+}
+
+.editor-archivo-nombre {
+  flex: 1 1 8rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--body-quiet-color, #666);
+  font-size: 0.8rem;
+}
+
+.editor-archivo-nombre:empty {
+  display: none;
 }
 
 .editor-nota {

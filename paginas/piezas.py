@@ -28,13 +28,37 @@ MAX_PIEZAS = 24
 MAX_DIAPOSITIVAS = 8
 MAX_BLOQUES = 8
 MAX_NOMBRE = 80
+MAX_COLUMNAS = 3
 PREFIJO_ID = 'pz'
+# El contenido propio de la sección, dentro de la cuadrícula. No es un bloque interno.
+REF_PROPIA = ''
+TOKEN_PROPIA = 'propia'
 # Piezas que caben dentro de una sección agregada. El encabezado sigue siendo una sección.
 TIPOS_INTERNOS = ('texto', 'imagen', 'carrusel', 'boton')
+# Borradores viejos: el diseño fijo pasa a un número de columnas iguales.
+_COLUMNAS_DE_DISENO = {
+    'una': 1,
+    'dos': 2,
+    'imagen-texto': 2,
+    'texto-imagen': 2,
+    'tres': 3,
+}
 
 _ID = re.compile(r'^pz[0-9a-f]{8}$')
 _DIA = re.compile(r'^[0-9]{2}$')
 _BLOQUE = re.compile(r'^b[0-9]{2}$')
+
+
+@dataclass(frozen=True)
+class Puesto:
+    """Dónde se sienta una pieza. ref vacío es el contenido propio de la sección.
+
+    Patrón Composite: la sección agrupa casillas y cada casilla agrupa piezas.
+    Cambiar el número de columnas reparte las piezas que ya estaban.
+    """
+
+    ref: str
+    celda: int
 
 
 @dataclass(frozen=True)
@@ -75,6 +99,7 @@ class Pieza:
     diapositivas: tuple = ()
     nombre: str = ''
     columnas: int = 1
+    puestos: tuple = ()
     bloques: tuple = ()
 
 
@@ -212,7 +237,7 @@ class SeccionVista:
 
     def __init__(
         self, id_seccion, plantilla, *, libre=False, oculta=False,
-        campos=None, diapositivas=(), columnas=1, celdas=(),
+        campos=None, diapositivas=(), columnas=1, casillas=(),
     ):
         self.id = id_seccion
         self.plantilla = plantilla
@@ -220,12 +245,26 @@ class SeccionVista:
         self.oculta = oculta
         self.campos = campos
         self.diapositivas = diapositivas
-        self.columnas = columnas
-        self.celdas = celdas
+        self.columnas = columnas if columnas in (1, 2, 3) else 1
+        self.casillas = casillas
+
+    @property
+    def variante(self):
+        """Clase de la portada: una, dos o tres columnas iguales."""
+        return {1: 'una', 2: 'dos', 3: 'tres'}[self.columnas]
+
+
+class CasillaVista:
+    """Una columna de la cuadrícula. Sin piezas, el hueco queda libre."""
+
+    def __init__(self, indice, piezas):
+        self.indice = indice
+        self.piezas = piezas
+        self.vacia = not piezas
 
 
 class CeldaVista:
-    """Una pieza de la rejilla. Una columna las apila; dos las reparte en este orden."""
+    """Una pieza dentro de una casilla. Varias pueden compartir la misma."""
 
     def __init__(self, tipo, ancla, campos=None, diapositivas=()):
         self.tipo = tipo
@@ -284,8 +323,8 @@ def _materializar_interno(seccion, bloque):
 
 
 def en_rejilla(pieza):
-    """La plantilla suelta se conserva si no hay piezas internas ni segunda columna."""
-    return bool(pieza.bloques) or pieza.columnas == 2
+    """La plantilla suelta se conserva en una columna y sin piezas internas."""
+    return bool(pieza.bloques) or pieza.columnas != 1
 
 
 def materializar_todas(composicion):
@@ -393,16 +432,20 @@ def con_nombres(composicion, post):
 
 
 def con_columnas(composicion, post):
-    """Lee columnas__id si vino. 2 es dos columnas; cualquier otro valor, una."""
+    """Lee columnas__id si vino en un guardado. El mismo reparto que la acción en vivo."""
     if post is None:
         return composicion
     piezas = []
     for pieza in composicion.piezas:
         clave = f'columnas__{pieza.id}'
-        columnas = pieza.columnas
-        if clave in post:
-            columnas = 2 if str(post.get(clave)) == '2' else 1
-        piezas.append(replace(pieza, columnas=columnas))
+        if clave not in post:
+            piezas.append(pieza)
+            continue
+        bruto = str(post.get(clave) or '')
+        if bruto not in ('1', '2', '3'):
+            piezas.append(pieza)
+            continue
+        piezas.append(_pieza_con_columnas(pieza, int(bruto)))
     return Composicion(composicion.ocultas, tuple(piezas))
 
 
@@ -452,6 +495,13 @@ def mutar(composicion, orden, valores, accion, tipo_pedido):
         if len(partes) != 3:
             return composicion, orden, valores, 'No se reconoció la acción.'
         return _quitar_interno(composicion, orden, valores, partes[1], partes[2])
+    if accion.startswith('pieza-ubicar:'):
+        partes = accion.split(':')
+        if len(partes) != 5:
+            return composicion, orden, valores, 'No se reconoció la acción.'
+        return _ubicar_pieza(
+            composicion, orden, valores, partes[1], partes[2], partes[3], partes[4],
+        )
     if accion.startswith('columnas:'):
         partes = accion.split(':')
         if len(partes) != 3:
@@ -467,8 +517,8 @@ def es_estructural(accion):
         return True
     return accion.startswith((
         'ocultar:', 'mostrar:', 'quitar:',
-        'pieza-agregar:', 'pieza-quitar:', 'columnas:',
-        'dia-agregar:', 'dia-quitar:', 'dia-subir:', 'dia-bajar:',
+        'pieza-agregar:', 'pieza-quitar:', 'pieza-ubicar:', 'columnas:',
+        'dia-agregar:', 'dia-quitar:', 'dia-orden:',
     ))
 
 
@@ -514,7 +564,11 @@ def _agregar(composicion, orden, valores, tipo_pedido):
         )
     diapositivas = ('01',) if tipo_pedido == 'carrusel' else ()
     pieza = Pieza(
-        id=_nuevo_id(composicion), tipo=tipo_pedido, visible=True, diapositivas=diapositivas,
+        id=_nuevo_id(composicion),
+        tipo=tipo_pedido,
+        visible=True,
+        diapositivas=diapositivas,
+        puestos=(Puesto(REF_PROPIA, 0),),
     )
     valores = dict(valores)
     valores.update(valores_de_fabrica(pieza))
@@ -586,8 +640,9 @@ def _pieza(item, vistas):
         visible=bool(item.get('visible', True)),
         diapositivas=_diapositivas(item, tipo),
         nombre=_nombre_guardado(item.get('nombre')),
-        columnas=_columnas(item),
+        columnas=_columnas_de(item),
         bloques=_bloques(item),
+        puestos=_puestos_de_item(item, _columnas_de(item), _bloques(item)),
     )
 
 
@@ -597,8 +652,15 @@ def _serializar_pieza(pieza):
         datos['nombre'] = pieza.nombre
     if pieza.tipo == 'carrusel':
         datos['diapositivas'] = list(pieza.diapositivas or ('01',))
-    if pieza.columnas == 2:
-        datos['columnas'] = 2
+    if pieza.columnas != 1:
+        datos['columnas'] = pieza.columnas
+    puestos = puestos_de(pieza)
+    if not _puestos_son_herencia(pieza, puestos):
+        datos['puestos'] = [
+            {'celda': puesto.celda} if puesto.ref == REF_PROPIA
+            else {'ref': puesto.ref, 'celda': puesto.celda}
+            for puesto in puestos
+        ]
     if pieza.bloques:
         datos['bloques'] = [_serializar_bloque(bloque) for bloque in pieza.bloques]
     return datos
@@ -684,7 +746,8 @@ def _agregar_interno(composicion, orden, valores, pieza_id, tipo):
     )
     valores = dict(valores)
     valores.update(valores_de_fabrica(fantasma))
-    nueva = replace(pieza, bloques=pieza.bloques + (bloque,))
+    puestos = _agregar_ref(puestos_de(pieza), pieza.columnas, bloque_id)
+    nueva = replace(pieza, bloques=pieza.bloques + (bloque,), puestos=puestos)
     return _reemplazar(composicion, nueva), orden, valores, None
 
 
@@ -697,6 +760,7 @@ def _quitar_interno(composicion, orden, valores, pieza_id, bloque_id):
     nueva = replace(
         pieza,
         bloques=tuple(bloque for bloque in pieza.bloques if bloque.id != bloque_id),
+        puestos=tuple(puesto for puesto in puestos_de(pieza) if puesto.ref != bloque_id),
     )
     return _reemplazar(composicion, nueva), orden, valores, None
 
@@ -705,9 +769,42 @@ def _poner_columnas(composicion, orden, valores, pieza_id, bruto):
     pieza, error = _exigir_agregada(composicion, pieza_id)
     if error:
         return composicion, orden, valores, error
-    if bruto not in ('1', '2'):
-        return composicion, orden, valores, 'La distribución solo puede ser una o dos columnas.'
-    return _reemplazar(composicion, replace(pieza, columnas=int(bruto))), orden, valores, None
+    if str(bruto) not in ('1', '2', '3'):
+        return composicion, orden, valores, 'La cuadrícula admite 1, 2 o 3 columnas.'
+    return (
+        _reemplazar(composicion, _pieza_con_columnas(pieza, int(bruto))),
+        orden,
+        valores,
+        None,
+    )
+
+
+def _ubicar_pieza(composicion, orden, valores, pieza_id, token, celda_bruta, indice_bruto):
+    """Suelta una pieza en una casilla. El índice es el lugar después de quitarla."""
+    pieza, error = _exigir_agregada(composicion, pieza_id)
+    if error:
+        return composicion, orden, valores, error
+    ref = _ref_de_token(token)
+    if ref is None or not _ref_conocida(pieza, ref):
+        return composicion, orden, valores, 'Esa pieza no está en la sección.'
+    if not str(celda_bruta).isdigit() or not str(indice_bruto).isdigit():
+        return composicion, orden, valores, 'No se reconoció la casilla.'
+    celda = int(celda_bruta)
+    indice = int(indice_bruto)
+    if celda < 0 or celda >= pieza.columnas:
+        return composicion, orden, valores, 'Esa casilla no está en la cuadrícula.'
+    grupos = _grupos_de(puestos_de(pieza), pieza.columnas)
+    for grupo in grupos:
+        if ref in grupo:
+            grupo.remove(ref)
+    destino = grupos[celda]
+    destino.insert(min(indice, len(destino)), ref)
+    return (
+        _reemplazar(composicion, replace(pieza, puestos=_puestos_desde_grupos(grupos))),
+        orden,
+        valores,
+        None,
+    )
 
 
 def _mutar_dia(composicion, orden, valores, accion):
@@ -770,6 +867,13 @@ def _cambiar_diapositivas(diapositivas, verbo, dia, prefijo, valores):
         valores[f'{prefijo}-d{nuevo}'] = ('', '')
         valores[f'{prefijo}-r{nuevo}'] = ('', '')
         return diapositivas + (nuevo,), valores, None
+    if verbo == 'dia-orden':
+        ordenadas = _orden_de_dias(diapositivas, dia)
+        if ordenadas is None:
+            return diapositivas, valores, (
+                'Ese orden no corresponde a las diapositivas del carrusel.'
+            )
+        return ordenadas, valores, None
     if _DIA.fullmatch(dia or '') is None or dia not in diapositivas:
         return diapositivas, valores, 'Esa diapositiva no está en el carrusel.'
     if verbo == 'dia-quitar':
@@ -778,18 +882,168 @@ def _cambiar_diapositivas(diapositivas, verbo, dia, prefijo, valores):
                 'El carrusel necesita al menos una diapositiva. Puedes quitar la sección.'
             )
         return tuple(item for item in diapositivas if item != dia), valores, None
-    if verbo in ('dia-subir', 'dia-bajar'):
-        lista = list(diapositivas)
-        indice = lista.index(dia)
-        destino = indice + (-1 if verbo == 'dia-subir' else 1)
-        if 0 <= destino < len(lista):
-            lista[indice], lista[destino] = lista[destino], lista[indice]
-        return tuple(lista), valores, None
     return diapositivas, valores, 'No se reconoció la acción.'
 
 
-def _columnas(item):
-    return 2 if item.get('columnas') == 2 else 1
+def _orden_de_dias(diapositivas, bruto):
+    """Una permutación de las diapositivas que ya existen. No agrega ni quita."""
+    partes = [item for item in str(bruto or '').split(',') if item]
+    if len(partes) != len(diapositivas):
+        return None
+    if any(_DIA.fullmatch(item) is None for item in partes):
+        return None
+    if set(partes) != set(diapositivas) or len(set(partes)) != len(partes):
+        return None
+    return tuple(partes)
+
+
+def puestos_de(pieza):
+    """Casillas ya guardadas, o el reparto heredado de un borrador sin puestos."""
+    if pieza.puestos:
+        return _normalizar_puestos(pieza.puestos, pieza.columnas, pieza.bloques)
+    return _puestos_heredados(pieza.bloques, pieza.columnas)
+
+
+def casillas_de(pieza):
+    """Refs por columna, en el orden de lectura. '' es el contenido propio."""
+    return _grupos_de(puestos_de(pieza), pieza.columnas)
+
+
+def _columnas_de(item):
+    """1, 2 o 3. Acepta la cuadrícula nueva y el diseño fijo de un borrador viejo."""
+    bruto = item.get('columnas')
+    if bruto in (1, 2, 3):
+        return bruto
+    if isinstance(bruto, str) and bruto in ('1', '2', '3'):
+        return int(bruto)
+    diseno = item.get('diseno')
+    if isinstance(diseno, str) and diseno in _COLUMNAS_DE_DISENO:
+        return _COLUMNAS_DE_DISENO[diseno]
+    return 1
+
+
+def _puestos_de_item(item, columnas, bloques):
+    brutos = item.get('puestos')
+    if isinstance(brutos, list):
+        puestos = []
+        for bruto in brutos:
+            puesto = _puesto_bruto(bruto, columnas)
+            if puesto is not None:
+                puestos.append(puesto)
+        return _normalizar_puestos(tuple(puestos), columnas, bloques)
+    return _puestos_heredados(bloques, columnas)
+
+
+def _puesto_bruto(bruto, columnas):
+    if not isinstance(bruto, dict):
+        return None
+    celda = bruto.get('celda', 0)
+    if isinstance(celda, str) and celda.isdigit():
+        celda = int(celda)
+    if not isinstance(celda, int) or isinstance(celda, bool):
+        return None
+    if celda < 0 or celda >= columnas:
+        celda = 0
+    ref = bruto.get('ref', REF_PROPIA)
+    if ref in ('', TOKEN_PROPIA, None):
+        return Puesto(REF_PROPIA, celda)
+    if isinstance(ref, str) and _BLOQUE.fullmatch(ref):
+        return Puesto(ref, celda)
+    return None
+
+
+def _puestos_heredados(bloques, columnas):
+    """Reparte en orden: la propia, luego cada bloque. Así un diseño viejo no se pierde."""
+    refs = [REF_PROPIA] + [bloque.id for bloque in bloques]
+    return tuple(Puesto(ref, indice % columnas) for indice, ref in enumerate(refs))
+
+
+def _normalizar_puestos(puestos, columnas, bloques):
+    grupos = _grupos_de(puestos, columnas)
+    vistos = set()
+    for grupo in grupos:
+        limpio = []
+        for ref in grupo:
+            if ref in vistos:
+                continue
+            if ref != REF_PROPIA and not any(bloque.id == ref for bloque in bloques):
+                continue
+            vistos.add(ref)
+            limpio.append(ref)
+        grupo[:] = limpio
+    if REF_PROPIA not in vistos:
+        grupos[0].insert(0, REF_PROPIA)
+        vistos.add(REF_PROPIA)
+    for bloque in bloques:
+        if bloque.id not in vistos:
+            grupos[0].append(bloque.id)
+    return _puestos_desde_grupos(grupos)
+
+
+def _puestos_son_herencia(pieza, puestos):
+    return puestos == _puestos_heredados(pieza.bloques, pieza.columnas)
+
+
+def _pieza_con_columnas(pieza, columnas):
+    if columnas == pieza.columnas:
+        return pieza
+    plano = _orden_lectura(puestos_de(pieza), pieza.columnas)
+    grupos = [[] for _ in range(columnas)]
+    for indice, ref in enumerate(plano):
+        grupos[indice % columnas].append(ref)
+    return replace(pieza, columnas=columnas, puestos=_puestos_desde_grupos(grupos))
+
+
+def _agregar_ref(puestos, columnas, ref):
+    grupos = _grupos_de(puestos, columnas)
+    grupos[0].append(ref)
+    return _puestos_desde_grupos(grupos)
+
+
+def _orden_lectura(puestos, columnas):
+    """Fila a fila, de izquierda a derecha, para no dejar el orden viejo al repartir."""
+    grupos = _grupos_de(puestos, columnas)
+    plano = []
+    fila = 0
+    while True:
+        alguno = False
+        for grupo in grupos:
+            if fila < len(grupo):
+                plano.append(grupo[fila])
+                alguno = True
+        if not alguno:
+            return plano
+        fila += 1
+
+
+def _grupos_de(puestos, columnas):
+    grupos = [[] for _ in range(max(columnas, 1))]
+    for puesto in puestos:
+        celda = puesto.celda if 0 <= puesto.celda < columnas else 0
+        grupos[celda].append(puesto.ref)
+    return grupos
+
+
+def _puestos_desde_grupos(grupos):
+    return tuple(
+        Puesto(ref, celda)
+        for celda, grupo in enumerate(grupos)
+        for ref in grupo
+    )
+
+
+def _ref_de_token(token):
+    if token == TOKEN_PROPIA:
+        return REF_PROPIA
+    if isinstance(token, str) and _BLOQUE.fullmatch(token):
+        return token
+    return None
+
+
+def _ref_conocida(pieza, ref):
+    if ref == REF_PROPIA:
+        return True
+    return any(bloque.id == ref for bloque in pieza.bloques)
 
 
 def _bloques(item):

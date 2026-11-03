@@ -27,13 +27,17 @@ from paginas.imagenes import (
 from paginas.models import BloquePortada
 from paginas.piezas import (
     CLAVE_COMPOSICION,
+    REF_PROPIA,
     TIPOS,
+    TOKEN_PROPIA,
     CamposPieza,
+    CasillaVista,
     CeldaVista,
     Composicion,
     DiaVista,
     Pieza,
     SeccionVista,
+    casillas_de,
     con_columnas,
     con_nombres,
     con_visibilidad,
@@ -263,6 +267,7 @@ def grupos_editor(
             'oculta': grupo_id in composicion.ocultas,
             'tipo': '',
             'columnas': 1,
+            'casillas': (),
             'internas': (),
         }
     for pieza in composicion.piezas:
@@ -278,6 +283,7 @@ def grupos_editor(
             'nombre_propio': pieza.nombre,
             'nombre_fabrica': fabricas.get(pieza.id, ''),
             'columnas': pieza.columnas,
+            'casillas': _casillas_editor(pieza),
             'internas': _internas_editor(pieza),
         }
     if indice.secciones:
@@ -751,26 +757,37 @@ def _vista_carrusel(pieza, mapa):
 
 
 def _vista_compuesta(pieza, mapa):
-    """La sección y sus piezas internas, en el orden en que se reparten las columnas."""
-    celdas = [_celda_nativa(pieza, mapa)]
-    for bloque in pieza.bloques:
-        ancla = f'{pieza.id}-{bloque.id}'
-        fantasma = Pieza(
-            id=ancla, tipo=bloque.tipo, diapositivas=bloque.diapositivas,
-        )
-        celdas.append(CeldaVista(
-            bloque.tipo,
-            ancla,
-            None if bloque.tipo == 'carrusel' else _campos_de(fantasma, mapa),
-            _dias_de(fantasma, mapa) if bloque.tipo == 'carrusel' else (),
-        ))
+    """La cuadrícula y, dentro de cada casilla, las piezas en el orden guardado."""
+    casillas = []
+    for indice, refs in enumerate(casillas_de(pieza)):
+        piezas = []
+        for ref in refs:
+            if ref == REF_PROPIA:
+                piezas.append(_celda_nativa(pieza, mapa))
+                continue
+            bloque = next(item for item in pieza.bloques if item.id == ref)
+            piezas.append(_celda_interna(pieza, bloque, mapa))
+        casillas.append(CasillaVista(indice, tuple(piezas)))
     return SeccionVista(
         pieza.id,
         'inicio/secciones/pieza_compuesta.html',
         libre=True,
         oculta=not pieza.visible,
         columnas=pieza.columnas,
-        celdas=tuple(celdas),
+        casillas=tuple(casillas),
+    )
+
+
+def _celda_interna(seccion, bloque, mapa):
+    ancla = f'{seccion.id}-{bloque.id}'
+    fantasma = Pieza(
+        id=ancla, tipo=bloque.tipo, diapositivas=bloque.diapositivas,
+    )
+    return CeldaVista(
+        bloque.tipo,
+        ancla,
+        None if bloque.tipo == 'carrusel' else _campos_de(fantasma, mapa),
+        _dias_de(fantasma, mapa) if bloque.tipo == 'carrusel' else (),
     )
 
 
@@ -801,6 +818,32 @@ def _dias_de(pieza, mapa):
         )
         for dia in (pieza.diapositivas or ('01',))
     )
+
+
+def _casillas_editor(pieza):
+    """Lo que el inspector arrastra. El token «propia» es el contenido de la sección."""
+    nombres = {item['id']: item for item in _internas_editor(pieza)}
+    casillas = []
+    for indice, refs in enumerate(casillas_de(pieza)):
+        piezas = []
+        for ref in refs:
+            if ref == REF_PROPIA:
+                piezas.append({
+                    'ref': TOKEN_PROPIA,
+                    'tipo': pieza.tipo,
+                    'nombre': TIPOS[pieza.tipo].nombre,
+                })
+                continue
+            interno = nombres.get(ref)
+            if interno is None:
+                continue
+            piezas.append({
+                'ref': ref,
+                'tipo': interno['tipo'],
+                'nombre': interno['nombre'],
+            })
+        casillas.append({'indice': indice, 'piezas': piezas})
+    return tuple(casillas)
 
 
 def _internas_editor(pieza):

@@ -154,13 +154,15 @@ def _aviso_estructura(accion):
         return 'Pieza agregada al borrador. La página pública no cambió.'
     if accion.startswith('pieza-quitar:'):
         return 'Pieza quitada del borrador. La página pública no cambió.'
+    if accion.startswith('pieza-ubicar:'):
+        return 'La pieza cambió de lugar en el borrador. La página pública no cambió.'
     if accion.startswith('columnas:'):
-        return 'Distribución guardada en el borrador. La página pública no cambió.'
+        return 'Columnas guardadas en el borrador. La página pública no cambió.'
     if accion.startswith('dia-agregar:'):
         return 'Diapositiva agregada al borrador. La página pública no cambió.'
     if accion.startswith('dia-quitar:'):
         return 'Diapositiva quitada del borrador. La página pública no cambió.'
-    if accion.startswith(('dia-subir:', 'dia-bajar:')):
+    if accion.startswith('dia-orden:'):
         return 'Orden de las diapositivas guardado en el borrador. La página pública no cambió.'
     return 'Sección quitada del borrador. La página pública no cambió.'
 
@@ -224,6 +226,8 @@ def _id_de_accion(accion, comp_antes, comp):
 
 def _pieza_elegida(accion, comp):
     """Id de la pieza interna que el inspector debe abrir. None si la acción no la toca."""
+    if accion == 'agregar':
+        return 'propia'
     if accion.startswith('pieza-quitar:'):
         return ''
     if not accion.startswith('pieza-agregar:'):

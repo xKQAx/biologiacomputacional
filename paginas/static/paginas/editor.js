@@ -692,6 +692,250 @@
     });
   }
 
+  /* La cuadrícula y las diapositivas se sueltan por el mismo envío que escribe el iframe. */
+  var arrastrePieza = null;
+  var arrastreDia = null;
+
+  function diasDelCarrusel(grupo, trozo) {
+    var ids = [];
+    form.querySelectorAll("[data-dia-item]").forEach(function (nodo) {
+      if (nodo.getAttribute("data-dia-grupo") !== grupo) return;
+      if ((nodo.getAttribute("data-dia-trozo") || "") !== (trozo || "")) return;
+      ids.push(nodo.getAttribute("data-dia-item"));
+    });
+    return ids;
+  }
+
+  function accionDia(grupo, trozo, ids) {
+    var orden = ids.join(",");
+    if (trozo) return "dia-orden:" + grupo + ":" + trozo + ":" + orden;
+    return "dia-orden:" + grupo + ":" + orden;
+  }
+
+  function quitarMarcasArrastre() {
+    var caja = document.getElementById("propiedades");
+    if (!caja) return;
+    caja.querySelectorAll(".hueco-casilla, .hueco-dia, .arrastrando, .arrastrando-dia").forEach(function (nodo) {
+      nodo.classList.remove("hueco-casilla", "hueco-dia", "arrastrando", "arrastrando-dia");
+    });
+  }
+
+  function indiceDePieza(item) {
+    var lista = item.parentElement;
+    if (!lista) return 0;
+    return Array.prototype.indexOf.call(lista.querySelectorAll("[data-pieza-item]"), item);
+  }
+
+  function colocarPieza(item, casilla, event) {
+    var lista = casilla.querySelector("[data-casilla-lista]");
+    if (!lista) return;
+    var sobre = event.target.closest("[data-pieza-item]");
+    if (sobre === item) return;
+    if (sobre && lista.contains(sobre)) {
+      var rect = sobre.getBoundingClientRect();
+      var despues = event.clientY > rect.top + rect.height / 2;
+      var referencia = despues ? sobre.nextElementSibling : sobre;
+      if (referencia) lista.insertBefore(item, referencia);
+      else lista.appendChild(item);
+    } else {
+      lista.appendChild(item);
+    }
+  }
+
+  function enviarPieza(item, casilla) {
+    if (!item || !casilla || !arrastrePieza) return;
+    var celda = casilla.getAttribute("data-casilla");
+    var indice = indiceDePieza(item);
+    if (celda === arrastrePieza.celda && indice === arrastrePieza.indice) return;
+    enviarEstructura(
+      "pieza-ubicar:" + arrastrePieza.seccion + ":" + arrastrePieza.ref + ":" + celda + ":" + indice
+    );
+  }
+
+  function moverDiaNodo(origen, destino, despues) {
+    if (!origen || !destino || origen === destino) return false;
+    var referencia = despues ? destino.nextElementSibling : destino;
+    if (referencia === origen) return false;
+    var padre = destino.parentElement;
+    if (!padre) return false;
+    if (referencia) padre.insertBefore(origen, referencia);
+    else padre.appendChild(origen);
+    return true;
+  }
+
+  form.addEventListener("dragstart", function (event) {
+    var asaDia = event.target.closest("[data-asa-dia]");
+    var asaPieza = event.target.closest("[data-asa-pieza]");
+    if (!asaDia && !asaPieza) return;
+    if (asaDia) {
+      var dia = asaDia.closest("[data-dia-item]");
+      if (!dia) return;
+      arrastreDia = {
+        grupo: dia.getAttribute("data-dia-grupo") || "",
+        trozo: dia.getAttribute("data-dia-trozo") || "",
+        dia: dia.getAttribute("data-dia-item") || "",
+        orden: diasDelCarrusel(dia.getAttribute("data-dia-grupo") || "", dia.getAttribute("data-dia-trozo") || "").join(","),
+      };
+      arrastrePieza = null;
+      dia.classList.add("arrastrando-dia");
+    } else {
+      var pieza = asaPieza.closest("[data-pieza-item]");
+      var casilla = asaPieza.closest("[data-casilla]");
+      if (!pieza || !casilla) return;
+      arrastrePieza = {
+        seccion: pieza.getAttribute("data-pieza-seccion") || "",
+        ref: pieza.getAttribute("data-pieza") || "",
+        celda: casilla.getAttribute("data-casilla") || "",
+        indice: indiceDePieza(pieza),
+      };
+      arrastreDia = null;
+      pieza.classList.add("arrastrando");
+    }
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", asaDia ? "dia" : "pieza");
+    if (event.dataTransfer.setDragImage) {
+      event.dataTransfer.setDragImage(asaDia ? asaDia.closest("[data-dia-item]") : asaPieza.closest("[data-pieza-item]"), 24, 16);
+    }
+  });
+
+  form.addEventListener("dragover", function (event) {
+    if (arrastreDia) {
+      var dia = event.target.closest("[data-dia-item]");
+      if (!dia || dia.getAttribute("data-dia-grupo") !== arrastreDia.grupo) return;
+      if ((dia.getAttribute("data-dia-trozo") || "") !== arrastreDia.trozo) return;
+      event.preventDefault();
+      form.querySelectorAll(".hueco-dia").forEach(function (nodo) {
+        nodo.classList.remove("hueco-dia");
+      });
+      if (dia.getAttribute("data-dia-item") !== arrastreDia.dia) dia.classList.add("hueco-dia");
+      return;
+    }
+    if (!arrastrePieza) return;
+    var casilla = event.target.closest("[data-casilla]");
+    if (!casilla || casilla.getAttribute("data-casilla-seccion") !== arrastrePieza.seccion) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    form.querySelectorAll(".hueco-casilla").forEach(function (nodo) {
+      nodo.classList.remove("hueco-casilla");
+    });
+    casilla.classList.add("hueco-casilla");
+  });
+
+  form.addEventListener("drop", function (event) {
+    if (arrastreDia) {
+      event.preventDefault();
+      var destino = event.target.closest("[data-dia-item]");
+      var origen = null;
+      form.querySelectorAll("[data-dia-item]").forEach(function (nodo) {
+        if (nodo.getAttribute("data-dia-grupo") === arrastreDia.grupo && nodo.getAttribute("data-dia-item") === arrastreDia.dia && (nodo.getAttribute("data-dia-trozo") || "") === arrastreDia.trozo) {
+          origen = nodo;
+        }
+      });
+      var grupo = arrastreDia.grupo;
+      var trozo = arrastreDia.trozo;
+      var previo = arrastreDia.orden;
+      if (destino && origen && destino.getAttribute("data-dia-grupo") === grupo && (destino.getAttribute("data-dia-trozo") || "") === trozo) {
+        var rect = destino.getBoundingClientRect();
+        moverDiaNodo(origen, destino, event.clientY > rect.top + rect.height / 2);
+      }
+      quitarMarcasArrastre();
+      arrastreDia = null;
+      var ids = diasDelCarrusel(grupo, trozo);
+      if (ids.join(",") !== previo) enviarEstructura(accionDia(grupo, trozo, ids));
+      return;
+    }
+    if (!arrastrePieza) return;
+    event.preventDefault();
+    var casilla = event.target.closest("[data-casilla]");
+    var item = null;
+    form.querySelectorAll("[data-pieza-item]").forEach(function (nodo) {
+      if (nodo.getAttribute("data-pieza-seccion") === arrastrePieza.seccion && nodo.getAttribute("data-pieza") === arrastrePieza.ref) {
+        item = nodo;
+      }
+    });
+    if (casilla && item && casilla.getAttribute("data-casilla-seccion") === arrastrePieza.seccion) {
+      colocarPieza(item, casilla, event);
+      enviarPieza(item, casilla);
+    }
+    quitarMarcasArrastre();
+    arrastrePieza = null;
+  });
+
+  form.addEventListener("dragend", function () {
+    arrastreDia = null;
+    arrastrePieza = null;
+    quitarMarcasArrastre();
+  });
+
+  form.addEventListener("keydown", function (event) {
+    if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
+    var asaDia = event.target.closest && event.target.closest("[data-asa-dia]");
+    if (asaDia) {
+      event.preventDefault();
+      var actual = asaDia.closest("[data-dia-item]");
+      if (!actual) return;
+      var grupo = actual.getAttribute("data-dia-grupo") || "";
+      var trozo = actual.getAttribute("data-dia-trozo") || "";
+      var hermanos = [];
+      form.querySelectorAll("[data-dia-item]").forEach(function (nodo) {
+        if (nodo.getAttribute("data-dia-grupo") === grupo && (nodo.getAttribute("data-dia-trozo") || "") === trozo) hermanos.push(nodo);
+      });
+      var posicion = hermanos.indexOf(actual);
+      var vecino = hermanos[posicion + (event.key === "ArrowUp" ? -1 : 1)];
+      if (!vecino) return;
+      var antes = diasDelCarrusel(grupo, trozo).join(",");
+      moverDiaNodo(actual, vecino, event.key === "ArrowDown");
+      var ids = diasDelCarrusel(grupo, trozo);
+      if (ids.join(",") !== antes) enviarEstructura(accionDia(grupo, trozo, ids));
+      return;
+    }
+    var asaPieza = event.target.closest && event.target.closest("[data-asa-pieza]");
+    if (!asaPieza) return;
+    event.preventDefault();
+    var piezaItem = asaPieza.closest("[data-pieza-item]");
+    var casillaActual = asaPieza.closest("[data-casilla]");
+    if (!piezaItem || !casillaActual) return;
+    var seccion = piezaItem.getAttribute("data-pieza-seccion") || "";
+    var casillas = Array.prototype.filter.call(
+      form.querySelectorAll('[data-casilla][data-casilla-seccion="' + CSS.escape(seccion) + '"]'),
+      function () { return true; }
+    );
+    var lista = casillaActual.querySelector("[data-casilla-lista]");
+    var locales = lista ? Array.prototype.slice.call(lista.querySelectorAll("[data-pieza-item]")) : [];
+    var local = locales.indexOf(piezaItem);
+    var delta = event.key === "ArrowUp" ? -1 : 1;
+    var destinoCasilla = casillaActual;
+    if (delta < 0 && local <= 0) {
+      var anterior = casillas[casillas.indexOf(casillaActual) - 1];
+      if (!anterior) return;
+      destinoCasilla = anterior;
+      var listaAnterior = anterior.querySelector("[data-casilla-lista]");
+      if (listaAnterior) listaAnterior.appendChild(piezaItem);
+    } else if (delta > 0 && local >= locales.length - 1) {
+      var siguiente = casillas[casillas.indexOf(casillaActual) + 1];
+      if (!siguiente) return;
+      destinoCasilla = siguiente;
+      var listaSiguiente = siguiente.querySelector("[data-casilla-lista]");
+      var primero = listaSiguiente && listaSiguiente.querySelector("[data-pieza-item]");
+      if (primero) listaSiguiente.insertBefore(piezaItem, primero);
+      else if (listaSiguiente) listaSiguiente.appendChild(piezaItem);
+    } else if (lista && locales[local + delta]) {
+      var vecinoPieza = locales[local + delta];
+      if (delta < 0) lista.insertBefore(piezaItem, vecinoPieza);
+      else lista.insertBefore(vecinoPieza, piezaItem);
+    } else {
+      return;
+    }
+    arrastrePieza = {
+      seccion: seccion,
+      ref: piezaItem.getAttribute("data-pieza") || "",
+      celda: casillaActual.getAttribute("data-casilla") || "",
+      indice: local,
+    };
+    enviarPieza(piezaItem, destinoCasilla);
+    arrastrePieza = null;
+  });
+
   form.addEventListener("focusin", function (event) {
     var campo = event.target.closest("[data-nombre-seccion]");
     if (!campo || seleccion.grupo === campo.getAttribute("data-grupo-btn")) return;
@@ -839,14 +1083,19 @@
     post(mensajeCampo(fs));
   });
 
+  function mostrarNombreArchivo(input) {
+    var caja = input.closest && input.closest(".editor-archivo");
+    if (!caja) return;
+    var nombre = caja.querySelector("[data-archivo-nombre]");
+    if (!nombre) return;
+    var archivo = input.files && input.files[0];
+    nombre.textContent = archivo ? archivo.name : "";
+  }
+
   form.addEventListener("change", function (event) {
-    var radio = event.target;
-    if (radio.getAttribute("data-columnas")) {
-      enviarEstructura("columnas:" + radio.getAttribute("data-columnas") + ":" + radio.value);
-      return;
-    }
     var input = event.target;
     if (input.getAttribute("data-campo") !== "imagen") return;
+    mostrarNombreArchivo(input);
     var fs = input.closest("fieldset[data-clave]");
     if (!fs) return;
     var error = fs.querySelector("[data-error-imagen]");
@@ -1087,6 +1336,7 @@
     if (typeof data.pieza === "string") seleccion.pieza = data.pieza;
     form.querySelectorAll("[data-campo=imagen]").forEach(function (input) {
       if (input.files && input.files.length) input.value = "";
+      mostrarNombreArchivo(input);
     });
     pintar();
     /* El iframe sigue siendo el mismo documento: el inspector nuevo no lo desengancha. */
