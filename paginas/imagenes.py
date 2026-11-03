@@ -70,9 +70,12 @@ def olvidar(urls):
     """Borra fotos subidas que ya no usa ningún bloque. No toca estáticos ni URLs externas."""
     if not urls:
         return
+    from paginas.historial import enlaces_guardados
     from paginas.models import BloquePortada
 
     en_uso = set(BloquePortada.objects.values_list('enlace', flat=True))
+    # Una copia del historial puede seguir apuntando al archivo.
+    en_uso.update(enlaces_guardados())
     for url in urls:
         if url in en_uso:
             continue
