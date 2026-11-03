@@ -72,6 +72,7 @@
           <a href="{{ enlace_relacionado.url }}">{{ enlace_relacionado.texto }}</a>
         </p>
         {% endif %}
+        {# Índice e inspector: la lista solo nombra; debajo se edita la sección elegida. #}
         <h2>Partes</h2>
         {% if tiene_lista %}
         <ul class="editor-partes">
@@ -92,15 +93,7 @@
         <ul class="editor-secciones" id="lista-secciones">
           {% for grupo in grupos %}
             {% if grupo.zona == "seccion" %}
-            <li data-seccion-item="{{ grupo.id }}">
-              <button type="button" class="flecha" data-subir aria-label="Subir {{ grupo.nombre }}">↑</button>
-              <button
-                type="button"
-                data-grupo-btn="{{ grupo.id }}"
-                {% if grupo.id == grupo_inicial %}class="activa" aria-current="true"{% endif %}
-              >{{ grupo.nombre }}</button>
-              <button type="button" class="flecha" data-bajar aria-label="Bajar {{ grupo.nombre }}">↓</button>
-            </li>
+            {% include "admin/paginas/editor_seccion_item.html" %}
             {% endif %}
           {% endfor %}
         </ul>
@@ -108,6 +101,20 @@
           <p class="error-campo" role="alert">{{ error_orden }}</p>
         {% endif %}
         <input type="hidden" name="orden_secciones" id="orden-secciones" value="{{ orden_secciones }}">
+        {% if permite_piezas %}
+        <div class="editor-agregar">
+          <label class="editor-rotulo" for="tipo-pieza">Agregar sección</label>
+          <div class="editor-agregar-fila">
+            <select id="tipo-pieza" name="tipo_pieza">
+              {% for tipo in tipos_pieza %}
+              <option value="{{ tipo.id }}">{{ tipo.nombre }}</option>
+              {% endfor %}
+            </select>
+            <button type="button" data-vivo="agregar" value="agregar">Agregar</button>
+          </div>
+          <p class="editor-nota">Entra al borrador y se abre para editarla. La página pública no cambia hasta publicar.</p>
+        </div>
+        {% endif %}
         {% endif %}
         {% if tiene_despues %}
         <ul class="editor-partes">
@@ -125,111 +132,40 @@
         </ul>
         {% endif %}
 
-        <h2 id="titulo-propiedades">{{ grupo_inicial_nombre }}</h2>
+        <h2 id="titulo-propiedades">Editando: {{ grupo_inicial_nombre }}</h2>
         <div id="propiedades">
           {% for grupo in grupos %}
-            {% for bloque in grupo.bloques %}
-            <fieldset
-              data-clave="{{ bloque.clave }}"
-              data-grupo="{{ bloque.grupo }}"
-              data-vista="{{ bloque.vista }}"
-              data-etiqueta="{{ bloque.etiqueta }}"
-              data-nombre="{{ bloque.nombre }}"
-              {% if bloque.grupo != grupo_inicial and not bloque.errores.texto and not bloque.errores.enlace and not bloque.errores.imagen %}hidden{% endif %}
-            >
-              <legend>{{ bloque.nombre }}</legend>
-              {% if bloque.tipo == "imagen" %}
-              <label for="imagen-{{ bloque.clave }}">Imagen</label>
-              <input
-                id="imagen-{{ bloque.clave }}"
-                type="file"
-                name="imagen__{{ bloque.clave }}"
-                data-campo="imagen"
-                accept="image/jpeg,image/png,image/gif,image/webp"
-                {% if bloque.errores.imagen %}aria-invalid="true" aria-describedby="error-imagen-{{ bloque.clave }}"{% endif %}
-              >
-              <p class="editor-nota">Si no eliges otra, se conserva la imagen actual.</p>
-              <p class="error-campo" id="error-imagen-{{ bloque.clave }}" data-error-imagen{% if bloque.errores.imagen %} role="alert"{% endif %}>{{ bloque.errores.imagen }}</p>
-              {% endif %}
-              {% if bloque.perfil != "plano" %}
-              <div class="editor-formato" data-formato="{{ bloque.perfil }}">
-                <label id="etiqueta-texto-{{ bloque.clave }}">{{ bloque.etiqueta_texto }}</label>
-                <div class="editor-formato-barra" role="toolbar" aria-label="Formato del texto">
-                  <button type="button" data-fmt="strong" title="Negrita (Ctrl+B)" aria-keyshortcuts="Control+B Meta+B" aria-pressed="false"><strong>Negrita</strong></button>
-                  <button type="button" data-fmt="em" title="Cursiva (Ctrl+I)" aria-keyshortcuts="Control+I Meta+I" aria-pressed="false"><em>Cursiva</em></button>
-                  <button type="button" data-fmt="u" title="Subrayado (Ctrl+U)" aria-keyshortcuts="Control+U Meta+U" aria-pressed="false"><u>Subrayado</u></button>
-                  {% if bloque.perfil == "bloque" %}
-                  <button type="button" data-fmt="ul" title="Lista con viñetas" aria-pressed="false">Lista</button>
-                  <button type="button" data-fmt="ol" title="Lista numerada" aria-pressed="false">Numerada</button>
-                  {% endif %}
-                  <button type="button" data-fmt="enlace" title="Enlace http, https o mailto">Enlace</button>
-                  <button type="button" data-fmt="limpiar" title="Quitar negrita, cursiva, subrayado, listas y enlace">Quitar formato</button>
-                </div>
-                <div
-                  id="texto-{{ bloque.clave }}"
-                  class="editor-formato-campo{% if bloque.perfil == "linea" %} es-linea{% endif %}{% if bloque.area %} es-multilinea{% endif %}"
-                  contenteditable="true"
-                  role="textbox"
-                  aria-multiline="{% if bloque.perfil == "bloque" or bloque.area %}true{% else %}false{% endif %}"
-                  aria-labelledby="etiqueta-texto-{{ bloque.clave }}"
-                  data-campo="texto-rico"
-                  {% if bloque.errores.texto %}aria-invalid="true" aria-describedby="error-texto-{{ bloque.clave }}"{% endif %}
-                ></div>
-                <p class="editor-nota">
-                  Atajos: Ctrl+B negrita, Ctrl+I cursiva y Ctrl+U subrayado. En Mac, Cmd.
-                  {% if bloque.perfil == "bloque" %}
-                  En un párrafo también hay lista con viñetas y lista numerada.
-                  {% else %}
-                  En un título o un botón solo cabe el formato en línea.
-                  {% endif %}
-                </p>
-                <textarea name="texto__{{ bloque.clave }}" data-campo="texto" hidden>{{ bloque.texto }}</textarea>
-              </div>
-              {% else %}
-              <label for="texto-{{ bloque.clave }}">{{ bloque.etiqueta_texto }}</label>
-              {% if bloque.area and bloque.tipo != "imagen" %}
-              <textarea
-                id="texto-{{ bloque.clave }}"
-                name="texto__{{ bloque.clave }}"
-                data-campo="texto"
-                rows="4"
-                {% if bloque.errores.texto %}aria-invalid="true" aria-describedby="error-texto-{{ bloque.clave }}"{% endif %}
-              >{{ bloque.texto }}</textarea>
-              {% else %}
-              <input
-                id="texto-{{ bloque.clave }}"
-                type="text"
-                name="texto__{{ bloque.clave }}"
-                data-campo="texto"
-                value="{{ bloque.texto }}"
-                {% if bloque.errores.texto %}aria-invalid="true" aria-describedby="error-texto-{{ bloque.clave }}"{% endif %}
-              >
-              {% endif %}
-              {% endif %}
-              {% if bloque.errores.texto %}
-              <p class="error-campo" id="error-texto-{{ bloque.clave }}" data-error-texto role="alert">{{ bloque.errores.texto }}</p>
-              {% endif %}
-              {% if bloque.tipo != "texto" %}
-              <label for="enlace-{{ bloque.clave }}">{{ bloque.etiqueta_enlace }}</label>
-              <input
-                id="enlace-{{ bloque.clave }}"
-                type="text"
-                name="enlace__{{ bloque.clave }}"
-                data-campo="enlace"
-                value="{{ bloque.enlace }}"
-                spellcheck="false"
-                autocomplete="off"
-                {% if bloque.errores.enlace %}aria-invalid="true" aria-describedby="error-enlace-{{ bloque.clave }}"{% endif %}
-              >
-              {% if bloque.errores.enlace %}
-              <p class="error-campo" id="error-enlace-{{ bloque.clave }}" data-error-enlace role="alert">{{ bloque.errores.enlace }}</p>
-              {% endif %}
-              {% endif %}
-            </fieldset>
-            {% endfor %}
+            {% include "admin/paginas/editor_inspector.html" %}
           {% endfor %}
         </div>
+
+        <section class="editor-historial" aria-label="Publicaciones">
+          <h2>Publicaciones</h2>
+          {% if publicaciones %}
+          <ul>
+            {% for item in publicaciones %}
+            <li>
+              <span>{{ item.cuando }}</span>
+              <span>{{ item.autor }}</span>
+              <button type="submit" name="accion" value="restaurar:{{ item.id }}">Restaurar</button>
+            </li>
+            {% endfor %}
+          </ul>
+          <p class="editor-nota">Restaurar copia esa versión al borrador. La página pública no cambia hasta que publiques. Descartar no borra este historial.</p>
+          {% else %}
+          <p class="editor-nota">Aún no hay publicaciones de esta página.</p>
+          {% endif %}
+        </section>
       </aside>
+
+      <div
+        class="editor-divisor"
+        data-divisor
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Ancho del panel"
+        tabindex="0"
+      ></div>
 
       <div class="editor-lienzo">
         <iframe

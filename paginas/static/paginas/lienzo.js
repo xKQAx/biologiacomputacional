@@ -1,4 +1,5 @@
-/* Recibe la selección y el texto del editor. El lienzo no es un formulario. */
+/* El clic en el lienzo avisa al editor. El texto, ocultar y mostrar los escribe
+   el padre sobre este documento, sin recargar el iframe. */
 (function () {
   var ORIGEN = window.location.origin;
 
@@ -124,6 +125,24 @@
     });
   }
 
+  function colocarSeccion(data) {
+    var contenedor = document.getElementById("contenido-inicio");
+    if (!contenedor || !claveValida(data.id)) return;
+    var actual = contenedor.querySelector('[data-seccion="' + CSS.escape(data.id) + '"]');
+    var html = String(data.html || "").trim();
+    if (!html) {
+      if (actual) actual.remove();
+    } else {
+      var plantilla = document.createElement("template");
+      plantilla.innerHTML = html;
+      var nuevo = plantilla.content.querySelector("[data-seccion]") || plantilla.content.firstElementChild;
+      if (!nuevo) return;
+      if (actual) actual.replaceWith(nuevo);
+      else contenedor.appendChild(nuevo);
+    }
+    if (Array.isArray(data.orden)) reordenar(data.orden);
+  }
+
   function reordenar(orden) {
     var contenedor = document.getElementById("contenido-inicio");
     if (!contenedor || !Array.isArray(orden)) return;
@@ -181,6 +200,7 @@
     if (data.tipo === "actualizar") aplicar(data);
     if (data.tipo === "previsualizar-imagen") previsualizar(data);
     if (data.tipo === "reordenar") reordenar(data.orden);
+    if (data.tipo === "seccion") colocarSeccion(data);
     if (data.tipo === "vista") {
       document.documentElement.dataset.vista = data.vista === "sesion" ? "sesion" : "visitante";
     }

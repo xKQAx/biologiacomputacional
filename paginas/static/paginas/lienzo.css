@@ -22,6 +22,22 @@ html[data-vista="sesion"] [data-vista="visitante"] {
   background-color: rgba(239, 184, 16, 0.34) !important;
 }
 
+.pieza-oculta-aviso {
+  margin: 0;
+  padding: 0.35rem 0.75rem;
+  background: #f4f8fb;
+  color: #417690;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+img.pieza-imagen:not([src]) {
+  display: block;
+  width: 100%;
+  min-height: 12rem;
+  background: #e7eef3;
+}
+
 .edit-seleccionado,
 [data-edit-id].edit-seleccionado:hover {
   cursor: pointer;

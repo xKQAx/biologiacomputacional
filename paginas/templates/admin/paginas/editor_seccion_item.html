@@ -1,0 +1,49 @@
+<li data-seccion-item="{{ grupo.id }}"{% if grupo.oculta %} class="esta-oculta"{% endif %}>
+  <div class="editor-seccion-fila">
+    <span
+      class="asa"
+      data-asa
+      draggable="true"
+      role="button"
+      tabindex="0"
+      aria-keyshortcuts="ArrowUp ArrowDown"
+      aria-label="Arrastrar {{ grupo.nombre }}. Flechas para subir o bajar."
+    >⋮⋮</span>
+    {% if grupo.agregada %}
+    <input
+      type="text"
+      class="editor-nombre{% if grupo.id == grupo_inicial %} activa{% endif %}"
+      name="nombre__{{ grupo.id }}"
+      value="{{ grupo.nombre_propio }}"
+      placeholder="{{ grupo.nombre_fabrica }}"
+      maxlength="80"
+      autocomplete="off"
+      spellcheck="false"
+      data-nombre-seccion="{{ grupo.id }}"
+      data-grupo-btn="{{ grupo.id }}"
+      aria-label="Nombre en la lista"
+      {% if grupo.id == grupo_inicial %}aria-current="true"{% endif %}
+    >
+    {% else %}
+    <button
+      type="button"
+      data-grupo-btn="{{ grupo.id }}"
+      {% if grupo.id == grupo_inicial %}class="activa" aria-current="true"{% endif %}
+    >{{ grupo.nombre }}</button>
+    {% endif %}
+    {% if permite_piezas %}
+    <div class="editor-seccion-comandos" role="group" aria-label="Acciones de {{ grupo.nombre }}">
+      <button
+        type="button"
+        data-vivo="{% if grupo.oculta %}mostrar{% else %}ocultar{% endif %}:{{ grupo.id }}"
+        value="{% if grupo.oculta %}mostrar{% else %}ocultar{% endif %}:{{ grupo.id }}"
+        title="{% if grupo.oculta %}Mostrar sección{% else %}Ocultar sección{% endif %}"
+      >{% if grupo.oculta %}Mostrar{% else %}Ocultar{% endif %}</button>
+      {% if grupo.agregada %}
+      <button type="button" class="peligro" data-vivo="quitar:{{ grupo.id }}" value="quitar:{{ grupo.id }}" title="Eliminar sección">Eliminar</button>
+      {% endif %}
+    </div>
+    <input type="hidden" name="visible__{{ grupo.id }}" value="{% if grupo.oculta %}0{% else %}1{% endif %}">
+    {% endif %}
+  </div>
+</li>

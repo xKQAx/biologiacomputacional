@@ -111,8 +111,9 @@ body.editor-portada #content {
 }
 
 .editor-columnas {
+  --ancho-panel: 28rem;
   display: grid;
-  grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr);
+  grid-template-columns: var(--ancho-panel) 0.45rem minmax(0, 1fr);
   flex: 1;
   min-height: 0;
   border: 1px solid var(--hairline-color, #e8e8e8);
@@ -122,7 +123,28 @@ body.editor-portada #content {
 .editor-panel {
   overflow: auto;
   padding: 0.85rem 1rem 1.25rem;
-  border-right: 1px solid var(--hairline-color, #e8e8e8);
+  min-width: 0;
+}
+
+.editor-divisor {
+  position: relative;
+  cursor: col-resize;
+  touch-action: none;
+  background: var(--hairline-color, #e8e8e8);
+}
+
+.editor-divisor::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -5px;
+  right: -5px;
+}
+
+.editor-divisor:focus-visible {
+  outline: 2px solid var(--secondary, #417690);
+  outline-offset: -2px;
 }
 
 .editor-ayuda {
@@ -134,6 +156,20 @@ body.editor-portada #content {
 .editor-panel h2 {
   margin: 0.4rem 0;
   font-size: 0.95rem;
+}
+
+/* Cabecera de lo que se edita: azul oscuro y filete dorado, como el resto del laboratorio. */
+#titulo-propiedades {
+  margin: 1rem 0 0.65rem;
+  padding: 0.55rem 0.75rem;
+  background: var(--primary-dark, #022d7c);
+  color: #fff;
+  border-left: 4px solid var(--accent-gold, #efb810);
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.35;
 }
 
 .editor-partes {
@@ -160,25 +196,297 @@ body.editor-portada #content {
 }
 
 .editor-secciones li {
-  display: flex;
-  gap: 0.25rem;
-  align-items: stretch;
+  min-width: 0;
 }
 
-.editor-secciones [data-grupo-btn] {
+.editor-seccion-fila,
+.editor-seccion-acciones,
+.editor-seccion-comandos,
+.editor-agregar-fila,
+.editor-distribucion,
+.editor-piezas li {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.editor-seccion-acciones button,
+.editor-seccion-comandos button,
+.editor-piezas button,
+.editor-agregar button,
+.editor-agregar select,
+.editor-piezas select {
+  font: inherit;
+  cursor: pointer;
+  border: 1px solid var(--border-color, #ccc);
+  background: var(--body-bg, #fff);
+  color: var(--body-fg, #333);
+  border-radius: 4px;
+  padding: 0.25rem 0.55rem;
+}
+
+.editor-seccion-comandos {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.editor-seccion-comandos button,
+.editor-piezas button {
+  white-space: nowrap;
+}
+
+.editor-seccion-acciones .peligro,
+.editor-seccion-comandos .peligro,
+.editor-piezas .peligro {
+  color: var(--error-fg, #ba2121);
+}
+
+.editor-editando {
+  margin: 0 0 0.75rem;
+  padding: 0.55rem 0.75rem;
+  background: var(--selected-bg, #e7eef8);
+  color: var(--primary-dark, #022d7c);
+  border-left: 4px solid var(--accent-gold, #efb810);
+  border-radius: 0 6px 6px 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.editor-opciones {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 0.35rem;
+}
+
+.editor-distribucion,
+.editor-piezas {
+  margin: 0;
+  padding: 0.7rem 0.75rem;
+  border: 1px solid var(--border-color, #d5dbe3);
+  border-radius: 8px;
+  background: var(--body-bg, #fff);
+}
+
+.editor-distribucion {
+  flex-wrap: wrap;
+  gap: 0.45rem 0.85rem;
+}
+
+.editor-distribucion label,
+.editor-piezas label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+}
+
+.editor-distribucion .editor-nota {
+  flex-basis: 100%;
+}
+
+.editor-piezas [data-pieza-btn] {
   flex: 1;
+  min-width: 0;
   text-align: left;
 }
 
-.editor-secciones .flecha {
-  width: 2rem;
-  padding-left: 0;
-  padding-right: 0;
+.editor-piezas [data-pieza-btn].activa {
+  border-color: var(--primary-dark, #022d7c);
+  font-weight: 600;
+  background: var(--selected-bg, #e7eef8);
+  box-shadow: inset 3px 0 0 var(--accent-gold, #efb810);
 }
 
-.editor-secciones .flecha:disabled {
-  opacity: 0.35;
-  cursor: default;
+.editor-piezas ul {
+  list-style: none;
+  margin: 0.45rem 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.editor-piezas li {
+  padding: 0.35rem;
+  border: 1px solid var(--border-color, #d5dbe3);
+  border-left: 3px solid var(--primary-blue, #0352a6);
+  border-radius: 6px;
+  background: var(--bg-subtle, #f8f9fa);
+}
+
+.editor-piezas li span {
+  flex: 1;
+  min-width: 0;
+}
+
+.editor-rotulo,
+.editor-agregar > .editor-rotulo,
+.editor-distribucion > .editor-rotulo,
+.editor-piezas > .editor-rotulo,
+.editor-agregar-fila > .editor-rotulo {
+  display: block;
+  flex: 1 0 100%;
+  margin: 0 0 0.15rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--primary-dark, #022d7c);
+}
+
+.editor-agregar {
+  margin: 0 0 1rem;
+  padding: 0.7rem 0.75rem;
+  border: 1px solid var(--border-color, #d5dbe3);
+  border-radius: 8px;
+  background: var(--body-bg, #fff);
+}
+
+.editor-agregar > .editor-rotulo {
+  margin-bottom: 0.4rem;
+}
+
+.editor-agregar-fila {
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.editor-agregar-fila > button,
+.editor-seccion-comandos button,
+.editor-seccion-acciones button,
+.editor-piezas button {
+  min-height: 2.15rem;
+  font-weight: 600;
+}
+
+.editor-agregar-fila > button {
+  background: var(--button-bg, var(--primary-blue, #0352a6));
+  border-color: var(--button-bg, var(--primary-blue, #0352a6));
+  color: var(--button-fg, #fff);
+}
+
+.editor-agregar-fila > button:hover,
+.editor-agregar-fila > button:focus-visible {
+  background: var(--primary-dark, #022d7c);
+  border-color: var(--primary-dark, #022d7c);
+  color: #fff;
+}
+
+.editor-seccion-comandos button,
+.editor-seccion-acciones button {
+  border-color: var(--primary-blue, #0352a6);
+  color: var(--primary-dark, #022d7c);
+  background: var(--body-bg, #fff);
+}
+
+.editor-agregar select {
+  flex: 1;
+  cursor: pointer;
+}
+
+.editor-secciones li.esta-oculta [data-grupo-btn] {
+  color: var(--body-quiet-color, #666);
+}
+
+.editor-historial {
+  margin-top: 1.25rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--hairline-color, #e8e8e8);
+}
+
+.editor-historial ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.editor-historial li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.6rem;
+  align-items: center;
+  font-size: 0.8rem;
+}
+
+.editor-historial button {
+  font: inherit;
+  cursor: pointer;
+  border: 1px solid var(--border-color, #ccc);
+  background: var(--body-bg, #fff);
+  color: var(--body-fg, #333);
+  border-radius: 4px;
+  padding: 0.2rem 0.5rem;
+}
+
+.editor-secciones [data-grupo-btn],
+.editor-secciones .editor-nombre {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.editor-secciones [data-grupo-btn] {
+  text-align: left;
+}
+
+.editor-secciones .asa {
+  flex: 0 0 auto;
+  align-self: center;
+  width: 1.6rem;
+  padding: 0.35rem 0;
+  border: 0;
+  background: transparent;
+  color: var(--body-quiet-color, #666);
+  font: inherit;
+  line-height: 1;
+  letter-spacing: -0.12em;
+  text-align: center;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.editor-secciones .asa:active {
+  cursor: grabbing;
+}
+
+.editor-secciones .asa:focus-visible {
+  outline: 2px solid var(--secondary, #417690);
+  outline-offset: 1px;
+  border-radius: 4px;
+}
+
+.editor-secciones .editor-nombre {
+  font: inherit;
+  border: 1px solid var(--border-color, #ccc);
+  background: var(--body-bg, #fff);
+  color: var(--body-fg, #333);
+  border-radius: 4px;
+  padding: 0.35rem 0.7rem;
+}
+
+.editor-secciones .editor-nombre.activa {
+  border-color: var(--secondary, #417690);
+  font-weight: 600;
+}
+
+.editor-secciones li.arrastrando {
+  opacity: 0.45;
+}
+
+.editor-secciones li.hueco-antes {
+  box-shadow: inset 0 2px 0 var(--secondary, #417690);
+}
+
+.editor-secciones li.hueco-despues {
+  box-shadow: inset 0 -2px 0 var(--secondary, #417690);
 }
 
 #propiedades fieldset {
@@ -199,19 +507,71 @@ body.editor-portada #content {
   font-size: 0.8rem;
 }
 
-#propiedades input,
-#propiedades textarea {
+#propiedades input:not([type="radio"]):not([type="checkbox"]):not([type="hidden"]),
+#propiedades textarea,
+#propiedades select,
+.editor-agregar select,
+.editor-piezas select {
   width: 100%;
   box-sizing: border-box;
   font: inherit;
-  padding: 0.35rem 0.45rem;
-  border: 1px solid var(--border-color, #ccc);
-  border-radius: 4px;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--border-color, #d5dbe3);
+  border-radius: 6px;
   background: var(--body-bg, #fff);
-  color: var(--body-fg, #333);
+  color: var(--body-fg, #1a1a1a);
+  min-height: 2.25rem;
+}
+
+#propiedades input[type="radio"],
+#propiedades input[type="checkbox"] {
+  width: 1.05rem;
+  height: 1.05rem;
+  margin: 0;
+  flex: 0 0 auto;
+  accent-color: var(--primary-blue, #0352a6);
+}
+
+#propiedades .editor-agregar-fila select,
+.editor-agregar .editor-agregar-fila select {
+  width: auto;
+  flex: 1 1 8rem;
+  min-width: 0;
+}
+
+#propiedades .editor-rotulo {
+  margin: 0 0 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--primary-dark, #022d7c);
+}
+
+.editor-seccion-comandos button.peligro,
+.editor-seccion-acciones button.peligro,
+.editor-piezas button.peligro {
+  border-color: var(--error-fg, #ba2121);
+  background: var(--body-bg, #fff);
+  color: var(--error-fg, #ba2121);
+}
+
+#propiedades input:focus-visible,
+#propiedades textarea:focus-visible,
+#propiedades select:focus-visible,
+.editor-agregar select:focus-visible,
+.editor-piezas select:focus-visible,
+.editor-seccion-comandos button:focus-visible,
+.editor-agregar-fila button:focus-visible,
+.editor-piezas button:focus-visible,
+.editor-seccion-acciones button:focus-visible,
+.editor-secciones .editor-nombre:focus-visible {
+  outline: 2px solid var(--primary-blue, #0352a6);
+  outline-offset: 2px;
+  border-color: var(--primary-blue, #0352a6);
 }
 
 #propiedades input[type="file"] {
+  width: 100%;
+  min-height: 0;
   padding: 0.25rem 0;
   border: 0;
   background: transparent;
@@ -349,6 +709,10 @@ body.editor-portada #content {
 
   .editor-columnas {
     grid-template-columns: 1fr;
+  }
+
+  .editor-divisor {
+    display: none;
   }
 
   .editor-lienzo {
