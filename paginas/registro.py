@@ -44,6 +44,8 @@ _AYUDA_INICIO = (
     + ' ocultar una sección o quitar una que hayas agregado.'
     + ' En una sección agregada puedes sumar texto, imagen, carrusel o botón'
     + ' y elegir un diseño: una columna, dos iguales, imagen y texto o tres tarjetas.'
+    + ' En “Qué encontrar” puedes cambiar la presentación, reordenar tarjetas u ocultarlas.'
+    + ' La vista móvil adapta el diseño automáticamente.'
     + ' Nada de eso cambia la página pública hasta que publiques.'
 )
 _AVISO_GUARDADO = 'Borrador guardado. La página pública no cambió.'

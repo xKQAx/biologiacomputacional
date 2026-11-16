@@ -18,6 +18,7 @@ from paginas.catalogo import (
     IMAGEN,
     LINEA,
     PLANO,
+    POR_CLAVE,
     SECCIONES,
     TEXTO,
     DefinicionBloque,
@@ -51,7 +52,8 @@ PREFIJO_ID = 'pz'
 REF_PROPIA = ''
 TOKEN_PROPIA = 'propia'
 # Piezas que caben dentro de una sección agregada. El encabezado sigue siendo una sección.
-TIPOS_INTERNOS = ('texto', 'imagen', 'carrusel', 'boton')
+TIPOS_INTERNOS = ('texto', 'imagen', 'carrusel', 'boton', 'tarjeta')
+TIPOS_AGREGABLES = ('encabezado', 'texto', 'imagen', 'boton', 'carrusel')
 # Borradores viejos: el diseño fijo pasa a un número de columnas iguales.
 _COLUMNAS_DE_DISENO = {
     'una': 1,
@@ -64,6 +66,26 @@ _COLUMNAS_DE_DISENO = {
 _ID = re.compile(r'^pz[0-9a-f]{8}$')
 _DIA = re.compile(r'^[0-9]{2}$')
 _BLOQUE = re.compile(r'^b[0-9]{2}$')
+_TARJETAS_ENCONTRAR = ('profesionales', 'investigacion', 'servicios')
+_DISENOS_ENCONTRAR = ('tarjetas', 'lista', 'destacada')
+ID_LAYOUT_ENCONTRAR = 'pz00000000'
+_CAMPOS_TARJETAS_ORIGINALES = {
+    'propia': (
+        'tarjeta_profesionales_imagen',
+        'tarjeta_profesionales_titulo',
+        'tarjeta_profesionales_texto',
+    ),
+    'b01': (
+        'tarjeta_investigacion_imagen',
+        'tarjeta_investigacion_titulo',
+        'tarjeta_investigacion_texto',
+    ),
+    'b02': (
+        'tarjeta_servicios_imagen',
+        'tarjeta_servicios_titulo',
+        'tarjeta_servicios_texto',
+    ),
+}
 
 
 @dataclass(frozen=True)
@@ -106,6 +128,7 @@ class BloqueInterno:
     id: str
     tipo: str
     diapositivas: tuple = ()
+    nombre: str = ''
 
 
 @dataclass(frozen=True)
@@ -127,12 +150,42 @@ class Pieza:
 class Composicion:
     ocultas: tuple = ()
     piezas: tuple = ()
+    # Orden de las tarjetas originales de «Qué encontrar».
+    orden_encontrar: tuple = ()
+    diseno_encontrar: str = 'tarjetas'
+    ocultas_encontrar: tuple = ()
+    layout_encontrar: Pieza = None
 
     def por_id(self, pieza_id):
+        if pieza_id in ('encontrar', ID_LAYOUT_ENCONTRAR):
+            return self.layout_encontrar
         for pieza in self.piezas:
             if pieza.id == pieza_id:
                 return pieza
         return None
+
+
+def para_editor(composicion):
+    """El lienzo de inicio parte de las tres tarjetas actuales en la rejilla común."""
+    if composicion.layout_encontrar is not None:
+        return composicion
+    orden = composicion.orden_encontrar or _TARJETAS_ENCONTRAR
+    ref_por_tarjeta = {'profesionales': REF_PROPIA, 'investigacion': 'b01', 'servicios': 'b02'}
+    bloques = (
+        BloqueInterno('b01', 'tarjeta', nombre='Investigación'),
+        BloqueInterno('b02', 'tarjeta', nombre='Servicios'),
+    )
+    pieza = Pieza(
+        id=ID_LAYOUT_ENCONTRAR,
+        tipo='tarjeta',
+        columnas=3,
+        bloques=bloques,
+        puestos=tuple(
+            Puesto(ref_por_tarjeta[tarjeta], indice)
+            for indice, tarjeta in enumerate(orden)
+        ),
+    )
+    return replace(composicion, layout_encontrar=pieza)
 
 
 def _construir_fijos(pieza):
@@ -231,6 +284,16 @@ TIPOS = {
         'inicio/secciones/pieza_carrusel.html',
         (),
     ),
+    'tarjeta': TipoSeccion(
+        'tarjeta',
+        'Tarjeta',
+        'inicio/secciones/pieza_tarjeta.html',
+        (
+            CampoTipo('foto', 'Imagen', 'Tarjeta', tipo=IMAGEN),
+            CampoTipo('titulo', 'Título', 'Nueva tarjeta', tipo=ENLACE, formato=LINEA, enlace='#'),
+            CampoTipo('texto', 'Texto', 'Añade una descripción.', formato=BLOQUE, multilinea=True),
+        ),
+    ),
 }
 
 _CONSTRUCTORES = {tipo_id: _construir_fijos for tipo_id in TIPOS}
@@ -242,6 +305,7 @@ FRAGMENTOS = {
     'imagen': 'inicio/secciones/fragmentos/imagen.html',
     'boton': 'inicio/secciones/fragmentos/boton.html',
     'carrusel': 'inicio/secciones/fragmentos/carrusel.html',
+    'tarjeta': 'inicio/secciones/fragmentos/tarjeta.html',
 }
 _NOMBRE_PANEL = {
     'encabezado': 'Encabezado agregado',
@@ -249,6 +313,7 @@ _NOMBRE_PANEL = {
     'imagen': 'Imagen agregada',
     'boton': 'Botón agregado',
     'carrusel': 'Carrusel agregado',
+    'tarjeta': 'Tarjeta agregada',
 }
 
 
@@ -311,7 +376,7 @@ class CamposPieza:
 
 
 def tipos_editor():
-    return tuple(TIPOS[tipo_id] for tipo_id in TIPOS)
+    return tuple(TIPOS[tipo_id] for tipo_id in TIPOS_AGREGABLES)
 
 
 def tipos_internos():
@@ -328,9 +393,38 @@ def materializar(pieza):
     return definiciones
 
 
+def _construir_tarjeta(pieza):
+    """Tarjetas originales conservan sus claves; las nuevas usan claves propias."""
+    alias = _CAMPOS_TARJETAS_ORIGINALES.get(
+        'propia' if pieza.id == ID_LAYOUT_ENCONTRAR else '',
+    )
+    if alias:
+        return [
+            replace(POR_CLAVE[clave], grupo='encontrar', orden=(indice + 1) * 10)
+            for indice, clave in enumerate(alias)
+        ]
+    return _construir_fijos(pieza)
+
+
+_CONSTRUCTORES['tarjeta'] = _construir_tarjeta
+
+
 def _materializar_interno(seccion, bloque):
     """Misma fábrica, con la clave de la pieza y el grupo de la sección."""
     ancla = f'{seccion.id}-{bloque.id}'
+    if seccion.id == ID_LAYOUT_ENCONTRAR and bloque.tipo == 'tarjeta':
+        alias = _CAMPOS_TARJETAS_ORIGINALES.get(bloque.id)
+        if alias:
+            return [
+                replace(
+                    POR_CLAVE[clave],
+                    grupo='encontrar',
+                    etiqueta=f'{bloque.nombre or TIPOS[bloque.tipo].nombre} · {POR_CLAVE[clave].etiqueta}',
+                    orden=(indice + 1) * 10,
+                    trozo=bloque.id,
+                )
+                for indice, clave in enumerate(alias)
+            ]
     fantasma = Pieza(id=ancla, tipo=bloque.tipo, diapositivas=bloque.diapositivas)
     definiciones = []
     for item in _CONSTRUCTORES[bloque.tipo](fantasma):
@@ -352,6 +446,8 @@ def materializar_todas(composicion):
     definiciones = []
     for pieza in composicion.piezas:
         definiciones.extend(materializar(pieza))
+    if composicion.layout_encontrar is not None:
+        definiciones.extend(materializar(composicion.layout_encontrar))
     return definiciones
 
 
@@ -378,10 +474,13 @@ def nombres_piezas(composicion):
     No es el título público: ese sigue en el campo de la sección, si lo tiene.
     """
     fabrica = nombres_de_fabrica(composicion)
-    return {
+    nombres = {
         pieza.id: pieza.nombre or fabrica[pieza.id]
         for pieza in composicion.piezas
     }
+    if composicion.layout_encontrar is not None:
+        nombres[ID_LAYOUT_ENCONTRAR] = 'Qué encontrar'
+    return nombres
 
 
 def elegir(publicados, borradores, preferir_borrador):
@@ -408,14 +507,43 @@ def parsear(texto):
     vistas = set()
     for item in datos.get('piezas') or []:
         pieza = _pieza(item, vistas)
-        if pieza is None:
+        if pieza is None or pieza.id == ID_LAYOUT_ENCONTRAR:
             continue
         vistas.add(pieza.id)
         piezas.append(pieza)
+    orden_encontrar = _orden_encontrar(datos.get('orden_encontrar'))
+    ocultas_encontrar = _ocultas_encontrar(datos.get('ocultas_encontrar'))
+    layout_bruto = datos.get('layout_encontrar')
+    layout = _pieza(layout_bruto, vistas) if isinstance(layout_bruto, dict) else None
+    if layout is not None and (layout.id != ID_LAYOUT_ENCONTRAR or layout.tipo != 'tarjeta'):
+        layout = None
     return Composicion(
         tuple(seccion for seccion in SECCIONES if seccion in ocultas),
         tuple(piezas),
+        orden_encontrar,
+        _diseno_encontrar(datos.get('diseno_encontrar')),
+        ocultas_encontrar,
+        layout,
     )
+
+
+def _orden_encontrar(valor):
+    if not isinstance(valor, (list, tuple)):
+        return ()
+    orden = tuple(item for item in valor if item in _TARJETAS_ENCONTRAR)
+    if len(orden) != len(_TARJETAS_ENCONTRAR) or set(orden) != set(_TARJETAS_ENCONTRAR):
+        return ()
+    return orden
+
+
+def _diseno_encontrar(valor):
+    return valor if valor in _DISENOS_ENCONTRAR else 'tarjetas'
+
+
+def _ocultas_encontrar(valor):
+    if not isinstance(valor, (list, tuple)):
+        return ()
+    return tuple(item for item in _TARJETAS_ENCONTRAR if item in valor)
 
 
 def serializar(composicion):
@@ -423,6 +551,10 @@ def serializar(composicion):
         {
             'ocultas': list(composicion.ocultas),
             'piezas': [_serializar_pieza(pieza) for pieza in composicion.piezas],
+            **({'orden_encontrar': list(composicion.orden_encontrar)} if composicion.orden_encontrar else {}),
+            'diseno_encontrar': composicion.diseno_encontrar,
+            'ocultas_encontrar': list(composicion.ocultas_encontrar),
+            **({'layout_encontrar': _serializar_pieza(composicion.layout_encontrar)} if composicion.layout_encontrar else {}),
         },
         ensure_ascii=False,
         separators=(',', ':'),
@@ -449,7 +581,7 @@ def con_nombres(composicion, post):
                 f'El nombre de la sección admite como máximo {MAX_NOMBRE} caracteres.'
             )
         piezas.append(replace(pieza, nombre=texto))
-    return Composicion(composicion.ocultas, tuple(piezas)), errores
+    return replace(composicion, piezas=tuple(piezas)), errores
 
 
 def con_columnas(composicion, post):
@@ -467,7 +599,7 @@ def con_columnas(composicion, post):
             piezas.append(pieza)
             continue
         piezas.append(_pieza_con_columnas(pieza, int(bruto)))
-    return Composicion(composicion.ocultas, tuple(piezas))
+    return replace(composicion, piezas=tuple(piezas))
 
 
 def con_visibilidad(composicion, post):
@@ -490,9 +622,10 @@ def con_visibilidad(composicion, post):
         if clave in post:
             visible = str(post.get(clave)) != '0'
         piezas.append(replace(pieza, visible=visible))
-    return Composicion(
-        tuple(seccion for seccion in SECCIONES if seccion in ocultas),
-        tuple(piezas),
+    return replace(
+        composicion,
+        ocultas=tuple(seccion for seccion in SECCIONES if seccion in ocultas),
+        piezas=tuple(piezas),
     )
 
 
@@ -532,6 +665,50 @@ def mutar(composicion, orden, valores, accion, tipo_pedido):
         return _mutar_dia(composicion, orden, valores, accion)
     if accion.startswith('rejilla-'):
         return _mutar_rejilla(composicion, orden, valores, accion)
+    if accion.startswith('tarjetas-orden:'):
+        partes = accion.split(':')
+        if len(partes) != 3 or partes[1] != 'encontrar':
+            return composicion, orden, valores, 'No se reconoció la acción.'
+        bruto = partes[2].split(',')
+        actual = composicion.orden_encontrar or _TARJETAS_ENCONTRAR
+        visibles = set(_TARJETAS_ENCONTRAR) - set(composicion.ocultas_encontrar)
+        if not bruto or len(bruto) != len(visibles) or set(bruto) != visibles:
+            return composicion, orden, valores, 'El orden de las tarjetas no es válido.'
+        siguientes = iter(bruto)
+        nuevos = tuple(next(siguientes) if tarjeta in visibles else tarjeta for tarjeta in actual)
+        layout = composicion.layout_encontrar
+        if layout is not None:
+            ref_por_tarjeta = {'profesionales': REF_PROPIA, 'investigacion': 'b01', 'servicios': 'b02'}
+            layout = replace(layout, puestos=tuple(
+                Puesto(ref_por_tarjeta[tarjeta], indice)
+                for indice, tarjeta in enumerate(nuevos)
+            ))
+        return replace(
+            composicion,
+            orden_encontrar=nuevos,
+            layout_encontrar=layout,
+        ), orden, valores, None
+    if accion.startswith('tarjetas-diseno:'):
+        partes = accion.split(':')
+        if len(partes) != 3 or partes[1] != 'encontrar' or partes[2] not in _DISENOS_ENCONTRAR:
+            return composicion, orden, valores, 'No se reconoció la presentación.'
+        return replace(composicion, diseno_encontrar=partes[2]), orden, valores, None
+    if accion.startswith('tarjetas-visible:'):
+        partes = accion.split(':')
+        if (
+            len(partes) != 4 or partes[1] != 'encontrar'
+            or partes[2] not in _TARJETAS_ENCONTRAR or partes[3] not in ('0', '1')
+        ):
+            return composicion, orden, valores, 'No se reconoció la tarjeta.'
+        ocultas = set(composicion.ocultas_encontrar)
+        if partes[3] == '0':
+            ocultas.add(partes[2])
+        else:
+            ocultas.discard(partes[2])
+        return replace(
+            composicion,
+            ocultas_encontrar=tuple(id_ for id_ in _TARJETAS_ENCONTRAR if id_ in ocultas),
+        ), orden, valores, None
     return composicion, orden, valores, 'No se reconoció la acción.'
 
 
@@ -544,6 +721,10 @@ def es_estructural(accion):
         'dia-agregar:', 'dia-quitar:', 'dia-orden:',
         'rejilla-preset:', 'rejilla-medida:', 'rejilla-mover:', 'rejilla-span:',
         'rejilla-olvidar:', 'rejilla-agregar:',
+        'tarjetas-orden:',
+        'tarjetas-diseno:',
+        'tarjetas-visible:',
+        'tarjetas-visible:',
     ))
 
 
@@ -551,14 +732,20 @@ def pendientes_de_imagen(composicion, valores, imagenes=None):
     """Una imagen visible no se publica sin archivo. El borrador sí puede quedar vacío."""
     imagenes = imagenes or {}
     pendientes = []
-    for pieza in composicion.piezas:
+    piezas = list(composicion.piezas)
+    if composicion.layout_encontrar is not None:
+        piezas.append(composicion.layout_encontrar)
+    for pieza in piezas:
         if not pieza.visible:
             continue
         for indice, clave in enumerate(_claves_imagen(pieza), start=1):
             _texto, enlace = valores.get(clave, ('', ''))
             if clave in imagenes or str(enlace or '').strip():
                 continue
-            nombre = nombres_piezas(composicion)[pieza.id]
+            nombre = (
+                'Qué encontrar' if pieza.id == ID_LAYOUT_ENCONTRAR
+                else nombres_piezas(composicion)[pieza.id]
+            )
             if pieza.tipo == 'carrusel':
                 detalle = f'«{nombre}», diapositiva {indice}, necesita una imagen'
             else:
@@ -580,7 +767,7 @@ def valores_de_fabrica(pieza):
 
 
 def _agregar(composicion, orden, valores, tipo_pedido):
-    if tipo_pedido not in TIPOS:
+    if tipo_pedido not in TIPOS_AGREGABLES:
         return composicion, orden, valores, 'Esa sección no está en el catálogo.'
     if len(composicion.piezas) >= MAX_PIEZAS:
         return (
@@ -598,7 +785,7 @@ def _agregar(composicion, orden, valores, tipo_pedido):
     valores = dict(valores)
     valores.update(valores_de_fabrica(pieza))
     return (
-        Composicion(composicion.ocultas, composicion.piezas + (pieza,)),
+        replace(composicion, piezas=composicion.piezas + (pieza,)),
         list(orden) + [pieza.id],
         valores,
         None,
@@ -615,9 +802,9 @@ def _visible(composicion, orden, valores, pieza_id, visible):
         else:
             ocultas.add(pieza_id)
         return (
-            Composicion(
-                tuple(seccion for seccion in SECCIONES if seccion in ocultas),
-                composicion.piezas,
+            replace(
+                composicion,
+                ocultas=tuple(seccion for seccion in SECCIONES if seccion in ocultas),
             ),
             orden,
             valores,
@@ -629,7 +816,7 @@ def _visible(composicion, orden, valores, pieza_id, visible):
         replace(pieza, visible=visible) if pieza.id == pieza_id else pieza
         for pieza in composicion.piezas
     )
-    return Composicion(composicion.ocultas, piezas), orden, valores, None
+    return replace(composicion, piezas=piezas), orden, valores, None
 
 
 def _quitar(composicion, orden, valores, pieza_id):
@@ -643,7 +830,7 @@ def _quitar(composicion, orden, valores, pieza_id):
         return composicion, orden, valores, 'Esa sección no está en la página.'
     piezas = tuple(pieza for pieza in composicion.piezas if pieza.id != pieza_id)
     return (
-        Composicion(composicion.ocultas, piezas),
+        replace(composicion, piezas=piezas),
         [grupo for grupo in orden if grupo != pieza_id],
         valores,
         None,
@@ -696,6 +883,8 @@ def _serializar_pieza(pieza):
 
 def _serializar_bloque(bloque):
     datos = {'id': bloque.id, 'tipo': bloque.tipo}
+    if bloque.nombre:
+        datos['nombre'] = bloque.nombre
     if bloque.tipo == 'carrusel':
         datos['diapositivas'] = list(bloque.diapositivas or ('01',))
     return datos
@@ -731,6 +920,9 @@ def _claves_imagen(pieza):
         claves.append(f'{pieza.id}-foto')
     elif pieza.tipo == 'carrusel':
         claves.extend(f'{pieza.id}-d{dia}' for dia in (pieza.diapositivas or ('01',)))
+    elif pieza.tipo == 'tarjeta':
+        if pieza.id != ID_LAYOUT_ENCONTRAR:
+            claves.append(f'{pieza.id}-foto')
     for bloque in pieza.bloques:
         prefijo = f'{pieza.id}-{bloque.id}'
         if bloque.tipo == 'imagen':
@@ -739,13 +931,16 @@ def _claves_imagen(pieza):
             claves.extend(
                 f'{prefijo}-d{dia}' for dia in (bloque.diapositivas or ('01',))
             )
+        elif bloque.tipo == 'tarjeta':
+            if not (pieza.id == ID_LAYOUT_ENCONTRAR and bloque.id in _CAMPOS_TARJETAS_ORIGINALES):
+                claves.append(f'{prefijo}-foto')
     return tuple(claves)
 
 
 def _exigir_agregada(composicion, pieza_id):
-    if pieza_id in SECCIONES or pieza_id in ('barra', 'pie'):
+    if (pieza_id in SECCIONES and pieza_id != 'encontrar') or pieza_id in ('barra', 'pie'):
         return None, (
-            'La distribución y las piezas solo aplican a una sección agregada.'
+            'La distribución y las piezas solo aplican a una sección editable.'
         )
     pieza = composicion.por_id(pieza_id)
     if pieza is None:
@@ -1115,6 +1310,7 @@ def _bloque_interno(item, vistos):
         bloque_id,
         tipo,
         _diapositivas(item, tipo) if tipo == 'carrusel' else (),
+        _nombre_guardado(item.get('nombre')),
     )
 
 
@@ -1130,8 +1326,10 @@ def _nuevo_bloque_id(pieza):
 
 
 def _reemplazar(composicion, nueva):
+    if composicion.layout_encontrar and nueva.id == composicion.layout_encontrar.id:
+        return replace(composicion, layout_encontrar=nueva)
     piezas = tuple(nueva if pieza.id == nueva.id else pieza for pieza in composicion.piezas)
-    return Composicion(composicion.ocultas, piezas)
+    return replace(composicion, piezas=piezas)
 
 
 def _distribucion_de(item, bloques):
@@ -1295,6 +1493,7 @@ def _pesos(texto):
 
 def _nuevo_id(composicion):
     ocupados = {pieza.id for pieza in composicion.piezas}
+    ocupados.add(ID_LAYOUT_ENCONTRAR)
     for _intento in range(8):
         candidato = PREFIJO_ID + uuid.uuid4().hex[:8]
         if candidato not in ocupados:

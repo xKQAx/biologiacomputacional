@@ -1,18 +1,18 @@
 {# Inspector de una sección. El índice, arriba, no repite estos campos. #}
-<div data-inspector="{{ grupo.id }}"{% if grupo.agregada %} data-agregada="1" data-mapa="{{ grupo.mapa_json }}" data-overrides="{{ grupo.overrides }}"{% endif %}{% if grupo.id != grupo_inicial %} hidden{% endif %}>
+<div data-inspector="{{ grupo.id }}"{% if grupo.agregada or grupo.componible %} data-agregada="1" data-componible="{{ grupo.componible|yesno:'1,0' }}" data-mapa="{{ grupo.mapa_json }}" data-overrides="{{ grupo.overrides }}"{% endif %}{% if grupo.id != grupo_inicial %} hidden{% endif %}>
   <p class="editor-editando" data-editando>
-    {% if grupo.agregada %}
+    {% if grupo.agregada or grupo.componible %}
     Editando la sección {{ grupo.nombre }}. Elige una pieza para ver solo sus campos.
     {% else %}
     Editando la sección {{ grupo.nombre }}.
     {% endif %}
   </p>
-  {% if grupo.agregada %}
+  {% if grupo.agregada or grupo.componible %}
   <div class="editor-opciones">
     {# Los presets se aplican al dispositivo activo. #}
     <div class="editor-cuadricula" data-rejilla="{{ grupo.id }}">
-      <span class="editor-rotulo">Distribución</span>
-      <p class="editor-nota">Elige una forma. Se aplica a este dispositivo al momento. El texto y las imágenes se quedan. Escritorio, tablet y móvil no se pisan.</p>
+      <span class="editor-rotulo">Presentación de los elementos</span>
+      <p class="editor-nota">Elige una forma visual. El contenido se conserva y la vista previa te muestra el resultado.</p>
       <div class="editor-presets" role="group" aria-label="Miniaturas de distribución">
         {% for preset in grupo.miniaturas %}
         <button
@@ -21,12 +21,12 @@
           data-preset-seccion="{{ grupo.id }}"
           data-activo-en="{{ preset.activo_en }}"
           aria-pressed="{% if 'escritorio' in preset.activo_en %}true{% else %}false{% endif %}"
-          title="{{ preset.columnas }} por {{ preset.filas }}"
+          title="{{ preset.etiqueta }}"
         >
           <span class="editor-miniatura" style="--cols: {{ preset.columnas }}; --rows: {{ preset.filas }}" aria-hidden="true">
             {% for celda in preset.celdas %}<i></i>{% endfor %}
           </span>
-          <span>{{ preset.columnas }} × {{ preset.filas }}</span>
+          <span>{{ preset.etiqueta }}</span>
         </button>
         {% endfor %}
       </div>
@@ -43,7 +43,7 @@
         </select>
         <button type="button" data-vivo="pieza-agregar:{{ grupo.id }}" title="Agregar pieza a la sección">Agregar</button>
       </div>
-      <p class="editor-nota">Agrega un texto, una imagen, un carrusel o un botón. En el lienzo, arrástralo a otra celda.</p>
+      <p class="editor-nota">Agrega un texto, una imagen, un carrusel o un botón. En el lienzo, arrástralo a otra celda. También puedes elegir Tarjeta para conservar el estilo de esta sección.</p>
     </div>
     <div class="editor-seccion-acciones" data-quitar-pieza{% if not pieza_abierta or pieza_abierta == "propia" %} hidden{% endif %}>
       <button
@@ -74,15 +74,20 @@
     data-vista="{{ bloque.vista }}"
     data-etiqueta="{{ bloque.etiqueta }}"
     data-nombre="{{ bloque.nombre }}"
-    data-pieza="{% if bloque.trozo %}{{ bloque.trozo }}{% elif grupo.agregada %}propia{% endif %}"
+    data-pieza="{% if bloque.trozo %}{{ bloque.trozo }}{% elif grupo.componible %}{% if bloque.clave == 'encontrar_titulo' or bloque.clave == 'encontrar_subtitulo' %}cabecera{% else %}propia{% endif %}{% elif grupo.agregada %}propia{% endif %}"
     {% if bloque.dia and bloque.tipo == "imagen" %}
     data-dia-item="{{ bloque.dia }}"
     data-dia-grupo="{{ bloque.grupo }}"
     data-dia-trozo="{{ bloque.trozo }}"
     {% endif %}
-    {% if grupo.agregada %}
-      {% if bloque.trozo %}{% if bloque.trozo != pieza_abierta %} hidden{% endif %}
-      {% elif pieza_abierta != "propia" %} hidden{% endif %}
+    {% if grupo.agregada or grupo.componible %}
+      {% if bloque.trozo %}
+        {% if bloque.trozo != pieza_abierta %} hidden{% endif %}
+      {% elif grupo.componible %}
+        {% if bloque.clave != 'encontrar_titulo' and bloque.clave != 'encontrar_subtitulo' and pieza_abierta != 'propia' %} hidden{% endif %}
+      {% elif pieza_abierta != 'propia' %}
+        hidden
+      {% endif %}
     {% endif %}
   >
     <legend>

@@ -285,6 +285,7 @@
 
   /* Arrastre sobre el estado del grid. El transform no es la posición guardada. */
   var arrastre = null;
+  var arrastreTarjeta = null;
   var cancelado = false;
 
   function mapaDe(seccion) {
@@ -402,6 +403,29 @@
   }
 
   document.addEventListener("dragstart", function (event) {
+    var asaTarjeta = event.target.closest("[data-arrastrar-tarjeta]");
+    if (asaTarjeta) {
+      var tarjeta = asaTarjeta.closest("[data-layout-tarjeta]");
+      var seccionTarjetas = asaTarjeta.closest(".seccion-en-edicion[data-seccion='encontrar']");
+      if (!tarjeta || !seccionTarjetas) {
+        event.preventDefault();
+        return;
+      }
+      arrastreTarjeta = {
+        item: tarjeta,
+        seccion: seccionTarjetas,
+        ordenOriginal: Array.prototype.map.call(
+          seccionTarjetas.querySelectorAll("[data-layout-tarjeta]"),
+          function (item) { return item.getAttribute("data-layout-tarjeta"); }
+        ),
+      };
+      tarjeta.classList.add("tarjeta-arrastrando");
+      if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", tarjeta.getAttribute("data-layout-tarjeta") || "");
+      }
+      return;
+    }
     var origen = event.target.closest("[data-elemento]");
     if (!origen) return;
     if (
@@ -430,6 +454,38 @@
       event.dataTransfer.effectAllowed = "move";
       event.dataTransfer.setData("text/plain", arrastre.ref || "");
     }
+  });
+
+  document.addEventListener("dragover", function (event) {
+    if (!arrastreTarjeta) return;
+    var destino = event.target.closest("[data-layout-tarjeta]");
+    if (!destino || destino === arrastreTarjeta.item || destino.parentElement !== arrastreTarjeta.item.parentElement) return;
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+    var caja = destino.getBoundingClientRect();
+    var mitadY = caja.top + caja.height / 2;
+    var despues = event.clientY > mitadY || (event.clientY >= caja.top && event.clientY <= caja.bottom && event.clientX > caja.left + caja.width / 2);
+    destino.parentElement.insertBefore(arrastreTarjeta.item, despues ? destino.nextSibling : destino);
+  });
+
+  document.addEventListener("drop", function (event) {
+    if (!arrastreTarjeta) return;
+    event.preventDefault();
+    var datos = arrastreTarjeta;
+    arrastreTarjeta = null;
+    datos.item.classList.remove("tarjeta-arrastrando");
+    var orden = Array.prototype.map.call(
+      datos.seccion.querySelectorAll("[data-layout-tarjeta]"),
+      function (item) { return item.getAttribute("data-layout-tarjeta"); }
+    );
+    if (orden.every(function (id, indice) { return id === datos.ordenOriginal[indice]; })) return;
+    window.parent.postMessage({ tipo: "orden-tarjetas", grupo: "encontrar", orden: orden }, ORIGEN);
+  });
+
+  document.addEventListener("dragend", function () {
+    if (!arrastreTarjeta) return;
+    arrastreTarjeta.item.classList.remove("tarjeta-arrastrando");
+    arrastreTarjeta = null;
   });
 
   document.addEventListener("dragenter", function (event) {

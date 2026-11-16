@@ -55,6 +55,32 @@ img.pieza-imagen:not([src]) {
   transition: outline-color 160ms ease;
 }
 
+.seccion-en-edicion .control-arrastre-tarjeta {
+  position: absolute;
+  z-index: 2;
+  top: .35rem;
+  left: .35rem;
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid #8ca9ce;
+  border-radius: .35rem;
+  background: #fff;
+  color: #064b9c;
+  cursor: grab;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.seccion-en-edicion [data-layout-tarjeta] {
+  position: relative;
+}
+
+.seccion-en-edicion .tarjeta-arrastrando {
+  opacity: .45;
+}
+
 .seccion-seleccionada {
   outline-color: #022d7c;
 }

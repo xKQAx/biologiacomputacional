@@ -29,6 +29,7 @@ from paginas.imagenes import (
 from paginas.models import BloquePortada
 from paginas.piezas import (
     CLAVE_COMPOSICION,
+    ID_LAYOUT_ENCONTRAR,
     REF_PROPIA,
     TIPOS,
     TOKEN_PROPIA,
@@ -49,6 +50,7 @@ from paginas.piezas import (
     materializar_todas,
     nombres_de_fabrica,
     nombres_piezas,
+    para_editor,
     serializar,
 )
 from paginas.rejilla import (
@@ -207,12 +209,16 @@ def _bloques_para(pagina, preferir_borrador):
 
 def contexto_publico(pagina=INICIO, request=None):
     indice = _indice(pagina)
+    comp = _composicion_actual(False, pagina)
+    bloques = _bloques_para(pagina, preferir_borrador=False)
     contexto = {
-        'bloques': _bloques_para(pagina, preferir_borrador=False),
+        'bloques': bloques,
         'secciones': secciones_en_orden(
             preferir_borrador=False, pagina=pagina, incluir_ocultas=False,
         ),
         'modo_editor': False,
+        'tarjetas_encontrar': _tarjetas_encontrar(bloques, comp),
+        'disposicion_encontrar': comp.diseno_encontrar,
     }
     if indice.datos is not None:
         contexto.update(indice.datos(request))
@@ -221,18 +227,57 @@ def contexto_publico(pagina=INICIO, request=None):
 
 def contexto_lienzo(pagina=INICIO, request=None):
     indice = _indice(pagina)
+    comp = _composicion_actual(True, pagina)
+    bloques = _bloques_para(pagina, preferir_borrador=True)
     contexto = {
-        'bloques': _bloques_para(pagina, preferir_borrador=True),
+        'bloques': bloques,
         # La vista previa es el borrador como lo vería el visitante: oculta no va en el HTML.
         'secciones': secciones_en_orden(
             preferir_borrador=True, pagina=pagina, incluir_ocultas=False,
         ),
         'modo_editor': True,
         'catalogo_lienzo': _catalogo_de(pagina, preferir_borrador=True),
+        'tarjetas_encontrar': _tarjetas_encontrar(bloques, comp),
+        'disposicion_encontrar': comp.diseno_encontrar,
     }
     if indice.datos is not None:
         contexto.update(indice.datos(request))
     return contexto
+
+
+def _tarjetas_encontrar(bloques, composicion):
+    """Agrupa los campos de cada tarjeta para poder moverla como una unidad."""
+    ids = ('profesionales', 'investigacion', 'servicios')
+    orden = composicion.orden_encontrar or ids
+    return [
+        {
+            'id': tarjeta,
+            'nombre': tarjeta.replace('_', ' ').title(),
+            'visible': tarjeta not in composicion.ocultas_encontrar,
+            'imagen': getattr(bloques, 'tarjeta_{}_imagen'.format(tarjeta)),
+            'titulo': getattr(bloques, 'tarjeta_{}_titulo'.format(tarjeta)),
+            'texto': getattr(bloques, 'tarjeta_{}_texto'.format(tarjeta)),
+        }
+        for tarjeta in orden
+        if tarjeta not in composicion.ocultas_encontrar
+    ]
+
+
+def _tarjetas_configuracion(composicion):
+    nombres = {
+        'profesionales': 'Profesionales',
+        'investigacion': 'Investigación',
+        'servicios': 'Servicios',
+    }
+    orden = composicion.orden_encontrar or tuple(nombres)
+    return tuple(
+        {
+            'id': tarjeta,
+            'nombre': nombres[tarjeta],
+            'visible': tarjeta not in composicion.ocultas_encontrar,
+        }
+        for tarjeta in orden
+    )
 
 
 def grupos_editor(
@@ -268,17 +313,32 @@ def grupos_editor(
         orden = resolver_orden(preferir_borrador=True, pagina=pagina)
     por_id = {}
     for grupo_id, nombre in indice.grupos:
+        es_componible = grupo_id == 'encontrar' and composicion.layout_encontrar is not None
+        definiciones = list(indice.claves_por_grupo.get(grupo_id, ()))
+        if es_componible:
+            definiciones = [
+                clave for clave in definiciones
+                if clave in ('encontrar_titulo', 'encontrar_subtitulo')
+            ]
+            definiciones.extend(
+                d.clave for d in materializar(composicion.layout_encontrar)
+            )
+        rejilla = _datos_rejilla(composicion.layout_encontrar) if es_componible else {}
         por_id[grupo_id] = {
             'id': grupo_id,
             'nombre': nombre,
-            'bloques': [getattr(mapa, clave) for clave in indice.claves_por_grupo.get(grupo_id, ())],
+            'bloques': [getattr(mapa, clave) for clave in definiciones],
             'ordenable': grupo_id in indice.secciones_set,
             'agregada': False,
+            'componible': es_componible,
             'oculta': grupo_id in composicion.ocultas,
-            'tipo': '',
-            'columnas': 1,
-            'casillas': (),
-            'internas': (),
+            'tipo': composicion.layout_encontrar.tipo if es_componible else '',
+            'diseno': composicion.diseno_encontrar,
+            'tarjetas': _tarjetas_configuracion(composicion) if grupo_id == 'encontrar' else (),
+            'columnas': composicion.layout_encontrar.columnas if es_componible else 1,
+            'casillas': _casillas_editor(composicion.layout_encontrar) if es_componible else (),
+            'internas': _internas_editor(composicion.layout_encontrar) if es_componible else (),
+            **rejilla,
         }
     for pieza in composicion.piezas:
         defs = materializar(pieza)
@@ -711,7 +771,8 @@ def _capa(preferir_borrador, pagina):
 def _composicion(pagina, publicados, borradores, preferir_borrador):
     if not _indice(pagina).permite_piezas:
         return Composicion()
-    return elegir(publicados, borradores, preferir_borrador)
+    composicion = elegir(publicados, borradores, preferir_borrador)
+    return para_editor(composicion) if preferir_borrador and pagina == INICIO else composicion
 
 
 def _composicion_actual(preferir_borrador, pagina):
@@ -732,6 +793,19 @@ def _vistas(indice, comp, mapa, orden, incluir_ocultas):
         if grupo_id in indice.secciones_set:
             oculta = grupo_id in comp.ocultas
             if oculta and not incluir_ocultas:
+                continue
+            if grupo_id == 'encontrar' and comp.layout_encontrar is not None:
+                mosaico = _vista_mosaico(comp.layout_encontrar, mapa)
+                mosaico.mosaico.encabezado = (
+                    mapa.encontrar_titulo, mapa.encontrar_subtitulo,
+                )
+                vistas.append(SeccionVista(
+                    'encontrar',
+                    'inicio/secciones/encontrar.html',
+                    libre=True,
+                    oculta=oculta,
+                    mosaico=mosaico.mosaico,
+                ))
                 continue
             vistas.append(SeccionVista(
                 grupo_id, indice.plantillas[grupo_id], oculta=oculta,
@@ -796,7 +870,19 @@ def _vista_mosaico(pieza, mapa):
     resueltas = resolver_rejilla(casillas_de(pieza), dict(pieza.distribucion))
     nombres = {item['id']: item['nombre'] for item in _internas_editor(pieza)}
     elementos = []
-    for ref in (REF_PROPIA,) + tuple(bloque.id for bloque in pieza.bloques):
+    referencias = (REF_PROPIA,) + tuple(bloque.id for bloque in pieza.bloques)
+    posiciones = {
+        posicion.ref: posicion
+        for posicion in resueltas['escritorio'].posiciones
+    }
+    referencias = tuple(sorted(
+        referencias,
+        key=lambda ref: (
+            posiciones[ref].fila,
+            posiciones[ref].columna,
+        ),
+    ))
+    for ref in referencias:
         if ref == REF_PROPIA:
             celda = _celda_nativa(pieza, mapa)
             token = TOKEN_PROPIA
@@ -816,6 +902,7 @@ def _vista_mosaico(pieza, mapa):
             plantilla=celda.plantilla,
         ))
     mosaico = SimpleNamespace(
+        id=f'mosaico-{pieza.id}',
         css=css_de(pieza.id, resueltas),
         css_lienzo=css_de(pieza.id, resueltas, editor=True),
         elementos=tuple(elementos),
@@ -862,10 +949,11 @@ def _celda_interna(seccion, bloque, mapa):
     fantasma = Pieza(
         id=ancla, tipo=bloque.tipo, diapositivas=bloque.diapositivas,
     )
+    campos = _campos_interno(seccion, bloque, fantasma, mapa)
     return CeldaVista(
         bloque.tipo,
         ancla,
-        None if bloque.tipo == 'carrusel' else _campos_de(fantasma, mapa),
+        None if bloque.tipo == 'carrusel' else campos,
         _dias_de(fantasma, mapa) if bloque.tipo == 'carrusel' else (),
     )
 
@@ -877,6 +965,9 @@ def _celda_nativa(pieza, mapa):
 
 
 def _campos_de(pieza, mapa):
+    if pieza.id == ID_LAYOUT_ENCONTRAR and pieza.tipo == 'tarjeta':
+        definiciones = [d for d in materializar(pieza) if not d.trozo]
+        return _campos_tarjeta_alias(definiciones, mapa)
     campos = {}
     for definicion in materializar(pieza):
         if definicion.trozo:
@@ -884,6 +975,26 @@ def _campos_de(pieza, mapa):
         sufijo = definicion.clave[len(pieza.id) + 1:]
         campos[sufijo] = getattr(mapa, definicion.clave)
     return CamposPieza(campos)
+
+
+def _campos_interno(seccion, bloque, fantasma, mapa):
+    if seccion.id != ID_LAYOUT_ENCONTRAR or bloque.tipo != 'tarjeta':
+        return _campos_de(fantasma, mapa)
+    originales = [
+        definicion for definicion in materializar(seccion)
+        if definicion.trozo == bloque.id
+    ]
+    if not originales or not all(d.clave.startswith('tarjeta_') for d in originales):
+        return _campos_de(fantasma, mapa)
+    return _campos_tarjeta_alias(originales, mapa)
+
+
+def _campos_tarjeta_alias(definiciones, mapa):
+    nombres = {'imagen': 'foto', 'titulo': 'titulo', 'texto': 'texto'}
+    return CamposPieza({
+        nombres[definicion.clave.rsplit('_', 1)[-1]]: getattr(mapa, definicion.clave)
+        for definicion in definiciones
+    })
 
 
 def _dias_de(pieza, mapa):
@@ -934,7 +1045,9 @@ def _internas_editor(pieza):
     lista = []
     for bloque in pieza.bloques:
         base = TIPOS[bloque.tipo].nombre
-        if conteo[bloque.tipo] > 1:
+        if bloque.nombre:
+            nombre = bloque.nombre
+        elif conteo[bloque.tipo] > 1:
             vistos[bloque.tipo] = vistos.get(bloque.tipo, 0) + 1
             nombre = f'{base} {vistos[bloque.tipo]}'
         else:

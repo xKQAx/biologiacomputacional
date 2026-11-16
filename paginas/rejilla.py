@@ -39,6 +39,19 @@ PRESETS = (
     ('2x3', 2, 3),
     ('3x3', 3, 3),
 )
+_ETIQUETAS_PRESET = {
+    '1x1': 'Una pieza',
+    '2x1': 'Dos en fila',
+    '3x1': 'Tres en fila',
+    '4x1': 'Cuatro en fila',
+    '1x2': 'Dos apiladas',
+    '2x2': 'Cuatro bloques',
+    '3x2': 'Seis bloques',
+    '4x2': 'Ocho bloques',
+    '1x3': 'Tres apiladas',
+    '2x3': 'Seis bloques',
+    '3x3': 'Nueve bloques',
+}
 
 _MEDIOS = {
     'escritorio': '@media (min-width:992px)',
@@ -130,6 +143,7 @@ def catalogo_miniaturas():
     return tuple(
         {
             'codigo': codigo,
+            'etiqueta': _ETIQUETAS_PRESET[codigo],
             'columnas': columnas,
             'filas': filas,
             'celdas': tuple(range(columnas * filas)),

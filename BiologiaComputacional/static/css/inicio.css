@@ -338,6 +338,45 @@
 .cardbox--delay-2 { animation-delay: 0.2s; }
 .cardbox--delay-3 { animation-delay: 0.3s; }
 
+/* Presentaciones visuales de «Qué encontrar»; el móvil se reorganiza solo. */
+.encontrar-tarjetas--destacada .encontrar-tarjeta:first-child .cardbox {
+  max-width: none;
+  height: 100%;
+}
+
+.encontrar-tarjetas--destacada .encontrar-tarjeta:first-child .card-image-container {
+  height: 260px;
+}
+
+.encontrar-tarjetas--lista .cardbox {
+  display: grid;
+  grid-template-columns: minmax(140px, 0.8fr) minmax(0, 1fr);
+  align-content: center;
+  align-items: center;
+  column-gap: 1.5rem;
+  max-width: none;
+  min-height: 13rem;
+  text-align: left;
+}
+
+.encontrar-tarjetas--lista .card-image-container {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  height: 100%;
+  min-height: 11rem;
+  margin: -2rem 0 -2rem -2rem;
+  border-radius: 10px 0 0 10px;
+}
+
+.encontrar-tarjetas--lista .cardbox > a,
+.encontrar-tarjetas--lista .cardbox > .texto-corrido {
+  grid-column: 2;
+}
+
+.encontrar-tarjetas--lista .cardbox > .texto-corrido {
+  margin-bottom: 0 !important;
+}
+
 /* ========================================
    SECCIÓN NOSOTROS
    ======================================== */
@@ -630,6 +669,29 @@
 
   .partner-logo {
     max-width: 80px;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .encontrar-tarjetas--lista .cardbox {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 0;
+    min-height: 0;
+    text-align: center;
+  }
+
+  .encontrar-tarjetas--lista .card-image-container {
+    grid-column: 1;
+    grid-row: auto;
+    min-height: 0;
+    height: 11rem;
+    margin: -1.25rem -1.25rem 1rem;
+    border-radius: 10px 10px 0 0;
+  }
+
+  .encontrar-tarjetas--lista .cardbox > a,
+  .encontrar-tarjetas--lista .cardbox > .texto-corrido {
+    grid-column: 1;
   }
 }
 

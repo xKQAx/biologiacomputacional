@@ -166,6 +166,12 @@ def _aviso_estructura(accion):
         return 'Diapositiva quitada del borrador. La página pública no cambió.'
     if accion.startswith('dia-orden:'):
         return 'Orden de las diapositivas guardado en el borrador. La página pública no cambió.'
+    if accion.startswith('tarjetas-orden:'):
+        return 'Orden de las tarjetas guardado en el borrador. La página pública no cambió.'
+    if accion.startswith('tarjetas-diseno:'):
+        return 'Presentación guardada en el borrador. La página pública no cambió.'
+    if accion.startswith('tarjetas-visible:'):
+        return 'Tarjeta actualizada en el borrador. La página pública no cambió.'
     return 'Sección quitada del borrador. La página pública no cambió.'
 
 

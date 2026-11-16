@@ -1,0 +1,18 @@
+{% load paginas %}
+<div class="cardbox encontrar-tarjeta-contenido">
+  <div class="card-image-container">
+    <img
+      src="{{ campos.foto.enlace }}"
+      class="card-img-fit"
+      alt="{{ campos.foto.texto }}"
+      loading="lazy"
+      width="380"
+      height="280"
+      {% edit_attrs campos.foto.clave %}
+    >
+  </div>
+  <a href="{{ campos.titulo.enlace }}" {% edit_attrs campos.titulo.clave %}>
+    <h5 class="mt-2 mb-3" data-edit-texto>{{ campos.titulo.contenido }}</h5>
+  </a>
+  <div class="fw-light mb-3 texto-corrido" {% edit_attrs campos.texto.clave %}>{{ campos.texto.contenido }}</div>
+</div>

@@ -1,0 +1,27 @@
+{% load paginas %}
+{% if tarjeta.visible %}
+<div class="col-12{% if disposicion_encontrar == 'tarjetas' %} col-md-4{% elif disposicion_encontrar == 'destacada' %}{% if forloop.first %} col-md-6{% else %} col-md-3{% endif %}{% endif %} d-flex justify-content-center encontrar-tarjeta encontrar-tarjeta--{{ disposicion_encontrar }}"{% if modo_editor %} data-layout-tarjeta="{{ tarjeta.id }}"{% endif %}>
+  <div class="cardbox cardbox--delay-{{ forloop.counter }} fade-in-up">
+    {% if modo_editor %}
+      <button type="button" class="control-arrastre-tarjeta" data-arrastrar-tarjeta draggable="true" aria-label="Mover tarjeta: {{ tarjeta.titulo.plano }}" title="Arrastra para cambiar el orden">
+        <span aria-hidden="true">⠿</span>
+      </button>
+    {% endif %}
+    <div class="card-image-container">
+      <img
+        src="{{ tarjeta.imagen.enlace }}"
+        class="card-img-fit"
+        alt="{{ tarjeta.imagen.texto }}"
+        loading="lazy"
+        width="380"
+        height="280"
+        {% edit_attrs tarjeta.imagen.clave %}
+      />
+    </div>
+    <a href="{{ tarjeta.titulo.enlace }}" {% edit_attrs tarjeta.titulo.clave %}>
+      <h5 class="mt-2 mb-3" data-edit-texto>{{ tarjeta.titulo.contenido }}</h5>
+    </a>
+    <div class="fw-light mb-3 texto-corrido" {% edit_attrs tarjeta.texto.clave %}>{{ tarjeta.texto.contenido }}</div>
+  </div>
+</div>
+{% endif %}

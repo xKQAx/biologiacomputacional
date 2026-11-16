@@ -137,6 +137,14 @@ class RejillaPuraTests(SimpleTestCase):
         otra = serializar(comp)
         self.assertNotIn('distribucion', otra)
 
+    def test_el_id_del_mosaico_de_plantilla_no_colisiona_con_secciones(self):
+        comp = parsear(json.dumps({
+            'piezas': [{'id': 'pz00000000', 'tipo': 'texto'}],
+            'layout_encontrar': {'id': 'pz00000000', 'tipo': 'tarjeta'},
+        }))
+        self.assertEqual(comp.piezas, ())
+        self.assertEqual(comp.layout_encontrar.id, 'pz00000000')
+
     def test_la_mutacion_de_escritorio_no_borra_el_texto_ni_el_movil(self):
         pieza = Pieza(
             id='pz1234abcd',

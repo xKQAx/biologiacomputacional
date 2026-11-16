@@ -43,6 +43,86 @@ class SeccionesAgregablesTests(TestCase):
         )
         self.client.force_login(self.staff)
 
+    def test_ordenar_tarjetas_de_encontrar_se_guarda_en_borrador_y_se_publica(self):
+        accion = 'tarjetas-orden:encontrar:servicios,profesionales,investigacion'
+        respuesta = self.client.post(
+            self.editor,
+            {'accion': accion},
+            HTTP_X_EDITOR_VIVO='1',
+            HTTP_ACCEPT='application/json',
+        )
+        datos = respuesta.json()
+        self.assertTrue(datos['ok'])
+        self.assertEqual(datos['id'], 'encontrar')
+        lienzo = datos['html_lienzo']
+        self.assertLess(lienzo.index('>Servicios</h5>'), lienzo.index('>Profesionales</h5>'))
+        self.assertIn('Orden de las tarjetas guardado', datos['aviso'])
+
+        self.client.logout()
+        portada = self.client.get('/')
+        self.assertLess(portada.content.index(b'>Profesionales</h5>'), portada.content.index(b'>Servicios</h5>'))
+        self.assertNotContains(portada, 'data-layout-tarjeta=')
+
+        self.client.force_login(self.staff)
+        self.client.post(self.editor, {'accion': 'agregar', 'tipo_pieza': 'texto'})
+        self.client.post(self.editor, {'accion': 'publicar'})
+        self.client.logout()
+        publicada = self.client.get('/')
+        self.assertLess(publicada.content.index(b'>Servicios</h5>'), publicada.content.index(b'>Profesionales</h5>'))
+
+    def test_que_encontrar_usa_la_misma_rejilla_y_admite_nuevas_tarjetas(self):
+        def cambio(accion):
+            return self.client.post(
+                self.editor,
+                {'accion': accion},
+                HTTP_X_EDITOR_VIVO='1',
+                HTTP_ACCEPT='application/json',
+            ).json()
+
+        editor = self.client.get(self.editor).content.decode()
+        self.assertIn('data-rejilla="encontrar"', editor)
+        self.assertIn('data-preset-seccion="encontrar"', editor)
+        self.assertIn('id="tipo-interna-encontrar"', editor)
+
+        cuadrícula = cambio('rejilla-preset:encontrar:escritorio:2x2')
+        self.assertTrue(cuadrícula['ok'])
+        self.assertIn('data-seccion="encontrar"', cuadrícula['html_lienzo'])
+        self.assertIn('data-mapa=', cuadrícula['html_lienzo'])
+        self.assertIn('editor-miniatura', cuadrícula['html_campos'])
+        self.assertIn('Cuatro bloques', cuadrícula['html_campos'])
+        self.assertIn('Agregar pieza', cuadrícula['html_campos'])
+        self.assertNotIn('Una destacada', cuadrícula['html_campos'])
+
+        tarjeta = cambio('pieza-agregar:encontrar:tarjeta')
+        self.assertTrue(tarjeta['ok'])
+        self.assertIn('data-ref="b03"', tarjeta['html_lienzo'])
+        self.assertIn('Nueva tarjeta', tarjeta['html_lienzo'])
+        movida = cambio('rejilla-mover:encontrar:escritorio:b03:2:2')
+        self.assertTrue(movida['ok'])
+        self.assertIn('data-guia-fila="2" data-guia-columna="2" data-ocupante="b03"', movida['html_lienzo'])
+
+        self.client.post(self.editor, {'accion': 'guardar'})
+        composicion = self._composicion()
+        layout = composicion['layout_encontrar']
+        self.assertEqual(layout['id'], 'pz00000000')
+        self.assertEqual(layout['bloques'][-1]['tipo'], 'tarjeta')
+        self.assertIn('escritorio', layout['distribucion'])
+        self.client.logout()
+        portada = self.client.get('/')
+        self.assertContains(portada, '>Investigación</h5>')
+        self.assertNotContains(portada, 'Nueva tarjeta')
+
+        self.client.force_login(self.staff)
+        publicacion = self.client.post(self.editor, {
+            'accion': 'publicar',
+            'imagen__pz00000000-b03-foto': _png('blue'),
+        })
+        self.assertEqual(publicacion.status_code, 302)
+        self.client.logout()
+        portada = self.client.get('/')
+        self.assertContains(portada, 'Nueva tarjeta')
+        self.assertContains(portada, 'encontrar-mosaico')
+
     def test_el_catalogo_esta_en_inicio_y_no_en_contacto_ni_bases(self):
         editor = self.client.get(self.editor)
         self.assertContains(editor, 'Agregar sección')
@@ -408,11 +488,15 @@ class SeccionesAgregablesTests(TestCase):
         self.assertIn('>Eliminar<', datos['html_item'])
         self.assertIn('data-asa', datos['html_item'])
         self.assertNotIn('<textarea', datos['html_item'])
-        self.assertIn('Distribución', datos['html_campos'])
+        self.assertIn('Presentación de los elementos', datos['html_campos'])
+        self.assertIn('Cuatro en fila', datos['html_campos'])
+        self.assertNotIn('×', datos['html_campos'])
         self.assertIn('data-preset="1x1"', datos['html_campos'])
         self.assertIn('data-preset="2x1"', datos['html_campos'])
         self.assertIn('data-preset="3x1"', datos['html_campos'])
         self.assertIn('editor-miniatura', datos['html_campos'])
+        self.assertIn('Dos en fila', datos['html_campos'])
+        self.assertNotIn('×', datos['html_campos'])
         self.assertNotIn('Ajustes de la cuadrícula', datos['html_campos'])
         self.assertNotIn('data-aplicar-medida', datos['html_campos'])
         self.assertNotIn('data-span=', datos['html_campos'])

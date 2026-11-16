@@ -576,13 +576,15 @@
     form.querySelectorAll("[data-inspector]").forEach(function (panel) {
       if (panel.hidden) return;
       var agregada = panel.hasAttribute("data-agregada");
+      var componible = panel.getAttribute("data-componible") === "1";
       var pieza = agregada ? seleccion.pieza || "" : "";
       panel.querySelectorAll("fieldset[data-clave]").forEach(function (fs) {
         if (!agregada) {
           fs.hidden = false;
           return;
         }
-        fs.hidden = (fs.getAttribute("data-pieza") || "") !== pieza;
+        var dueño = fs.getAttribute("data-pieza") || "";
+        fs.hidden = componible && dueño === "cabecera" ? false : dueño !== pieza;
       });
       var quitar = panel.querySelector("[data-quitar-pieza]");
       if (quitar) {
@@ -1399,6 +1401,12 @@
       enviarEstructura(
         "rejilla-mover:" + data.id + ":" + dispositivo + ":" + data.ref + ":" + fila + ":" + columna
       );
+    }
+    if (data.tipo === "orden-tarjetas" && data.grupo === "encontrar" && Array.isArray(data.orden)) {
+      var permitidas = { profesionales: true, investigacion: true, servicios: true };
+      var ordenTarjetas = data.orden.map(String);
+      if (ordenTarjetas.length < 2 || ordenTarjetas.length > 3 || ordenTarjetas.some(function (id) { return !permitidas[id]; }) || new Set(ordenTarjetas).size !== ordenTarjetas.length) return;
+      enviarEstructura("tarjetas-orden:encontrar:" + ordenTarjetas.join(","));
     }
   });
 
