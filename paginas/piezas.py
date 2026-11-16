@@ -22,6 +22,23 @@ from paginas.catalogo import (
     TEXTO,
     DefinicionBloque,
 )
+from paginas.rejilla import (
+    DISPOSITIVOS,
+    aplicar_preset,
+    con_medida,
+    con_span,
+    incorporar,
+    ocupante_en,
+    orden_lectura,
+    parsear_distribucion,
+    poner,
+    preset as preset_rejilla,
+    quitar as quitar_rejilla,
+    retirar,
+    resolver as resolver_rejilla,
+    serializar_distribucion,
+    soltar,
+)
 
 CLAVE_COMPOSICION = 'composicion'
 MAX_PIEZAS = 24
@@ -101,6 +118,9 @@ class Pieza:
     columnas: int = 1
     puestos: tuple = ()
     bloques: tuple = ()
+    # Overrides por dispositivo. Vacío: escritorio y tablet usan las columnas;
+    # el móvil apila en una. No repite el contenido de las piezas.
+    distribucion: tuple = ()
 
 
 @dataclass(frozen=True)
@@ -237,7 +257,7 @@ class SeccionVista:
 
     def __init__(
         self, id_seccion, plantilla, *, libre=False, oculta=False,
-        campos=None, diapositivas=(), columnas=1, casillas=(),
+        campos=None, diapositivas=(), columnas=1, casillas=(), mosaico=None,
     ):
         self.id = id_seccion
         self.plantilla = plantilla
@@ -247,6 +267,7 @@ class SeccionVista:
         self.diapositivas = diapositivas
         self.columnas = columnas if columnas in (1, 2, 3) else 1
         self.casillas = casillas
+        self.mosaico = mosaico
 
     @property
     def variante(self):
@@ -323,8 +344,8 @@ def _materializar_interno(seccion, bloque):
 
 
 def en_rejilla(pieza):
-    """La plantilla suelta se conserva en una columna y sin piezas internas."""
-    return bool(pieza.bloques) or pieza.columnas != 1
+    """La plantilla suelta se conserva en una columna, sin piezas ni cuadrícula libre."""
+    return bool(pieza.bloques) or pieza.columnas != 1 or bool(pieza.distribucion)
 
 
 def materializar_todas(composicion):
@@ -509,6 +530,8 @@ def mutar(composicion, orden, valores, accion, tipo_pedido):
         return _poner_columnas(composicion, orden, valores, partes[1], partes[2])
     if accion.startswith('dia-'):
         return _mutar_dia(composicion, orden, valores, accion)
+    if accion.startswith('rejilla-'):
+        return _mutar_rejilla(composicion, orden, valores, accion)
     return composicion, orden, valores, 'No se reconoció la acción.'
 
 
@@ -519,6 +542,8 @@ def es_estructural(accion):
         'ocultar:', 'mostrar:', 'quitar:',
         'pieza-agregar:', 'pieza-quitar:', 'pieza-ubicar:', 'columnas:',
         'dia-agregar:', 'dia-quitar:', 'dia-orden:',
+        'rejilla-preset:', 'rejilla-medida:', 'rejilla-mover:', 'rejilla-span:',
+        'rejilla-olvidar:', 'rejilla-agregar:',
     ))
 
 
@@ -643,6 +668,7 @@ def _pieza(item, vistas):
         columnas=_columnas_de(item),
         bloques=_bloques(item),
         puestos=_puestos_de_item(item, _columnas_de(item), _bloques(item)),
+        distribucion=_distribucion_de(item, _bloques(item)),
     )
 
 
@@ -663,6 +689,8 @@ def _serializar_pieza(pieza):
         ]
     if pieza.bloques:
         datos['bloques'] = [_serializar_bloque(bloque) for bloque in pieza.bloques]
+    if pieza.distribucion:
+        datos['distribucion'] = serializar_distribucion(pieza.distribucion)
     return datos
 
 
@@ -747,7 +775,12 @@ def _agregar_interno(composicion, orden, valores, pieza_id, tipo):
     valores = dict(valores)
     valores.update(valores_de_fabrica(fantasma))
     puestos = _agregar_ref(puestos_de(pieza), pieza.columnas, bloque_id)
-    nueva = replace(pieza, bloques=pieza.bloques + (bloque,), puestos=puestos)
+    nueva = replace(
+        pieza,
+        bloques=pieza.bloques + (bloque,),
+        puestos=puestos,
+        distribucion=_tocar_distribucion(pieza.distribucion, bloque_id, True),
+    )
     return _reemplazar(composicion, nueva), orden, valores, None
 
 
@@ -761,6 +794,7 @@ def _quitar_interno(composicion, orden, valores, pieza_id, bloque_id):
         pieza,
         bloques=tuple(bloque for bloque in pieza.bloques if bloque.id != bloque_id),
         puestos=tuple(puesto for puesto in puestos_de(pieza) if puesto.ref != bloque_id),
+        distribucion=_tocar_distribucion(pieza.distribucion, bloque_id, False),
     )
     return _reemplazar(composicion, nueva), orden, valores, None
 
@@ -800,7 +834,9 @@ def _ubicar_pieza(composicion, orden, valores, pieza_id, token, celda_bruta, ind
     destino = grupos[celda]
     destino.insert(min(indice, len(destino)), ref)
     return (
-        _reemplazar(composicion, replace(pieza, puestos=_puestos_desde_grupos(grupos))),
+        _reemplazar(composicion, replace(
+            pieza, puestos=_puestos_desde_grupos(grupos), distribucion=(),
+        )),
         orden,
         valores,
         None,
@@ -985,13 +1021,16 @@ def _puestos_son_herencia(pieza, puestos):
 
 
 def _pieza_con_columnas(pieza, columnas):
+    """Vuelve al diseño clásico. El mismo número también suelta la cuadrícula libre."""
     if columnas == pieza.columnas:
-        return pieza
+        if not pieza.distribucion:
+            return pieza
+        return replace(pieza, distribucion=())
     plano = _orden_lectura(puestos_de(pieza), pieza.columnas)
     grupos = [[] for _ in range(columnas)]
     for indice, ref in enumerate(plano):
         grupos[indice % columnas].append(ref)
-    return replace(pieza, columnas=columnas, puestos=_puestos_desde_grupos(grupos))
+    return replace(pieza, columnas=columnas, puestos=_puestos_desde_grupos(grupos), distribucion=())
 
 
 def _agregar_ref(puestos, columnas, ref):
@@ -1093,6 +1132,165 @@ def _nuevo_bloque_id(pieza):
 def _reemplazar(composicion, nueva):
     piezas = tuple(nueva if pieza.id == nueva.id else pieza for pieza in composicion.piezas)
     return Composicion(composicion.ocultas, piezas)
+
+
+def _distribucion_de(item, bloques):
+    """Sin la clave, no hay override: el diseño clásico sigue siendo el predeterminado."""
+    refs = (REF_PROPIA,) + tuple(bloque.id for bloque in bloques)
+    return parsear_distribucion(item.get('distribucion'), refs)
+
+
+def _tocar_distribucion(pares, ref, agregar):
+    if not pares:
+        return ()
+    funcion = incorporar if agregar else retirar
+    return tuple((dispositivo, funcion(rejilla, ref)) for dispositivo, rejilla in pares)
+
+
+def _rejilla_vigente(pieza, dispositivo):
+    explicitas = dict(pieza.distribucion)
+    if dispositivo in explicitas:
+        return explicitas[dispositivo]
+    return resolver_rejilla(casillas_de(pieza), explicitas)[dispositivo]
+
+
+def _guardar_rejilla(composicion, pieza, dispositivo, rejilla):
+    return _reemplazar(composicion, replace(
+        pieza, distribucion=poner(pieza.distribucion, dispositivo, rejilla),
+    ))
+
+
+def _mutar_rejilla(composicion, orden, valores, accion):
+    """Presets, medidas, arrastre y span. Solo toca el dispositivo nombrado."""
+    partes = accion.split(':')
+    verbo = partes[0]
+    if verbo == 'rejilla-preset' and len(partes) == 4:
+        return _rejilla_preset(composicion, orden, valores, *partes[1:])
+    if verbo == 'rejilla-medida' and len(partes) == 9:
+        return _rejilla_medida(composicion, orden, valores, *partes[1:])
+    if verbo == 'rejilla-mover' and len(partes) == 6:
+        return _rejilla_mover(composicion, orden, valores, *partes[1:])
+    if verbo == 'rejilla-span' and len(partes) == 6:
+        return _rejilla_span(composicion, orden, valores, *partes[1:])
+    if verbo == 'rejilla-olvidar' and len(partes) == 3:
+        return _rejilla_olvidar(composicion, orden, valores, partes[1], partes[2])
+    if verbo == 'rejilla-agregar' and len(partes) == 6:
+        return _rejilla_agregar(composicion, orden, valores, *partes[1:])
+    return composicion, orden, valores, 'No se reconoció la acción.'
+
+
+def _exigir_rejilla(composicion, pieza_id, dispositivo):
+    pieza, error = _exigir_agregada(composicion, pieza_id)
+    if error:
+        return None, error
+    if dispositivo not in DISPOSITIVOS:
+        return None, 'Ese dispositivo no está en el editor.'
+    return pieza, None
+
+
+def _rejilla_preset(composicion, orden, valores, pieza_id, dispositivo, codigo):
+    pieza, error = _exigir_rejilla(composicion, pieza_id, dispositivo)
+    if error:
+        return composicion, orden, valores, error
+    elegido = preset_rejilla(codigo)
+    if elegido is None:
+        return composicion, orden, valores, 'Esa distribución no está en las miniaturas.'
+    _codigo, columnas, filas = elegido
+    actual = _rejilla_vigente(pieza, dispositivo)
+    nueva = aplicar_preset(orden_lectura(actual), columnas, filas, actual)
+    return _guardar_rejilla(composicion, pieza, dispositivo, nueva), orden, valores, None
+
+
+def _rejilla_medida(
+    composicion, orden, valores, pieza_id, dispositivo,
+    columnas, filas, hueco_columna, hueco_fila, anchos, altos,
+):
+    pieza, error = _exigir_rejilla(composicion, pieza_id, dispositivo)
+    if error:
+        return composicion, orden, valores, error
+    if not str(columnas).isdigit() or not str(filas).isdigit():
+        return composicion, orden, valores, 'Las columnas y las filas tienen que ser números.'
+    if not str(hueco_columna).isdigit() or not str(hueco_fila).isdigit():
+        return composicion, orden, valores, 'La separación tiene que ser un número.'
+    nueva, error = con_medida(
+        _rejilla_vigente(pieza, dispositivo),
+        int(columnas), int(filas), int(hueco_columna), int(hueco_fila),
+        _pesos(anchos), _pesos(altos),
+    )
+    if error:
+        return composicion, orden, valores, error
+    return _guardar_rejilla(composicion, pieza, dispositivo, nueva), orden, valores, None
+
+
+def _rejilla_mover(composicion, orden, valores, pieza_id, dispositivo, token, fila, columna):
+    pieza, error = _exigir_rejilla(composicion, pieza_id, dispositivo)
+    if error:
+        return composicion, orden, valores, error
+    ref = _ref_de_token(token)
+    if ref is None or not _ref_conocida(pieza, ref):
+        return composicion, orden, valores, 'Esa pieza no está en la sección.'
+    if not str(fila).isdigit() or not str(columna).isdigit():
+        return composicion, orden, valores, 'No se reconoció la celda.'
+    nueva, error = soltar(_rejilla_vigente(pieza, dispositivo), ref, int(fila), int(columna))
+    if error:
+        return composicion, orden, valores, error
+    return _guardar_rejilla(composicion, pieza, dispositivo, nueva), orden, valores, None
+
+
+def _rejilla_span(composicion, orden, valores, pieza_id, dispositivo, token, filas, columnas):
+    pieza, error = _exigir_rejilla(composicion, pieza_id, dispositivo)
+    if error:
+        return composicion, orden, valores, error
+    ref = _ref_de_token(token)
+    if ref is None or not _ref_conocida(pieza, ref):
+        return composicion, orden, valores, 'Esa pieza no está en la sección.'
+    if not str(filas).isdigit() or not str(columnas).isdigit():
+        return composicion, orden, valores, 'El tamaño de la pieza tiene que ser un número.'
+    nueva, error = con_span(
+        _rejilla_vigente(pieza, dispositivo), ref, int(filas), int(columnas),
+    )
+    if error:
+        return composicion, orden, valores, error
+    return _guardar_rejilla(composicion, pieza, dispositivo, nueva), orden, valores, None
+
+
+def _rejilla_olvidar(composicion, orden, valores, pieza_id, dispositivo):
+    pieza, error = _exigir_rejilla(composicion, pieza_id, dispositivo)
+    if error:
+        return composicion, orden, valores, error
+    return _reemplazar(composicion, replace(
+        pieza, distribucion=quitar_rejilla(pieza.distribucion, dispositivo),
+    )), orden, valores, None
+
+
+def _rejilla_agregar(composicion, orden, valores, pieza_id, dispositivo, tipo, fila, columna):
+    """Agrega la pieza y la sienta en una celda vacía. No intercambia con quien ya está."""
+    pieza, error = _exigir_rejilla(composicion, pieza_id, dispositivo)
+    if error:
+        return composicion, orden, valores, error
+    if not str(fila).isdigit() or not str(columna).isdigit():
+        return composicion, orden, valores, 'No se reconoció la celda.'
+    if ocupante_en(_rejilla_vigente(pieza, dispositivo), int(fila), int(columna)) is not None:
+        return composicion, orden, valores, 'Esa celda ya está ocupada.'
+    composicion, orden, valores, error = _agregar_interno(
+        composicion, orden, valores, pieza_id, tipo,
+    )
+    if error:
+        return composicion, orden, valores, error
+    pieza = composicion.por_id(pieza_id)
+    if pieza is None or not pieza.bloques:
+        return composicion, orden, valores, 'No se pudo agregar la pieza.'
+    return _rejilla_mover(
+        composicion, orden, valores, pieza_id, dispositivo, pieza.bloques[-1].id, fila, columna,
+    )
+
+
+def _pesos(texto):
+    pesos = []
+    for parte in str(texto or '').split('.'):
+        if parte.isdigit():
+            pesos.append(int(parte))
+    return pesos
 
 
 def _nuevo_id(composicion):

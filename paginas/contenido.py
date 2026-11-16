@@ -5,7 +5,9 @@ del editor de esa página. Publicar copia el borrador encima de lo publicado
 y no toca el borrador de las demás.
 """
 
+import json
 import re
+from types import SimpleNamespace
 
 from django.db import transaction
 from django.template.defaultfilters import linebreaksbr
@@ -48,6 +50,14 @@ from paginas.piezas import (
     nombres_de_fabrica,
     nombres_piezas,
     serializar,
+)
+from paginas.rejilla import (
+    catalogo_miniaturas,
+    celdas_guia,
+    coincide_preset,
+    css_de,
+    mapa_publico,
+    resolver as resolver_rejilla,
 )
 from paginas.registro import INICIO, INDICES
 from paginas.saneo import PLANO, html_para_plantilla, preparar_texto, sin_marcas
@@ -285,6 +295,7 @@ def grupos_editor(
             'columnas': pieza.columnas,
             'casillas': _casillas_editor(pieza),
             'internas': _internas_editor(pieza),
+            **_datos_rejilla(pieza),
         }
     if indice.secciones:
         grupos = [por_id['barra']]
@@ -757,7 +768,9 @@ def _vista_carrusel(pieza, mapa):
 
 
 def _vista_compuesta(pieza, mapa):
-    """La cuadrícula y, dentro de cada casilla, las piezas en el orden guardado."""
+    """Cuadrícula libre si hay override; si no, las columnas clásicas."""
+    if pieza.distribucion:
+        return _vista_mosaico(pieza, mapa)
     casillas = []
     for indice, refs in enumerate(casillas_de(pieza)):
         piezas = []
@@ -776,6 +789,72 @@ def _vista_compuesta(pieza, mapa):
         columnas=pieza.columnas,
         casillas=tuple(casillas),
     )
+
+
+def _vista_mosaico(pieza, mapa):
+    """Una sola copia de cada pieza. La posición por dispositivo va en el CSS."""
+    resueltas = resolver_rejilla(casillas_de(pieza), dict(pieza.distribucion))
+    nombres = {item['id']: item['nombre'] for item in _internas_editor(pieza)}
+    elementos = []
+    for ref in (REF_PROPIA,) + tuple(bloque.id for bloque in pieza.bloques):
+        if ref == REF_PROPIA:
+            celda = _celda_nativa(pieza, mapa)
+            token = TOKEN_PROPIA
+            nombre = TIPOS[pieza.tipo].nombre
+        else:
+            bloque = next(item for item in pieza.bloques if item.id == ref)
+            celda = _celda_interna(pieza, bloque, mapa)
+            token = ref
+            nombre = nombres.get(ref, TIPOS[bloque.tipo].nombre)
+        elementos.append(SimpleNamespace(
+            token=token,
+            nombre=nombre,
+            tipo=celda.tipo,
+            ancla=celda.ancla,
+            campos=celda.campos,
+            diapositivas=celda.diapositivas,
+            plantilla=celda.plantilla,
+        ))
+    mosaico = SimpleNamespace(
+        css=css_de(pieza.id, resueltas),
+        css_lienzo=css_de(pieza.id, resueltas, editor=True),
+        elementos=tuple(elementos),
+        guias=tuple(
+            SimpleNamespace(dispositivo=dispositivo, celdas=celdas_guia(rejilla))
+            for dispositivo, rejilla in resueltas.items()
+        ),
+        mapa_json=json.dumps(
+            mapa_publico(resueltas), ensure_ascii=True, separators=(',', ':'),
+        ),
+    )
+    return SeccionVista(
+        pieza.id,
+        'inicio/secciones/pieza_mosaico.html',
+        libre=True,
+        oculta=not pieza.visible,
+        mosaico=mosaico,
+    )
+
+
+def _datos_rejilla(pieza):
+    """Miniaturas y estado del grid para el inspector. El contenido no se copia aquí."""
+    resueltas = resolver_rejilla(casillas_de(pieza), dict(pieza.distribucion))
+    overrides = tuple(nombre for nombre, _rejilla in pieza.distribucion)
+    miniaturas = []
+    for item in catalogo_miniaturas():
+        activos = [
+            dispositivo
+            for dispositivo, rejilla in resueltas.items()
+            if coincide_preset(rejilla, item['columnas'], item['filas'])
+        ]
+        miniaturas.append({**item, 'activo_en': ' '.join(activos)})
+    return {
+        'overrides': ' '.join(overrides),
+        'miniaturas': tuple(miniaturas),
+        'mapa_json': json.dumps(
+            mapa_publico(resueltas), ensure_ascii=True, separators=(',', ':'),
+        ),
+    }
 
 
 def _celda_interna(seccion, bloque, mapa):

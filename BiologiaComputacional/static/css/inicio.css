@@ -721,6 +721,19 @@
   }
 }
 
+/* Cuadrícula libre: columnas, filas y spans salen del style de la sección.
+   Las líneas guía no viven aquí; solo se pintan en el lienzo del editor. */
+.pieza-mosaico {
+  position: relative;
+  align-items: start;
+}
+
+.pieza-mosaico-item {
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+}
+
 /* Carrusel de la portada: tres tarjetas a la vez en escritorio y una en ventana
    estrecha. Mismo radio, sombra y borde que las características. El alto sale
    del aspecto de la tarjeta, así no salta al pasar de diapositiva. */

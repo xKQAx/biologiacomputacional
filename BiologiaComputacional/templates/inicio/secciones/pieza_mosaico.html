@@ -1,0 +1,56 @@
+{% load paginas %}
+{# Cuadrícula libre. Guías y mapa solo en el editor; lo publicado usa media queries. #}
+<section
+  class="py-5"
+  data-seccion="{{ pieza.id }}"
+  data-mosaico="{{ pieza.id }}"
+  {% if modo_editor %}data-mapa="{{ pieza.mosaico.mapa_json }}"{% endif %}
+>
+  {% if modo_editor and pieza.oculta %}
+  <p class="pieza-oculta-aviso">Oculta para los visitantes. Sigue en el borrador.</p>
+  {% endif %}
+  <div class="container">
+    <div class="pieza-mosaico" id="mosaico-{{ pieza.id }}">
+      <style>{% if modo_editor %}{{ pieza.mosaico.css_lienzo|safe }}{% else %}{{ pieza.mosaico.css|safe }}{% endif %}</style>
+      {% if modo_editor %}
+      {% for guia in pieza.mosaico.guias %}
+      {% for celda in guia.celdas %}
+      {% if celda.ocupada %}
+      <div
+        class="pieza-guia-celda es-ocupada"
+        data-guia-celda
+        data-guia="{{ guia.dispositivo }}"
+        data-guia-fila="{{ celda.fila }}"
+        data-guia-columna="{{ celda.columna }}"
+        data-ocupante="{{ celda.token }}"
+        style="grid-column: {{ celda.columna }} / span {{ celda.columnas }}; grid-row: {{ celda.fila }} / span {{ celda.filas }}"
+      ></div>
+      {% else %}
+      <button
+        type="button"
+        class="pieza-guia-celda es-vacia"
+        data-guia-celda
+        data-guia="{{ guia.dispositivo }}"
+        data-guia-fila="{{ celda.fila }}"
+        data-guia-columna="{{ celda.columna }}"
+        style="grid-column: {{ celda.columna }} / span {{ celda.columnas }}; grid-row: {{ celda.fila }} / span {{ celda.filas }}"
+        aria-label="Celda vacía"
+      ></button>
+      {% endif %}
+      {% endfor %}
+      {% endfor %}
+      {% endif %}
+      {% for item in pieza.mosaico.elementos %}
+      <div
+        class="pieza-mosaico-item{% if item.tipo == 'encabezado' or item.tipo == 'boton' %} text-center{% endif %}"
+        data-elemento
+        data-ref="{{ item.token }}"
+        data-nombre="{{ item.nombre }}"
+        {% if modo_editor %}draggable="true"{% endif %}
+      >
+        {% include item.plantilla with campos=item.campos diapositivas=item.diapositivas ancla=item.ancla %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
