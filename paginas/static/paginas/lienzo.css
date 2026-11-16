@@ -46,3 +46,108 @@ img.pieza-imagen:not([src]) {
   background-color: rgba(239, 184, 16, 0.5) !important;
   box-shadow: inset 0 0 0 4px #efb810 !important;
 }
+
+/* Guías solo con el lienzo. La página pública no carga esta hoja ni pinta las celdas.
+   La celda es el ítem del mismo grid que la pieza: el borde envuelve esa área. */
+.seccion-en-edicion {
+  outline: 2px solid rgba(2, 45, 124, 0.45);
+  outline-offset: 4px;
+  transition: outline-color 160ms ease;
+}
+
+.seccion-seleccionada {
+  outline-color: #022d7c;
+}
+
+.pieza-guia-celda {
+  display: none;
+  align-self: stretch;
+  justify-self: stretch;
+  min-width: 0;
+  min-height: 2.75rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  background: transparent;
+  transition: background-color 160ms ease, outline-color 160ms ease;
+}
+
+html[data-dispositivo="escritorio"] .seccion-en-edicion .pieza-guia-celda[data-guia="escritorio"],
+html:not([data-dispositivo]) .seccion-en-edicion .pieza-guia-celda[data-guia="escritorio"],
+html[data-dispositivo="tablet"] .seccion-en-edicion .pieza-guia-celda[data-guia="tablet"],
+html[data-dispositivo="movil"] .seccion-en-edicion .pieza-guia-celda[data-guia="movil"] {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.pieza-guia-celda > .pieza-mosaico-item {
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+}
+
+.seccion-en-edicion .pieza-guia-celda.es-ocupada {
+  background: transparent;
+  outline: 1px dashed rgba(2, 45, 124, 0.4);
+  outline-offset: -1px;
+}
+
+.seccion-en-edicion .pieza-guia-celda.es-vacia {
+  cursor: pointer;
+  background: rgba(3, 82, 166, 0.06);
+  outline: 1px dashed rgba(3, 82, 166, 0.45);
+  outline-offset: -1px;
+}
+
+.pieza-guia-celda.celda-activa,
+.seccion-en-edicion .pieza-celda.celda-activa {
+  outline: 2px solid #efb810;
+  background: rgba(239, 184, 16, 0.18);
+}
+
+.pieza-guia-celda.rejilla-destino {
+  outline: 2px solid #0d5c1e;
+  background: rgba(13, 92, 30, 0.16);
+}
+
+.pieza-guia-celda.rejilla-rechazo {
+  outline: 2px solid #ba2121;
+  background: rgba(186, 33, 33, 0.16);
+}
+
+.seccion-en-edicion .pieza-mosaico-item {
+  cursor: grab;
+  user-select: none;
+}
+
+.pieza-mosaico-item.rejilla-arrastrando {
+  opacity: 0.55;
+  cursor: grabbing;
+}
+
+.rejilla-movio .pieza-mosaico-item {
+  animation: rejilla-entrar 180ms ease;
+}
+
+@keyframes rejilla-entrar {
+  from { opacity: 0.4; }
+  to { opacity: 1; }
+}
+
+/* Columnas clásicas: la guía es la propia casilla, no una capa encima. */
+.seccion-en-edicion .pieza-celda {
+  outline: 1px dashed rgba(2, 45, 124, 0.4);
+  outline-offset: -1px;
+  border-radius: 8px;
+  min-height: 2.75rem;
+}
+
+.seccion-en-edicion .pieza-celda-vacia {
+  background: rgba(3, 82, 166, 0.06);
+  cursor: pointer;
+}

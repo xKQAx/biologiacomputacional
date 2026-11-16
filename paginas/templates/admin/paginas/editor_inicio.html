@@ -168,6 +168,11 @@
       ></div>
 
       <div class="editor-lienzo">
+        <div class="editor-dispositivos" role="group" aria-label="Dispositivo de la distribución">
+          <button type="button" data-dispositivo-btn="escritorio" class="activa" aria-pressed="true">Escritorio</button>
+          <button type="button" data-dispositivo-btn="tablet" aria-pressed="false">Tablet</button>
+          <button type="button" data-dispositivo-btn="movil" aria-pressed="false">Móvil</button>
+        </div>
         <iframe
           id="lienzo"
           title="Lienzo de {{ nombre }}"

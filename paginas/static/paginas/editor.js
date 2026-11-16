@@ -15,6 +15,8 @@
   var enviando = false;
   var cola = [];
   var seleccion = { tipo: "parte", grupo: grupoInicial(), clave: "", pieza: "" };
+  var dispositivo = "escritorio";
+  var celdaElegida = null;
 
   function leerGuardado() {
     var nodo = document.getElementById("estado-guardado");
@@ -168,7 +170,6 @@
     refrescarBarra(campo);
   }
 
-  /* El lienzo es el documento del iframe. No hace falta recargarlo ni esperar postMessage. */
   function documentoLienzo() {
     try {
       var doc = marco.contentDocument;
@@ -180,6 +181,8 @@
     return null;
   }
 
+  /* El padre escribe el documento del iframe. post aplica aquí texto, orden,
+     sección, vista, dispositivo y sección activa: no hay postMessage en este sentido. */
   function post(mensaje) {
     if (!mensaje) return;
     var doc = documentoLienzo();
@@ -311,6 +314,7 @@
     var actual = contenedor.querySelector('[data-seccion="' + CSS.escape(data.id) + '"]');
     var html = String(data.html || "").trim();
     var nuevo = null;
+    var enEdicion = !!(actual && actual.classList.contains("seccion-en-edicion"));
     if (!html) {
       if (actual) actual.remove();
     } else {
@@ -320,8 +324,11 @@
       if (!nuevo) return;
       if (actual) actual.replaceWith(nuevo);
       else contenedor.appendChild(nuevo);
+      if (enEdicion) nuevo.classList.add("seccion-en-edicion");
+      if (data.movio) nuevo.classList.add("rejilla-movio");
     }
     if (Array.isArray(data.orden)) reordenarLienzo(doc, data.orden);
+    integrarLienzo(doc);
     if (!actual && nuevo && nuevo.scrollIntoView) {
       nuevo.scrollIntoView({ block: "center" });
       return;
@@ -359,6 +366,14 @@
     }
     if (data.tipo === "vista") {
       doc.documentElement.dataset.vista = data.vista === "sesion" ? "sesion" : "visitante";
+      return;
+    }
+    if (data.tipo === "dispositivo") {
+      fijarDispositivo(doc, data.dispositivo);
+      return;
+    }
+    if (data.tipo === "seccion-activa") {
+      marcarSeccionActiva(doc, data.id);
       return;
     }
     if (data.tipo === "resaltar") {
@@ -543,11 +558,12 @@
 
   function nombreEnEdicion() {
     if (seleccion.pieza) {
-      var piezaBtn = form.querySelector(
-        '[data-inspector="' + CSS.escape(seleccion.grupo) + '"] [data-pieza-btn][data-pieza="' +
+      var fsPieza = form.querySelector(
+        '[data-inspector="' + CSS.escape(seleccion.grupo) + '"] fieldset[data-pieza="' +
           CSS.escape(seleccion.pieza) + '"]'
       );
-      if (piezaBtn) return (piezaBtn.textContent || "").trim();
+      var leyenda = fsPieza && fsPieza.querySelector("legend");
+      if (leyenda) return (leyenda.textContent || "").replace(/\s+/g, " ").trim();
     }
     var control = form.querySelector(
       '[data-grupo-btn="' + CSS.escape(seleccion.grupo) + '"]'
@@ -568,11 +584,22 @@
         }
         fs.hidden = (fs.getAttribute("data-pieza") || "") !== pieza;
       });
-      panel.querySelectorAll("[data-pieza-btn]").forEach(function (boton) {
-        var activa = !!pieza && boton.getAttribute("data-pieza") === pieza;
-        boton.classList.toggle("activa", activa);
-        if (activa) boton.setAttribute("aria-current", "true");
-        else boton.removeAttribute("aria-current");
+      var quitar = panel.querySelector("[data-quitar-pieza]");
+      if (quitar) {
+        var interna = agregada && !!pieza && pieza !== "propia";
+        quitar.hidden = !interna;
+        var botonQuitar = quitar.querySelector("[data-quitar-pieza-btn]");
+        if (botonQuitar && interna) {
+          botonQuitar.setAttribute(
+            "data-vivo",
+            "pieza-quitar:" + panel.getAttribute("data-inspector") + ":" + pieza
+          );
+        }
+      }
+      panel.querySelectorAll("[data-dia-agregar]").forEach(function (boton) {
+        var dueño = boton.getAttribute("data-dia-agregar");
+        var visible = dueño === "propia" ? !pieza || pieza === "propia" : pieza === dueño;
+        boton.hidden = !visible;
       });
       var nota = panel.querySelector("[data-editando]");
       if (!nota) return;
@@ -588,26 +615,133 @@
       nota.textContent =
         "Editando la sección " + nombre + ". Elige una pieza para ver solo sus campos.";
     });
+    pintarRejilla();
   }
 
-  function elegirParte(grupo) {
-    seleccion = { tipo: "parte", grupo: grupo, clave: "", pieza: "" };
-    pintar();
-    post({ tipo: "mostrar-grupo", grupo: grupo });
+  function mapaInspector(panel) {
+    if (!panel) return null;
+    try {
+      return JSON.parse(panel.getAttribute("data-mapa") || "");
+    } catch (error) {
+      return null;
+    }
   }
 
-  function elegirPieza(grupo, pieza) {
-    seleccion = { tipo: "parte", grupo: grupo, clave: "", pieza: pieza || "" };
-    pintar();
-    if (!pieza) return;
-    var panel = form.querySelector('[data-inspector="' + CSS.escape(grupo) + '"]');
-    var fs = panel && panel.querySelector('fieldset[data-pieza="' + CSS.escape(pieza) + '"]');
-    if (!fs) return;
-    post({
-      tipo: "resaltar",
-      clave: fs.getAttribute("data-clave"),
-      desplazar: true,
+  function celdaSigueVacia(panel, celda) {
+    var mapa = mapaInspector(panel);
+    var rejilla = mapa && mapa[celda.dispositivo];
+    if (!rejilla) return false;
+    var fila = Number(celda.fila);
+    var columna = Number(celda.columna);
+    if (fila < 1 || columna < 1 || fila > rejilla.filas || columna > rejilla.columnas) return false;
+    var ocupada = false;
+    (rejilla.posiciones || []).forEach(function (pos) {
+      var filas = pos.filas || 1;
+      var columnas = pos.columnas || 1;
+      if (
+        fila >= pos.fila &&
+        fila < pos.fila + filas &&
+        columna >= pos.columna &&
+        columna < pos.columna + columnas
+      ) {
+        ocupada = true;
+      }
     });
+    return !ocupada;
+  }
+
+  /* Al soltar, al guardar o al refrescar: una celda ocupada ya no se ofrece para agregar. */
+  function olvidarCeldaSiOcupada() {
+    if (!celdaElegida) return;
+    var panel = form.querySelector('[data-inspector="' + CSS.escape(celdaElegida.id) + '"]');
+    if (!panel || !celdaSigueVacia(panel, celdaElegida)) {
+      celdaElegida = null;
+      return;
+    }
+    var propios = (panel.getAttribute("data-overrides") || "").split(/\s+/).filter(Boolean);
+    if (propios.indexOf(celdaElegida.dispositivo) === -1) celdaElegida = null;
+  }
+
+  /* El dispositivo activo enseña su miniatura, sus medidas y si tiene override. */
+  function pintarRejilla() {
+    olvidarCeldaSiOcupada();
+    document.querySelectorAll("[data-dispositivo-btn]").forEach(function (boton) {
+      var activo = boton.getAttribute("data-dispositivo-btn") === dispositivo;
+      boton.classList.toggle("activa", activo);
+      boton.setAttribute("aria-pressed", activo ? "true" : "false");
+    });
+    var marcoLienzo = document.querySelector(".editor-lienzo");
+    if (marcoLienzo) {
+      marcoLienzo.classList.toggle("dispositivo-tablet", dispositivo === "tablet");
+      marcoLienzo.classList.toggle("dispositivo-movil", dispositivo === "movil");
+    }
+    var panel = form.querySelector('[data-inspector="' + CSS.escape(seleccion.grupo) + '"]');
+    var propios = panel ? (panel.getAttribute("data-overrides") || "").split(/\s+/).filter(Boolean) : [];
+    document.querySelectorAll("[data-dispositivo-btn]").forEach(function (boton) {
+      boton.classList.toggle(
+        "con-override",
+        propios.indexOf(boton.getAttribute("data-dispositivo-btn")) !== -1
+      );
+    });
+    form.querySelectorAll("[data-preset]").forEach(function (boton) {
+      var dueño = boton.closest("[data-inspector]");
+      if (dueño && dueño.hidden) return;
+      var activos = (boton.getAttribute("data-activo-en") || "").split(/\s+/);
+      var activo = activos.indexOf(dispositivo) !== -1;
+      boton.setAttribute("aria-pressed", activo ? "true" : "false");
+      boton.classList.toggle("activa", activo);
+    });
+    var notaCelda = panel && panel.querySelector("[data-celda-nota]");
+    var agregarAqui = panel && panel.querySelector("[data-agregar-aqui]");
+    var hayCelda = !!(
+      celdaElegida &&
+      celdaElegida.id === seleccion.grupo &&
+      celdaElegida.dispositivo === dispositivo
+    );
+    if (notaCelda) {
+      notaCelda.hidden = !hayCelda;
+      notaCelda.textContent = hayCelda
+        ? "Celda vacía. La pieza que elijas abajo se coloca aquí."
+        : "";
+    }
+    if (agregarAqui) agregarAqui.hidden = !hayCelda;
+  }
+
+  /* El botón del panel es la fuente del dispositivo. El iframe solo lo refleja. */
+  function avisarLienzo() {
+    post({ tipo: "dispositivo", dispositivo: dispositivo });
+    if (seleccion.grupo) post({ tipo: "seccion-activa", id: seleccion.grupo });
+  }
+
+  function integrarLienzo(doc) {
+    try {
+      var api = doc.defaultView && doc.defaultView.BiocomLienzo;
+      if (api && api.integrar) api.integrar();
+    } catch (error) {
+      /* El lienzo aún no expone el anclaje de celdas. */
+    }
+  }
+
+  function fijarDispositivo(doc, nombre) {
+    var activo = typeof nombre === "string" && /^[a-z]+$/.test(nombre) ? nombre : "escritorio";
+    doc.documentElement.dataset.dispositivo = activo;
+    integrarLienzo(doc);
+  }
+
+  function marcarSeccionActiva(doc, id) {
+    if (!claveValida(id)) return;
+    doc.querySelectorAll("[data-seccion]").forEach(function (el) {
+      el.classList.toggle("seccion-en-edicion", el.getAttribute("data-seccion") === id);
+    });
+    integrarLienzo(doc);
+  }
+
+  function elegirParte(grupo, desdeLienzo) {
+    seleccion = { tipo: "parte", grupo: grupo, clave: "", pieza: "" };
+    celdaElegida = null;
+    pintar();
+    avisarLienzo();
+    if (!desdeLienzo) post({ tipo: "mostrar-grupo", grupo: grupo });
   }
 
   function elegirBloque(clave, desdeLienzo) {
@@ -623,7 +757,9 @@
       pieza: fs.getAttribute("data-pieza") || "",
     };
     if (vista === "visitante" || vista === "sesion") marcarVista(vista);
+    celdaElegida = null;
     pintar();
+    avisarLienzo();
     post({
       tipo: "resaltar",
       clave: clave,
@@ -965,6 +1101,51 @@
   });
 
   form.addEventListener("click", function (event) {
+    var dispositivoBtn = event.target.closest("[data-dispositivo-btn]");
+    if (dispositivoBtn) {
+      event.preventDefault();
+      var siguiente = dispositivoBtn.getAttribute("data-dispositivo-btn") || "";
+      if (siguiente && siguiente.indexOf(":") === -1) {
+        dispositivo = siguiente;
+        pintar();
+        avisarLienzo();
+      }
+      return;
+    }
+    var preset = event.target.closest("[data-preset]");
+    if (preset) {
+      event.preventDefault();
+      var seccionPreset = preset.getAttribute("data-preset-seccion");
+      var codigo = preset.getAttribute("data-preset") || "";
+      if (claveValida(seccionPreset) && codigo && codigo.indexOf(":") === -1) {
+        enviarEstructura("rejilla-preset:" + seccionPreset + ":" + dispositivo + ":" + codigo);
+      }
+      return;
+    }
+    var enCelda = event.target.closest("[data-agregar-en-celda]");
+    if (enCelda) {
+      event.preventDefault();
+      olvidarCeldaSiOcupada();
+      if (!celdaElegida || !claveValida(celdaElegida.id)) {
+        pintar();
+        return;
+      }
+      var selectTipo = form.querySelector('[data-tipo-interna="' + CSS.escape(celdaElegida.id) + '"]');
+      var tipo = selectTipo ? selectTipo.value : "texto";
+      enviarEstructura(
+        "rejilla-agregar:" +
+          celdaElegida.id +
+          ":" +
+          dispositivo +
+          ":" +
+          tipo +
+          ":" +
+          celdaElegida.fila +
+          ":" +
+          celdaElegida.columna
+      );
+      return;
+    }
     var vivo = event.target.closest("[data-vivo]");
     if (vivo) {
       event.preventDefault();
@@ -977,14 +1158,6 @@
       var caja = boton.closest("[data-formato]");
       var campo = caja && caja.querySelector("[data-campo=texto-rico]");
       if (campo) aplicarFormato(campo, boton.getAttribute("data-fmt"));
-      return;
-    }
-    var piezaBtn = event.target.closest("[data-pieza-btn]");
-    if (piezaBtn) {
-      event.preventDefault();
-      var panelPieza = piezaBtn.closest("[data-inspector]");
-      var grupoPieza = panelPieza ? panelPieza.getAttribute("data-inspector") : seleccion.grupo;
-      elegirPieza(grupoPieza, piezaBtn.getAttribute("data-pieza") || "");
       return;
     }
     var parte = event.target.closest("[data-grupo-btn]");
@@ -1094,7 +1267,7 @@
 
   form.addEventListener("change", function (event) {
     var input = event.target;
-    if (input.getAttribute("data-campo") !== "imagen") return;
+    if (!input || input.getAttribute("data-campo") !== "imagen") return;
     mostrarNombreArchivo(input);
     var fs = input.closest("fieldset[data-clave]");
     if (!fs) return;
@@ -1193,6 +1366,7 @@
     var pendientes = cola.splice(0, cola.length);
     pendientes.forEach(post);
     if (editado) sincronizar();
+    avisarLienzo();
   }
 
   // El iframe puede haber terminado antes de que este script (defer) escuche.
@@ -1205,6 +1379,27 @@
     if (event.origin !== ORIGEN || event.source !== marco.contentWindow) return;
     var data = event.data || {};
     if (data.tipo === "seleccionar") elegirBloque(data.clave, true);
+    if (data.tipo === "seleccionar-seccion" && claveValida(data.id)) elegirParte(data.id, true);
+    if (data.tipo === "seleccionar-celda" && claveValida(data.id)) {
+      seleccion = { tipo: "parte", grupo: data.id, clave: "", pieza: "" };
+      celdaElegida = {
+        id: data.id,
+        fila: Number(data.fila),
+        columna: Number(data.columna),
+        dispositivo: dispositivo,
+      };
+      pintar();
+      avisarLienzo();
+    }
+    if (data.tipo === "rejilla-soltar" && claveValida(data.id) && /^(propia|b[0-9]{2})$/.test(data.ref || "")) {
+      var fila = Number(data.fila);
+      var columna = Number(data.columna);
+      if (!fila || !columna) return;
+      /* El dispositivo es el del botón, no el ancho con el que el iframe pintó la página. */
+      enviarEstructura(
+        "rejilla-mover:" + data.id + ":" + dispositivo + ":" + data.ref + ":" + fila + ":" + columna
+      );
+    }
   });
 
   form.querySelectorAll("[data-formato]").forEach(function (caja) {
@@ -1303,7 +1498,7 @@
     });
   }
 
-  function aplicarEstructura(data) {
+  function aplicarEstructura(data, accion) {
     if (!data || !data.ok) {
       avisoVivo((data && data.aviso) || "No se pudo guardar el cambio.", true);
       return;
@@ -1345,7 +1540,9 @@
       id: data.id,
       html: data.html_lienzo || "",
       orden: data.orden || [],
+      movio: accion.indexOf("rejilla-mover:") === 0,
     });
+    avisarLienzo();
     if (data.seleccionar && titulo) titulo.scrollIntoView({ block: "nearest" });
     refrescarAvisoPendiente();
   }
@@ -1371,7 +1568,9 @@
       .then(function (respuesta) {
         return respuesta.json();
       })
-      .then(aplicarEstructura)
+      .then(function (data) {
+        aplicarEstructura(data, accion);
+      })
       .catch(function () {
         avisoVivo("No se pudo guardar el cambio. Inténtalo otra vez.", true);
       })

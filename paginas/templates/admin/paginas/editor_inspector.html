@@ -1,5 +1,5 @@
 {# Inspector de una sección. El índice, arriba, no repite estos campos. #}
-<div data-inspector="{{ grupo.id }}"{% if grupo.agregada %} data-agregada="1"{% endif %}{% if grupo.id != grupo_inicial %} hidden{% endif %}>
+<div data-inspector="{{ grupo.id }}"{% if grupo.agregada %} data-agregada="1" data-mapa="{{ grupo.mapa_json }}" data-overrides="{{ grupo.overrides }}"{% endif %}{% if grupo.id != grupo_inicial %} hidden{% endif %}>
   <p class="editor-editando" data-editando>
     {% if grupo.agregada %}
     Editando la sección {{ grupo.nombre }}. Elige una pieza para ver solo sus campos.
@@ -9,50 +9,31 @@
   </p>
   {% if grupo.agregada %}
   <div class="editor-opciones">
-    {# Cuadrícula Composite: columnas y, en cada casilla, las piezas que ya hay. #}
-    <div class="editor-cuadricula">
-      <span class="editor-rotulo">Cuadrícula</span>
-      <div class="editor-cuadricula-columnas" role="radiogroup" aria-label="Columnas de la sección">
-        {% for n in "123" %}
+    {# Los presets se aplican al dispositivo activo. #}
+    <div class="editor-cuadricula" data-rejilla="{{ grupo.id }}">
+      <span class="editor-rotulo">Distribución</span>
+      <p class="editor-nota">Elige una forma. Se aplica a este dispositivo al momento. El texto y las imágenes se quedan. Escritorio, tablet y móvil no se pisan.</p>
+      <div class="editor-presets" role="group" aria-label="Miniaturas de distribución">
+        {% for preset in grupo.miniaturas %}
         <button
           type="button"
-          data-vivo="columnas:{{ grupo.id }}:{{ n }}"
-          aria-pressed="{% if grupo.columnas|stringformat:'s' == n %}true{% else %}false{% endif %}"
-        >{% if n == "1" %}1 columna{% else %}{{ n }} columnas{% endif %}</button>
+          data-preset="{{ preset.codigo }}"
+          data-preset-seccion="{{ grupo.id }}"
+          data-activo-en="{{ preset.activo_en }}"
+          aria-pressed="{% if 'escritorio' in preset.activo_en %}true{% else %}false{% endif %}"
+          title="{{ preset.columnas }} por {{ preset.filas }}"
+        >
+          <span class="editor-miniatura" style="--cols: {{ preset.columnas }}; --rows: {{ preset.filas }}" aria-hidden="true">
+            {% for celda in preset.celdas %}<i></i>{% endfor %}
+          </span>
+          <span>{{ preset.columnas }} × {{ preset.filas }}</span>
+        </button>
         {% endfor %}
       </div>
-      <div class="editor-casillas">
-        {% for casilla in grupo.casillas %}
-        <div class="editor-casilla" data-casilla="{{ casilla.indice }}" data-casilla-seccion="{{ grupo.id }}">
-          <p class="editor-rotulo">Casilla {{ casilla.indice|add:1 }}</p>
-          <ul data-casilla-lista>
-            {% for item in casilla.piezas %}
-            <li data-pieza-item data-pieza="{{ item.ref }}" data-pieza-seccion="{{ grupo.id }}">
-              <span
-                class="asa"
-                data-asa-pieza
-                draggable="true"
-                role="button"
-                tabindex="0"
-                aria-label="Arrastrar {{ item.nombre }} dentro de la cuadrícula"
-              >⋮⋮</span>
-              <button type="button" data-pieza-btn data-pieza="{{ item.ref }}"{% if item.ref == pieza_abierta %} class="activa" aria-current="true"{% endif %}>{{ item.nombre }}</button>
-              {% if item.tipo == "carrusel" %}
-              <button type="button" data-vivo="dia-agregar:{{ grupo.id }}{% if item.ref != 'propia' %}:{{ item.ref }}{% endif %}" title="Agregar diapositiva">Agregar diapositiva</button>
-              {% endif %}
-              {% if item.ref != "propia" %}
-              <button type="button" class="peligro" data-vivo="pieza-quitar:{{ grupo.id }}:{{ item.ref }}" title="Quitar pieza">Quitar</button>
-              {% endif %}
-            </li>
-            {% endfor %}
-          </ul>
-          {% if not casilla.piezas %}
-          <p class="editor-nota">Esta casilla está vacía. Puedes soltar aquí una pieza.</p>
-          {% endif %}
-        </div>
-        {% endfor %}
+      <p class="editor-nota" data-celda-nota hidden></p>
+      <div class="editor-agregar-fila" data-agregar-aqui hidden>
+        <button type="button" data-agregar-en-celda>Colocar aquí la pieza elegida</button>
       </div>
-      <p class="editor-nota">Cada casilla admite varias piezas. Arrástralas dentro de la casilla o a otra. Una casilla vacía no rompe la página.</p>
       <div class="editor-agregar-fila">
         <label class="editor-rotulo" for="tipo-interna-{{ grupo.id }}">Agregar pieza</label>
         <select id="tipo-interna-{{ grupo.id }}" data-tipo-interna="{{ grupo.id }}">
@@ -62,8 +43,28 @@
         </select>
         <button type="button" data-vivo="pieza-agregar:{{ grupo.id }}" title="Agregar pieza a la sección">Agregar</button>
       </div>
-      <p class="editor-nota">Agrega un texto, una imagen, un carrusel o un botón.</p>
+      <p class="editor-nota">Agrega un texto, una imagen, un carrusel o un botón. En el lienzo, arrástralo a otra celda.</p>
     </div>
+    <div class="editor-seccion-acciones" data-quitar-pieza{% if not pieza_abierta or pieza_abierta == "propia" %} hidden{% endif %}>
+      <button
+        type="button"
+        class="peligro"
+        data-quitar-pieza-btn
+        {% if pieza_abierta and pieza_abierta != "propia" %}data-vivo="pieza-quitar:{{ grupo.id }}:{{ pieza_abierta }}"{% endif %}
+      >Quitar esta pieza</button>
+    </div>
+    {% if grupo.tipo == "carrusel" %}
+    <div class="editor-seccion-acciones">
+      <button type="button" data-vivo="dia-agregar:{{ grupo.id }}" data-dia-agregar="propia">Agregar diapositiva</button>
+    </div>
+    {% endif %}
+    {% for item in grupo.internas %}
+    {% if item.tipo == "carrusel" %}
+    <div class="editor-seccion-acciones">
+      <button type="button" data-vivo="dia-agregar:{{ grupo.id }}:{{ item.id }}" data-dia-agregar="{{ item.id }}"{% if pieza_abierta != item.id %} hidden{% endif %}>Agregar diapositiva</button>
+    </div>
+    {% endif %}
+    {% endfor %}
   </div>
   {% endif %}
   {% for bloque in grupo.bloques %}

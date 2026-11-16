@@ -169,22 +169,312 @@
     visible.scrollIntoView({ block: "center", behavior: "smooth" });
   }
 
+  function quitarMarcasSeccion() {
+    document.querySelectorAll(".seccion-seleccionada, .celda-activa").forEach(function (el) {
+      el.classList.remove("seccion-seleccionada", "celda-activa");
+    });
+  }
+
+  function marcarEdicion(seccion) {
+    document.querySelectorAll("[data-seccion]").forEach(function (el) {
+      el.classList.toggle("seccion-en-edicion", el === seccion);
+    });
+    integrarRejilla();
+  }
+
+  /* La pieza entra en la celda del dispositivo del botón. Fuera de edición
+     vuelve a ser hija directa: el CSS publicado la coloca y no hay guías. */
+  function integrarRejilla() {
+    var dispositivo = dispositivoActivo();
+    document.querySelectorAll(".pieza-mosaico").forEach(function (mosaico) {
+      var seccion = mosaico.closest("[data-seccion]");
+      var edicion = !!(seccion && seccion.classList.contains("seccion-en-edicion"));
+      mosaico.querySelectorAll("[data-elemento]").forEach(function (item) {
+        mosaico.appendChild(item);
+        item.querySelectorAll("img, a").forEach(function (nodo) {
+          nodo.setAttribute("draggable", "false");
+        });
+      });
+      if (!edicion) return;
+      mosaico.querySelectorAll(":scope > [data-elemento]").forEach(function (item) {
+        var ref = item.getAttribute("data-ref") || "";
+        var celda = mosaico.querySelector(
+          ':scope > [data-guia="' + dispositivo + '"][data-ocupante="' + ref + '"]'
+        );
+        if (celda) celda.appendChild(item);
+      });
+    });
+  }
+
+  function elegirCampo(edicion) {
+    if (!edicion) return;
+    var seccionCampo = edicion.closest("[data-seccion]");
+    quitarMarcasSeccion();
+    if (seccionCampo) marcarEdicion(seccionCampo);
+    var celda = edicion.closest("[data-guia-celda], .pieza-celda");
+    if (celda) celda.classList.add("celda-activa");
+    quitarSeleccion();
+    edicion.classList.add("edit-seleccionado");
+    window.parent.postMessage(
+      { tipo: "seleccionar", clave: edicion.getAttribute("data-edit-id") },
+      ORIGEN
+    );
+  }
+
+  function seleccionarSeccion(seccion) {
+    if (!seccion) return;
+    quitarSeleccion();
+    quitarMarcasSeccion();
+    marcarEdicion(seccion);
+    seccion.classList.add("seccion-seleccionada");
+    window.parent.postMessage(
+      { tipo: "seleccionar-seccion", id: seccion.getAttribute("data-seccion") },
+      ORIGEN
+    );
+  }
+
+  function seleccionarCelda(celda) {
+    var seccion = celda.closest("[data-seccion]");
+    quitarSeleccion();
+    quitarMarcasSeccion();
+    if (seccion) marcarEdicion(seccion);
+    celda.classList.add("celda-activa");
+    window.parent.postMessage(
+      {
+        tipo: "seleccionar-celda",
+        id: seccion ? seccion.getAttribute("data-seccion") : "",
+        fila: Number(celda.getAttribute("data-guia-fila")),
+        columna: Number(celda.getAttribute("data-guia-columna")),
+      },
+      ORIGEN
+    );
+  }
+
   document.addEventListener(
     "click",
     function (event) {
       if (event.target.closest("a")) event.preventDefault();
-      var el = event.target.closest("[data-edit-id]");
-      if (!el) return;
+      if (event.target.closest("[data-carrusel-anterior], [data-carrusel-siguiente], [data-carrusel-punto]")) {
+        return;
+      }
+      var celda = event.target.closest("[data-guia-celda]");
+      if (celda && celda.classList.contains("es-vacia")) {
+        event.preventDefault();
+        event.stopPropagation();
+        seleccionarCelda(celda);
+        return;
+      }
+      var edicion = event.target.closest("[data-edit-id]");
+      var ocupada = celda && celda.classList.contains("es-ocupada") ? celda : null;
+      var clasica = event.target.closest(".pieza-celda:not(.pieza-celda-vacia)");
+      if (!edicion && ocupada) edicion = ocupada.querySelector("[data-edit-id]");
+      if (!edicion && clasica) edicion = clasica.querySelector("[data-edit-id]");
+      if (edicion) {
+        event.preventDefault();
+        event.stopPropagation();
+        elegirCampo(edicion);
+        return;
+      }
+      var seccion = event.target.closest("[data-seccion]");
+      if (!seccion) return;
       event.preventDefault();
-      quitarSeleccion();
-      el.classList.add("edit-seleccionado");
-      window.parent.postMessage(
-        { tipo: "seleccionar", clave: el.getAttribute("data-edit-id") },
-        ORIGEN
-      );
+      seleccionarSeccion(seccion);
     },
     true
   );
+
+  /* Arrastre sobre el estado del grid. El transform no es la posición guardada. */
+  var arrastre = null;
+  var cancelado = false;
+
+  function mapaDe(seccion) {
+    try {
+      return JSON.parse(seccion.getAttribute("data-mapa") || "{}");
+    } catch (error) {
+      return {};
+    }
+  }
+
+  function dispositivoActivo() {
+    return document.documentElement.dataset.dispositivo || "escritorio";
+  }
+
+  function limpiarDestino() {
+    document.querySelectorAll(".rejilla-destino, .rejilla-rechazo, .rejilla-arrastrando").forEach(function (nodo) {
+      nodo.classList.remove("rejilla-destino", "rejilla-rechazo", "rejilla-arrastrando");
+    });
+  }
+
+  function ocupa(pos) {
+    var celdas = {};
+    for (var fila = pos.fila; fila < pos.fila + pos.filas; fila += 1) {
+      for (var columna = pos.columna; columna < pos.columna + pos.columnas; columna += 1) {
+        celdas[fila + ":" + columna] = true;
+      }
+    }
+    return celdas;
+  }
+
+  function cabe(pos, columnas, filas, otras) {
+    if (pos.fila < 1 || pos.columna < 1) return false;
+    if (pos.fila + pos.filas - 1 > filas || pos.columna + pos.columnas - 1 > columnas) return false;
+    var propias = ocupa(pos);
+    for (var i = 0; i < otras.length; i += 1) {
+      var ajenas = ocupa(otras[i]);
+      for (var clave in propias) {
+        if (ajenas[clave]) return false;
+      }
+    }
+    return true;
+  }
+
+  function evaluar(rejilla, ref, fila, columna) {
+    var actual = null;
+    (rejilla.posiciones || []).forEach(function (pos) {
+      if (pos.id === ref) actual = pos;
+    });
+    if (!actual) return false;
+    var otras = (rejilla.posiciones || []).filter(function (pos) {
+      return pos.id !== ref;
+    });
+    var ocupante = null;
+    (rejilla.posiciones || []).forEach(function (pos) {
+      if (fila >= pos.fila && fila < pos.fila + pos.filas && columna >= pos.columna && columna < pos.columna + pos.columnas) {
+        ocupante = pos;
+      }
+    });
+    if (!ocupante || ocupante.id === ref) {
+      return cabe(
+        { fila: fila, columna: columna, filas: actual.filas, columnas: actual.columnas },
+        rejilla.columnas,
+        rejilla.filas,
+        otras
+      );
+    }
+    var movida = { fila: ocupante.fila, columna: ocupante.columna, filas: actual.filas, columnas: actual.columnas };
+    var otra = { fila: actual.fila, columna: actual.columna, filas: ocupante.filas, columnas: ocupante.columnas };
+    var resto = otras.filter(function (pos) {
+      return pos.id !== ocupante.id;
+    });
+    return cabe(movida, rejilla.columnas, rejilla.filas, resto.concat([otra])) &&
+      cabe(otra, rejilla.columnas, rejilla.filas, resto.concat([movida]));
+  }
+
+  function celdaBajo(event) {
+    var nodo = event.target && event.target.closest ? event.target.closest("[data-guia-celda]") : null;
+    if (nodo) return nodo;
+    if (!event.clientX && event.clientX !== 0) return null;
+    var bajo = document.elementFromPoint(event.clientX, event.clientY);
+    return bajo && bajo.closest ? bajo.closest("[data-guia-celda]") : null;
+  }
+
+  function apuntar(celda) {
+    if (!arrastre) return;
+    if (
+      !celda ||
+      celda.closest("[data-seccion]") !== arrastre.seccion ||
+      celda.getAttribute("data-guia") !== dispositivoActivo()
+    ) {
+      limpiarDestino();
+      if (arrastre.origen) arrastre.origen.classList.add("rejilla-arrastrando");
+      arrastre.valida = false;
+      return;
+    }
+    var fila = Number(celda.getAttribute("data-guia-fila"));
+    var columna = Number(celda.getAttribute("data-guia-columna"));
+    if (!fila || !columna) {
+      arrastre.valida = false;
+      return;
+    }
+    var valida = evaluar(
+      mapaDe(arrastre.seccion)[dispositivoActivo()] || {},
+      arrastre.ref,
+      fila,
+      columna
+    );
+    limpiarDestino();
+    arrastre.origen.classList.add("rejilla-arrastrando");
+    celda.classList.add(valida ? "rejilla-destino" : "rejilla-rechazo");
+    arrastre.fila = fila;
+    arrastre.columna = columna;
+    arrastre.valida = valida;
+    arrastre.misma = celda.getAttribute("data-ocupante") === arrastre.ref;
+  }
+
+  document.addEventListener("dragstart", function (event) {
+    var origen = event.target.closest("[data-elemento]");
+    if (!origen) return;
+    if (
+      event.target.closest(
+        "[data-carrusel-anterior], [data-carrusel-siguiente], [data-carrusel-punto], input, textarea, select, [contenteditable='true']"
+      )
+    ) {
+      event.preventDefault();
+      return;
+    }
+    var seccion = origen.closest(".seccion-en-edicion");
+    if (!seccion) {
+      event.preventDefault();
+      return;
+    }
+    cancelado = false;
+    arrastre = {
+      ref: origen.getAttribute("data-ref"),
+      seccion: seccion,
+      origen: origen,
+      nombre: origen.getAttribute("data-nombre") || "Pieza",
+      valida: false,
+    };
+    origen.classList.add("rejilla-arrastrando");
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", arrastre.ref || "");
+    }
+  });
+
+  document.addEventListener("dragenter", function (event) {
+    if (!arrastre || cancelado) return;
+    event.preventDefault();
+  });
+
+  document.addEventListener("dragover", function (event) {
+    if (!arrastre || cancelado) return;
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+    apuntar(celdaBajo(event));
+  });
+
+  document.addEventListener("drop", function (event) {
+    if (!arrastre) return;
+    event.preventDefault();
+    apuntar(celdaBajo(event));
+    var datos = arrastre;
+    arrastre = null;
+    limpiarDestino();
+    if (cancelado || !datos.valida || datos.misma) return;
+    window.parent.postMessage(
+      {
+        tipo: "rejilla-soltar",
+        id: datos.seccion.getAttribute("data-seccion"),
+        ref: datos.ref,
+        fila: datos.fila,
+        columna: datos.columna,
+      },
+      ORIGEN
+    );
+  });
+
+  document.addEventListener("dragend", function () {
+    arrastre = null;
+    cancelado = false;
+    limpiarDestino();
+  });
+
+  document.addEventListener("keydown", function (event) {
+    if (event.key !== "Escape" || !arrastre) return;
+    cancelado = true;
+    limpiarDestino();
+  });
 
   document.addEventListener(
     "submit",
@@ -210,6 +500,17 @@
       }
       resaltar(data.clave, !!data.desplazar);
     }
+    if (data.tipo === "dispositivo") {
+      var dispositivo = data.dispositivo;
+      if (dispositivo !== "tablet" && dispositivo !== "movil") dispositivo = "escritorio";
+      document.documentElement.dataset.dispositivo = dispositivo;
+      integrarRejilla();
+    }
+    if (data.tipo === "seccion-activa" && claveValida(data.id)) {
+      var activa = document.querySelector('[data-seccion="' + CSS.escape(data.id) + '"]');
+      if (activa) marcarEdicion(activa);
+      else integrarRejilla();
+    }
     if (data.tipo === "mostrar-grupo" && claveValida(data.grupo)) {
       quitarSeleccion();
       var visibles = Array.prototype.filter.call(
@@ -221,4 +522,6 @@
       if (visibles[0]) visibles[0].scrollIntoView({ block: "center", behavior: "smooth" });
     }
   });
+
+  window.BiocomLienzo = { integrar: integrarRejilla };
 })();

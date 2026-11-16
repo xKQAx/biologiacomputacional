@@ -158,6 +158,8 @@ def _aviso_estructura(accion):
         return 'La pieza cambió de lugar en el borrador. La página pública no cambió.'
     if accion.startswith('columnas:'):
         return 'Columnas guardadas en el borrador. La página pública no cambió.'
+    if accion.startswith('rejilla-'):
+        return 'Distribución guardada en el borrador. La página pública no cambió.'
     if accion.startswith('dia-agregar:'):
         return 'Diapositiva agregada al borrador. La página pública no cambió.'
     if accion.startswith('dia-quitar:'):
@@ -229,6 +231,14 @@ def _pieza_elegida(accion, comp):
     if accion == 'agregar':
         return 'propia'
     if accion.startswith('pieza-quitar:'):
+        return ''
+    if accion.startswith('rejilla-agregar:'):
+        partes = accion.split(':')
+        if len(partes) < 2:
+            return ''
+        pieza = comp.por_id(partes[1])
+        if pieza is not None and pieza.bloques:
+            return pieza.bloques[-1].id
         return ''
     if not accion.startswith('pieza-agregar:'):
         return None
