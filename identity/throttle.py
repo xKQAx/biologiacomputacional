@@ -1,9 +1,13 @@
 """Límite de intentos de login, sin dependencias fuera de Django.
 
-La clave junta el texto escrito y la IP. Un acierto borra el contador.
-La caché de pruebas puede usar otro LOCATION para no mezclar procesos.
+La clave almacena un HMAC del identificador y la IP, no sus valores directos.
+Un acierto borra el contador. La caché de pruebas puede usar otro LOCATION.
 """
 
+import hashlib
+import hmac
+
+from django.conf import settings
 from django.core.cache import cache
 
 from identity.accounts import normalize_username
@@ -22,8 +26,13 @@ def client_ip(request):
 
 
 def _key(identifier, ip):
-    ident = normalize_username(identifier).lower()
-    return f"identity-login-fail:{ident}:{ip or ''}"
+    datos = f"{normalize_username(identifier).lower()}:{ip or ''}"
+    huella = hmac.new(
+        settings.SECRET_KEY.encode('utf-8'),
+        datos.encode('utf-8'),
+        hashlib.sha256,
+    ).hexdigest()
+    return f'identity-login-fail:{huella}'
 
 
 def is_locked(identifier, ip):
