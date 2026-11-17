@@ -16,6 +16,15 @@ MENSAJE_TELEFONO = (
 
 
 class FormularioContacto(forms.Form):
+    website = forms.CharField(
+        required=False,
+        max_length=200,
+        widget=forms.TextInput(attrs={
+            'autocomplete': 'off',
+            'tabindex': '-1',
+            'aria-hidden': 'true',
+        }),
+    )
     nombres = forms.CharField(
         error_messages={'required': 'Indica tus nombres.'},
         widget=forms.TextInput(
@@ -35,6 +44,7 @@ class FormularioContacto(forms.Form):
             attrs={'class': 'form-control', 'placeholder': 'Email'}),
     )
     telefono = forms.CharField(
+        required=False,
         min_length=10,
         max_length=10,
         help_text='Introduce tu número de teléfono (10 dígitos)',
@@ -53,6 +63,8 @@ class FormularioContacto(forms.Form):
     def clean_telefono(self):
         # La longitud ya la limita el campo; aquí solo se rechazan letras y símbolos.
         telefono = self.cleaned_data.get('telefono') or ''
+        if not telefono:
+            return ''
         if not telefono.isdigit():
             raise forms.ValidationError(MENSAJE_TELEFONO)
         return telefono

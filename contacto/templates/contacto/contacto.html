@@ -52,6 +52,11 @@
         <form class="needs-validation" novalidate method="POST">
           {% csrf_token %}
 
+          <div class="campo-honeypot" aria-hidden="true">
+            <label for="{{ form.website.id_for_label }}">Sitio web</label>
+            {{ form.website }}
+          </div>
+
           <div class="row g-2">
             <div class="col-md">
               <div class="form-floating has-validation mb-2">
@@ -91,9 +96,9 @@
             <input type="tel" name="telefono" id="validationCustomPhone"
               class="form-control{% if form.telefono.errors %} is-invalid{% endif %}"
               value="{{ form.telefono.value|default_if_none:'' }}"
-              placeholder="" required autocomplete="tel"
+              placeholder="" autocomplete="tel"
               {% if form.telefono.errors %}aria-invalid="true" aria-describedby="error-telefono"{% endif %}>
-            <label for="validationCustomPhone" {% edit_attrs "cto_telefono" %}>{{ bloques.cto_telefono.contenido }}</label>
+            <label for="validationCustomPhone" {% edit_attrs "cto_telefono" %}>{{ bloques.cto_telefono.contenido }} (opcional)</label>
             {% include "contacto/error_campo.html" with errores=form.telefono.errors identificador="error-telefono" %}
           </div>
 

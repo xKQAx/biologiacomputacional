@@ -1007,21 +1007,11 @@ footer a a,
   text-decoration: underline;
   text-underline-offset: 0.12em;
 }
-/* Enlace de salto oculto hasta que se navega con teclado. */
-.skip-link {
-  position: fixed;
-  top: 0.75rem;
-  left: 0.75rem;
-  z-index: 2000;
-  padding: 0.75rem 1rem;
-  color: #fff;
-  background: #022d7c;
-  border: 2px solid #efb810;
-  border-radius: 0.35rem;
-  transform: translateY(calc(-100% - 1rem));
-}
-
-.skip-link:focus-visible {
-  color: #fff;
-  transform: translateY(0);
+.campo-honeypot {
+  position: absolute !important;
+  left: -10000px !important;
+  top: auto !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
 }

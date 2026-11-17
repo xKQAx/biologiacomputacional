@@ -43,7 +43,7 @@
             <a href="{% url 'admin:mensajes_detalle' mensaje.pk %}">{{ mensaje.nombre_completo }}</a>
           </th>
           <td>{{ mensaje.email }}</td>
-          <td>{{ mensaje.telefono }}</td>
+          <td>{{ mensaje.telefono|default:'No indicado' }}</td>
           <td>{% if mensaje.extracto %}{{ mensaje.extracto }}{% else %}—{% endif %}</td>
           <td>{% if mensaje.leido %}Leído{% else %}No leído{% endif %}</td>
           <td>{{ mensaje.get_estado_display }}</td>

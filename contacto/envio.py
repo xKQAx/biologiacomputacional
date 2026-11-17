@@ -15,7 +15,7 @@ def texto_correo(datos):
     """Mismo cuerpo que ya salía hacia el buzón del laboratorio."""
     return (
         'Nombre completo: ' + datos['nombres'] + ' ' + datos['apellidos']
-        + '\nTelefono: ' + datos['telefono']
+        + '\nTelefono: ' + (datos.get('telefono') or 'No proporcionado')
         + '\nOpiniones: ' + datos['opiniones']
         + '\nCorreo: ' + datos.get('email', '')
     )

@@ -63,8 +63,17 @@ El formulario de contacto envía a `CONTACT_EMAIL` (por defecto `lab.biomol.udes
 - Termina el despliegue detrás de HTTPS; configura `SECURE_SSL_REDIRECT=true`. Activa HSTS (`SECURE_HSTS_SECONDS`) solo cuando HTTPS esté probado en todo el dominio.
 - Configura PostgreSQL y un almacenamiento persistente para archivos subidos; SQLite y el disco local no son una estrategia de producción ni de respaldo.
 - Configura el SMTP real y confirma que activación de cuentas, recuperación de contraseña y formulario de contacto llegan al buzón acordado.
+- Con `DEBUG=false`, crea la tabla de caché compartida antes de abrir el sitio: `python manage.py createcachetable django_cache`.
+- Configura el proxy confiable del alojamiento para que `REMOTE_ADDR` identifique al cliente; no uses `X-Forwarded-For` directamente desde peticiones públicas.
 - Ejecuta `python manage.py check --deploy` en el entorno de producción y revisa sus avisos antes de abrir el sitio.
 - Define y ensaya restauración de base de datos y medios; revisa los textos institucionales de privacidad antes de anunciar el formulario.
+
+## Verificación de salida
+
+- Envía un mensaje de prueba a un buzón de verificación acordado y confirma tanto su recepción por correo como su registro en la bandeja del panel.
+- Comprueba en móvil el formulario, la navegación y los enlaces principales antes de anunciar el dominio.
+- Programa respaldos cifrados fuera del servidor y una verificación periódica; ensaya una restauración en una base aparte antes de depender del respaldo.
+- La bandeja de contacto limita a ocho envíos válidos por IP en diez minutos y descarta silenciosamente los envíos que completan el campo trampa. En producción usa la caché de base de datos configurada arriba.
 
 ## Cuentas y rutas útiles
 

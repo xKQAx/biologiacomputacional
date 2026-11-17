@@ -84,13 +84,12 @@
 
   <body>
     {% asegurar_bloques %}
-    <a class="skip-link" href="#main-content">Saltar al contenido</a>
     <!-- Navbar -->
     {% include "paginas/barra.html" %}
     <!-- Fin Navbar -->
 
     <!-- Contenido variable -->
-    <main id="main-content" tabindex="-1">
+    <main>
       {% block content %}{% endblock %}
     </main>
     <!-- Fin contenido variable -->

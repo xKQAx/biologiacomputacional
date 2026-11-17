@@ -137,6 +137,23 @@ else:
         }
     }
 
+# En producción la caché de base de datos comparte los límites entre procesos.
+# Durante el despliegue se crea su tabla con `manage.py createcachetable`.
+if DEBUG:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'biocom-desarrollo',
+        },
+    }
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+            'LOCATION': 'django_cache',
+        },
+    }
+
 # Login url
 LOGIN_URL = 'signin'
 
