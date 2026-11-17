@@ -2,6 +2,8 @@
 {% load static %}
 
 {% block title %}Políticas de privacidad{% endblock %}
+{% block og_title %}Privacidad · Laboratorio de Biología Computacional UDES{% endblock %}
+{% block meta_description %}Información sobre los datos que recibe el sitio del Laboratorio de Biología Computacional y cómo se usan para cuentas y solicitudes de contacto.{% endblock %}
 
 {% block content %}
 
@@ -12,9 +14,9 @@
       <div class="text-center mb-5">
         <img src="{% static 'images/logo-color.png' %}" class="mb-4" width="90" height="75"
           alt="Logo Biología Computacional">
-        <h2 class="fw-bold" style="color: var(--primary-blue); font-family: 'Montserrat', sans-serif;">
+        <h1 class="fw-bold" style="color: var(--primary-blue); font-family: 'Montserrat', sans-serif;">
           Políticas de privacidad
-        </h2>
+        </h1>
         <p class="text-muted">Laboratorio de Biología Computacional — Universidad de Santander</p>
       </div>
 
@@ -24,30 +26,26 @@
         <p>Esta Política de Privacidad se aplica al sitio web del Laboratorio de Biología Computacional de la
           Universidad de Santander (UDES) en Bucaramanga, Colombia.</p>
 
-        <h3 class="privacy-heading">Recopilación de Información</h3>
-        <p>Recopilamos información de identificación personal, como nombres, números de teléfono y direcciones de
-          correo electrónico, cuando se nos proporciona voluntariamente. Esta información se utiliza únicamente
-          para los fines para los que se proporciona.</p>
+        <h3 class="privacy-heading">Datos que recibe el sitio</h3>
+        <p>Al crear una cuenta se solicitan nombre de usuario y correo electrónico; el nombre y apellido son
+          opcionales. El perfil puede incluir teléfono, imagen y género. El formulario de contacto solicita
+          nombres, apellidos, correo, teléfono y mensaje.</p>
 
-        <h3 class="privacy-heading">Uso de la Información</h3>
-        <p>La información que recopilamos se utiliza para iniciar sesión en nuestro sitio web y para mostrar
-          profesionales asociados a nuestro laboratorio. No compartimos esta información con terceros externos.</p>
+        <h3 class="privacy-heading">Uso y acceso</h3>
+        <p>Los datos de cuenta se usan para administrar el acceso al sitio y los perfiles asociados. Los mensajes
+          del formulario se guardan para que el personal autorizado pueda darles seguimiento y se envían al correo
+          de contacto del laboratorio: <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>, mediante el
+          servicio de correo configurado para el sitio. Las fuentes y algunas bibliotecas de la página se cargan
+          desde proveedores externos, que pueden recibir datos técnicos de conexión.</p>
 
-        <h3 class="privacy-heading">Protección de la Información</h3>
-        <p>Implementamos una variedad de medidas de seguridad para proteger la seguridad de su información
-          personal.</p>
-
-        <h3 class="privacy-heading">Consentimiento</h3>
-        <p>Al utilizar nuestro sitio web, usted acepta nuestra Política de Privacidad.</p>
-
-        <h3 class="privacy-heading">Cambios en la Política de Privacidad</h3>
-        <p>Nos reservamos el derecho de modificar esta Política de Privacidad en cualquier momento. Si decidimos
-          cambiar nuestra Política de Privacidad, publicaremos esos cambios en esta página.</p>
+        <h3 class="privacy-heading">Conservación y protección</h3>
+        <p>Los datos permanecen en los sistemas del sitio mientras se conserva la cuenta o el registro de contacto.
+          El acceso a su administración requiere una cuenta autorizada. El laboratorio debe revisar y aplicar las
+          políticas institucionales vigentes para su conservación y atención de solicitudes sobre estos datos.</p>
 
         <h3 class="privacy-heading">Contacto</h3>
-        <p class="mb-0">Si tiene alguna pregunta sobre esta Política de Privacidad, puede ponerse en contacto con
-          nosotros a través de nuestros
-          <a href="{% url 'contactos' %}">canales de contacto</a>.
+        <p class="mb-0">Para preguntas sobre esta política o los datos del sitio, escriba a
+          <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>.
         </p>
 
       </div>

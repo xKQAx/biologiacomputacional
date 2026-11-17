@@ -1,0 +1,28 @@
+{% if servicio.version or servicio.compatibilidad or servicio.requisitos or servicio.instrucciones or servicio.documentacion_url or servicio.citacion or servicio.fecha_actualizacion %}
+<section class="border border-1 rounded-4 bg-white p-3 p-md-4 my-4 text-start" aria-labelledby="detalles-recurso-titulo">
+    <h2 id="detalles-recurso-titulo" class="h5 mb-3">Detalles para usar el recurso</h2>
+    <dl class="row mb-0">
+        {% if servicio.version %}
+        <dt class="col-sm-4">Versión</dt><dd class="col-sm-8">{{ servicio.version }}</dd>
+        {% endif %}
+        {% if servicio.fecha_actualizacion %}
+        <dt class="col-sm-4">Última actualización</dt><dd class="col-sm-8">{{ servicio.fecha_actualizacion|date:"d/m/Y" }}</dd>
+        {% endif %}
+        {% if servicio.compatibilidad %}
+        <dt class="col-sm-4">Sistemas o entornos compatibles</dt><dd class="col-sm-8">{{ servicio.compatibilidad|linebreaksbr }}</dd>
+        {% endif %}
+        {% if servicio.requisitos %}
+        <dt class="col-sm-4">Requisitos</dt><dd class="col-sm-8">{{ servicio.requisitos|linebreaksbr }}</dd>
+        {% endif %}
+        {% if servicio.instrucciones %}
+        <dt class="col-sm-4">Guía breve de uso</dt><dd class="col-sm-8">{{ servicio.instrucciones|linebreaksbr }}</dd>
+        {% endif %}
+        {% if servicio.documentacion_url %}
+        <dt class="col-sm-4">Documentación</dt><dd class="col-sm-8"><a href="{{ servicio.documentacion_url }}" target="_blank" rel="noopener noreferrer">Consultar documentación</a></dd>
+        {% endif %}
+        {% if servicio.citacion %}
+        <dt class="col-sm-4">Cómo citar</dt><dd class="col-sm-8">{{ servicio.citacion|linebreaksbr }}</dd>
+        {% endif %}
+    </dl>
+</section>
+{% endif %}

@@ -63,9 +63,25 @@
       <p id="aviso-editor" class="aviso aviso-pendiente" hidden></p>
     </div>
 
+    <section class="editor-revision" aria-labelledby="titulo-revision-editor">
+      <h2 id="titulo-revision-editor">Revisión antes de publicar</h2>
+      {% if imagenes_sin_alt %}
+      <p class="editor-revision-alerta">Añade texto alternativo a estas imágenes para que también se entiendan con lector de pantalla:</p>
+      <ul>
+        {% for imagen in imagenes_sin_alt %}<li>{{ imagen.nombre }}</li>{% endfor %}
+      </ul>
+      {% else %}
+      <p>Las imágenes visibles tienen texto alternativo.</p>
+      {% endif %}
+      <p>Los enlaces inseguros se rechazan al guardar. Revisa que cada enlace lleve al destino esperado.</p>
+      <p>Comprueba la vista <strong>Escritorio, Tablet y Móvil</strong> en el lienzo antes de publicar.</p>
+      <a href="{% url 'admin:pagina_biblioteca_imagenes' %}">Abrir biblioteca de imágenes</a>
+    </section>
+
     <div class="editor-columnas">
       <aside class="editor-panel" aria-label="Partes y propiedades">
         <p class="editor-ayuda">{{ ayuda }}</p>
+        <p class="editor-nota"><a href="{% url 'admin:pagina_biblioteca_imagenes' %}">Administrar biblioteca de imágenes</a></p>
         {% if enlace_relacionado %}
         <p class="editor-nota">
           {{ enlace_relacionado.nota }}

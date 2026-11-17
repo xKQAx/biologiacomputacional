@@ -119,6 +119,16 @@
       <span class="editor-archivo-nombre" data-archivo-nombre></span>
     </div>
     <p class="editor-nota">Si no eliges otra, se conserva la imagen actual.</p>
+    <div class="editor-biblioteca">
+      <label for="biblioteca-{{ bloque.clave }}">O elige una imagen de la biblioteca</label>
+      <select id="biblioteca-{{ bloque.clave }}" data-biblioteca-imagen>
+        <option value="">Seleccionar imagen existente…</option>
+        {% for imagen_biblioteca in biblioteca_imagenes %}
+        <option value="{{ imagen_biblioteca.imagen.url }}" data-alt="{{ imagen_biblioteca.texto_alternativo }}">{{ imagen_biblioteca.nombre }}</option>
+        {% endfor %}
+      </select>
+      <p class="editor-nota">La selección reemplaza cualquier archivo nuevo elegido en este campo.</p>
+    </div>
     <p class="error-campo" id="error-imagen-{{ bloque.clave }}" data-error-imagen{% if bloque.errores.imagen %} role="alert"{% endif %}>{{ bloque.errores.imagen }}</p>
     {% if bloque.dia %}
     <div class="editor-seccion-acciones">

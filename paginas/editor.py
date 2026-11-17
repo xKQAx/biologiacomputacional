@@ -197,6 +197,7 @@ def _respuesta_viva(request, definicion, valores, orden, comp, accion, comp_ante
                 'grupo_inicial': seccion_id,
                 'tipos_internos': tipos_internos(),
                 'pieza_abierta': pieza_abierta or '',
+                'biblioteca_imagenes': _imagenes_biblioteca(),
             },
             request=request,
         )
@@ -325,10 +326,28 @@ def _pintar(
         'estado_limpio': definicion.estado_limpio,
         'enlace_relacionado': enlace,
         'publicaciones': listar(definicion.slug),
+        'biblioteca_imagenes': _imagenes_biblioteca(),
+        'imagenes_sin_alt': _imagenes_sin_alt(grupos),
     })
     respuesta = render(request, 'admin/paginas/editor_inicio.html', context)
     respuesta['Cache-Control'] = 'no-store'
     return respuesta
+
+
+def _imagenes_biblioteca():
+    from paginas.models import ImagenBiblioteca
+
+    return ImagenBiblioteca.objects.order_by('nombre', 'pk')
+
+
+def _imagenes_sin_alt(grupos):
+    """Campos de imagen sin descripción accesible para la revisión editorial."""
+    return [
+        {'nombre': bloque.nombre, 'clave': bloque.clave}
+        for grupo in grupos if not grupo['oculta']
+        for bloque in grupo['bloques']
+        if bloque.tipo == 'imagen' and not bloque.texto.strip()
+    ]
 
 
 @xframe_options_sameorigin

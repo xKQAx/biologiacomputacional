@@ -11,10 +11,19 @@ def registrar_rutas():
     def get_urls():
         from django.urls import path
 
-        from contacto.bandeja import detalle_mensaje, lista_mensajes
+        from contacto.bandeja import (
+            actualizar_seguimiento,
+            detalle_mensaje,
+            lista_mensajes,
+        )
 
         extra = [
             path('mensajes/', admin.site.admin_view(lista_mensajes), name='mensajes'),
+            path(
+                'mensajes/<int:pk>/seguimiento/',
+                admin.site.admin_view(actualizar_seguimiento),
+                name='mensajes_seguimiento',
+            ),
             path(
                 'mensajes/<int:pk>/',
                 admin.site.admin_view(detalle_mensaje),

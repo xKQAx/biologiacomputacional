@@ -1269,6 +1269,25 @@
 
   form.addEventListener("change", function (event) {
     var input = event.target;
+    if (input && input.matches && input.matches("[data-biblioteca-imagen]")) {
+      var opcion = input.options[input.selectedIndex];
+      var fsBiblioteca = input.closest("fieldset[data-clave]");
+      if (!opcion || !opcion.value || !fsBiblioteca) return;
+      var enlaceBiblioteca = fsBiblioteca.querySelector("[data-campo=enlace]");
+      var altBiblioteca = fsBiblioteca.querySelector("[data-campo=texto]");
+      var archivoBiblioteca = fsBiblioteca.querySelector("[data-campo=imagen]");
+      if (archivoBiblioteca) {
+        archivoBiblioteca.value = "";
+        mostrarNombreArchivo(archivoBiblioteca);
+      }
+      if (enlaceBiblioteca) enlaceBiblioteca.value = opcion.value;
+      if (altBiblioteca) altBiblioteca.value = opcion.getAttribute("data-alt") || "";
+      editado = true;
+      refrescarAvisoPendiente();
+      post(mensajeCampo(fsBiblioteca));
+      input.value = "";
+      return;
+    }
     if (!input || input.getAttribute("data-campo") !== "imagen") return;
     mostrarNombreArchivo(input);
     var fs = input.closest("fieldset[data-clave]");

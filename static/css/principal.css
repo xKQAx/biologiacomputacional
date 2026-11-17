@@ -469,3 +469,36 @@ textarea:focus {
   border-top: 1px solid rgba(0, 0, 0, 0.05);
   padding: 1.5rem;
 }
+/* Enlace de salto visible al navegar con teclado. */
+.skip-link {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 2000;
+  padding: 0.75rem 1rem;
+  color: #fff;
+  background: #022d7c;
+  border-radius: 0.25rem;
+  transform: translateY(-150%);
+}
+
+.skip-link:focus {
+  color: #fff;
+  transform: translateY(0);
+}
+
+:focus-visible {
+  outline: 3px solid #efb810;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

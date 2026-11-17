@@ -11,9 +11,9 @@ from investigacion.carrusel import (
     CAMPOS_IMAGEN,
 )
 from investigacion.forms import CarruselBorradorForm, filas_del_formulario
+from investigacion.forms import InvestigacionForm
 from django.utils.decorators import method_decorator
 from django.shortcuts import render, get_object_or_404, redirect
-from BiologiaComputacional.forms import InvestigacionForm
 from BiologiaComputacional.permissions import staff_required
 from django.contrib import messages
 from django.views import View
@@ -21,12 +21,57 @@ from paginas.contenido import contexto_publico
 
 
 def contexto_pagina(request=None):
-    """Datos del listado. El carrusel aquí es el publicado; su borrador tiene otra pantalla."""
+    """Catálogo filtrable. El carrusel publicado conserva su flujo independiente."""
     carrusel = publicado_actual()
+    investigaciones = Investigacion.objects.select_related('categoria').order_by(
+        'categoria__nombre_categoria', 'nombre',
+    )
+    filtros = {
+        'q': '' if request is None else request.GET.get('q', '').strip(),
+        'categoria': '' if request is None else request.GET.get('categoria', '').strip(),
+        'anio': '' if request is None else request.GET.get('anio', '').strip(),
+        'organismo': '' if request is None else request.GET.get('organismo', '').strip(),
+        'metodo': '' if request is None else request.GET.get('metodo', '').strip(),
+    }
+    if filtros['q']:
+        from django.db.models import Q
+
+        termino = filtros['q']
+        investigaciones = investigaciones.filter(
+            Q(nombre__icontains=termino)
+            | Q(descrip__icontains=termino)
+            | Q(organismo__icontains=termino)
+            | Q(metodos__icontains=termino)
+            | Q(palabras_clave__icontains=termino)
+        )
+    if filtros['categoria'].isdigit():
+        investigaciones = investigaciones.filter(categoria_id=filtros['categoria'])
+    if filtros['anio'].isdigit():
+        investigaciones = investigaciones.filter(anio=filtros['anio'])
+    if filtros['organismo']:
+        investigaciones = investigaciones.filter(organismo__icontains=filtros['organismo'])
+    if filtros['metodo']:
+        investigaciones = investigaciones.filter(metodos__icontains=filtros['metodo'])
+    categorias = list(CategoriaI.objects.all())
+    proyectos = list(investigaciones)
+    grupos_catalogo = [
+        {
+            'categoria': categoria,
+            'investigaciones': [
+                proyecto for proyecto in proyectos
+                if proyecto.categoria_id == categoria.pk
+            ],
+        }
+        for categoria in categorias
+    ]
     return {
-        'categorias': CategoriaI.objects.all(),
+        'categorias': categorias,
+        'grupos_catalogo': grupos_catalogo,
         'carrusel': carrusel,
         'diapositivas': diapositivas_publicas(carrusel),
+        'investigaciones': proyectos,
+        'filtros_investigacion': filtros,
+        'cantidad_investigaciones': len(proyectos),
     }
 
 

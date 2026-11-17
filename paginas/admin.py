@@ -12,11 +12,17 @@ def registrar_rutas():
     def get_urls():
         from django.urls import path
 
+        from paginas.biblioteca import biblioteca_imagenes
         from paginas.editor import editor_inicio, editor_pagina, lienzo_inicio, lienzo_pagina
 
         # Antes que el resto: son rutas propias, no un modelo del admin.
         # Inicio va primero para conservar sus nombres. El resto usa el mismo editor.
         extra = [
+            path(
+                'pagina/biblioteca-imagenes/',
+                admin.site.admin_view(biblioteca_imagenes),
+                name='pagina_biblioteca_imagenes',
+            ),
             path(
                 'pagina/inicio/lienzo/',
                 admin.site.admin_view(lienzo_inicio),

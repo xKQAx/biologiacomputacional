@@ -19,9 +19,15 @@
 
         <div class="row">
             <div class="col-sm-12 col-md-4 col-lg-4 col-xl-4 mt-4 mb-4 text-center">
+                {% if profesional.foto %}
                 <img src="{{ profesional.foto.url }}"
-                    class="border border-3 img-fluid rounded-5 shadow align-items-center" alt="" width="250"
+                    class="border border-3 img-fluid rounded-5 shadow align-items-center" alt="Foto actual de {{ profesional.nombre }} {{ profesional.apellido }}" width="250"
                     height="100">
+                {% else %}
+                <img src="{% static 'images/default.jpg' %}"
+                    class="border border-3 img-fluid rounded-5 shadow align-items-center" alt="Perfil sin fotografía" width="250"
+                    height="100">
+                {% endif %}
 
                 <!-- File input agregar imagen -->
                 <h5 class="text-start mb-3 text-center mt-4"><i class="fa-solid fa-images me-1"></i> Imagen</h5>

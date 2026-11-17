@@ -2,6 +2,8 @@
 {% load static paginas %}
 
 {% block title %}Contacto{% endblock %}
+{% block og_title %}Contacto · Laboratorio de Biología Computacional UDES{% endblock %}
+{% block meta_description %}Contacta al Laboratorio de Biología Computacional de la Universidad de Santander por correo o mediante el formulario del sitio.{% endblock %}
 
 {% block content %}
 
@@ -32,31 +34,11 @@
 
         <div class="contact-info-item">
           <div class="contact-info-icon">
-            <i class="fa-solid fa-phone" aria-hidden="true"></i>
-          </div>
-          <div>
-            <p class="contact-info-label" {% edit_attrs "cto_tel_etiqueta" %}>{{ bloques.cto_tel_etiqueta.contenido }}</p>
-            <p class="contact-info-value" {% edit_attrs "cto_tel" %}>{{ bloques.cto_tel.contenido }}</p>
-          </div>
-        </div>
-
-        <div class="contact-info-item">
-          <div class="contact-info-icon">
             <i class="fa-solid fa-envelope" aria-hidden="true"></i>
           </div>
           <div>
             <p class="contact-info-label" {% edit_attrs "cto_correo_etiqueta" %}>{{ bloques.cto_correo_etiqueta.contenido }}</p>
-            <p class="contact-info-value" {% edit_attrs "cto_correo" %}>{{ bloques.cto_correo.contenido }}</p>
-          </div>
-        </div>
-
-        <div class="contact-info-item">
-          <div class="contact-info-icon">
-            <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
-          </div>
-          <div>
-            <p class="contact-info-label" {% edit_attrs "cto_lugar_etiqueta" %}>{{ bloques.cto_lugar_etiqueta.contenido }}</p>
-            <p class="contact-info-value" {% edit_attrs "cto_lugar" %}>{{ bloques.cto_lugar.contenido }}</p>
+            <a class="contact-info-value" href="mailto:{{ contact_email }}">{{ contact_email }}</a>
           </div>
         </div>
       </div>

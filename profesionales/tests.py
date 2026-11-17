@@ -42,3 +42,21 @@ class InfoProfesionalJsonTests(TestCase):
         self.assertNotIn('email', row)
         self.assertNotIn('telefono', row)
         self.assertNotIn('ana@example.com', response.content.decode())
+
+
+class PerfilSinFotografiaTests(TestCase):
+    def test_el_listado_y_el_detalle_usan_avatar_alternativo(self):
+        profesional = InformacionProfesional.objects.create(
+            nombre='Perfil',
+            apellido='Demostración',
+            titulo_universitario='Investigador de ejemplo',
+            universidad='Universidad de prueba',
+            email='perfil.demo@example.org',
+            telefono='0000000000',
+        )
+
+        listado = self.client.get('/profesionales/')
+        detalle = self.client.get(f'/profesionales/id={profesional.pk}/')
+
+        self.assertContains(listado, 'images/default.jpg')
+        self.assertContains(detalle, 'images/default.jpg')

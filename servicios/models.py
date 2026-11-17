@@ -13,6 +13,13 @@ class Servicio(models.Model):
     categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE)
     nombre = models.CharField(max_length=100, unique=True)
     descrip = models.TextField(blank=False)
+    version = models.CharField('Versión', max_length=80, blank=True)
+    compatibilidad = models.TextField('Compatibilidad', blank=True)
+    requisitos = models.TextField('Requisitos', blank=True)
+    instrucciones = models.TextField('Guía de uso', blank=True)
+    documentacion_url = models.URLField('Documentación', blank=True)
+    citacion = models.TextField('Cómo citar', blank=True)
+    fecha_actualizacion = models.DateField('Última actualización', blank=True, null=True)
     imagen_servicio = models.ImageField(upload_to='servicios-imagenes/', blank=True)
     # La ficha ya anuncia ZIP o RAR. El modelo lo exige para que el admin no acepte otro tipo.
     archivo = models.FileField(

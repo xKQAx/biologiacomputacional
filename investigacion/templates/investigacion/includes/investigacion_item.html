@@ -13,6 +13,22 @@ Cry11 conserva la imagen a la izquierda; el resto, el texto.
                         style="width: 40px;">
                     <div class="texto-corrido">{{ investigacion.descrip|html_o_parrafos }}</div>
 
+                    {% if investigacion.anio or investigacion.organismo or investigacion.metodos or investigacion.palabras_clave or investigacion.publicacion_url or investigacion.datos_url or investigacion.codigo_url %}
+                    <div class="small text-muted mt-3">
+                        {% if investigacion.anio %}<span class="me-3"><strong>Año:</strong> {{ investigacion.anio }}</span>{% endif %}
+                        {% if investigacion.organismo %}<span class="me-3"><strong>Organismo:</strong> {{ investigacion.organismo }}</span>{% endif %}
+                        {% if investigacion.metodos %}<p class="mb-1 mt-2"><strong>Métodos:</strong> {{ investigacion.metodos }}</p>{% endif %}
+                        {% if investigacion.palabras_clave %}<p class="mb-1"><strong>Palabras clave:</strong> {{ investigacion.palabras_clave }}</p>{% endif %}
+                        {% if investigacion.publicacion_url or investigacion.datos_url or investigacion.codigo_url %}
+                        <div class="d-flex flex-wrap gap-2 mt-2">
+                            {% if investigacion.publicacion_url %}<a href="{{ investigacion.publicacion_url }}" target="_blank" rel="noopener noreferrer">Publicación</a>{% endif %}
+                            {% if investigacion.datos_url %}<a href="{{ investigacion.datos_url }}" target="_blank" rel="noopener noreferrer">Datos</a>{% endif %}
+                            {% if investigacion.codigo_url %}<a href="{{ investigacion.codigo_url }}" target="_blank" rel="noopener noreferrer">Código</a>{% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
                     <p class="text-center mt-5">Resultados para {{ investigacion.nombre }}</p>
                     <hr class="border border-dark border-2 shadow opacity-75 mx-auto" style="width: 40px;">
 
@@ -106,9 +122,18 @@ Cry11 conserva la imagen a la izquierda; el resto, el texto.
 
             <div class="col-sm-12 col-md-6 {% if categoria.nombre_categoria == 'Cry11' %}order-1{% else %}order-2{% endif %}">
                 <div class="card-body text-center mt-5 mx-auto custom-photo d-flex flex-column justify-content-center">
+                    {% if investigacion.imagen_investigacion %}
                     <img src="{{ investigacion.imagen_investigacion.url }}"
                         class="img-fluid border border-2 border-secondary shadow-lg text-center rounded-5"
                         alt="{{ investigacion.nombre }}" style="max-width: 100%; height: auto;">
+                    {% else %}
+                    <div class="border border-2 border-secondary shadow-lg rounded-5 bg-white d-flex flex-column justify-content-center align-items-center text-muted p-4"
+                        role="img" aria-label="Imagen pendiente para {{ investigacion.nombre }}"
+                        style="min-height: 300px;">
+                        <i class="fa-solid fa-flask fa-3x mb-3" aria-hidden="true"></i>
+                        <span>Imagen de demostración pendiente</span>
+                    </div>
+                    {% endif %}
                     <div class="row mt-5 d-flex justify-content-center align-items-center">
                         {% for numero, imagen in investigacion.imagenes_extra %}
                         {% if imagen %}

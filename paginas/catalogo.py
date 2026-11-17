@@ -375,10 +375,6 @@ _BASE = (
     ),
     _b('pie_legal_aviso', 'pie', 'Aviso Legal', 'Aviso Legal', tipo=ENLACE, enlace='#'),
     _b('pie_contacto_titulo', 'pie', 'Título de contacto', 'Contacto'),
-    _b('pie_direccion_1', 'pie', 'Dirección', 'Campus Universitario Lagos del Cacique'),
-    _b('pie_direccion_2', 'pie', 'Calle', 'Calle 70 No. 55-210'),
-    _b('pie_direccion_3', 'pie', 'Ciudad', 'Bucaramanga, Colombia'),
-    _b('pie_telefono', 'pie', 'Teléfono', 'PBX: +57 607 6516500', formato=PLANO),
 )
 
 CATALOGO = tuple(

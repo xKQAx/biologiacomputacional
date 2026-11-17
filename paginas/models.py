@@ -55,3 +55,28 @@ class HistorialPagina(models.Model):
 
     def __str__(self):
         return f'{self.pagina} ({self.fecha:%Y-%m-%d %H:%M})'
+
+
+class ImagenBiblioteca(models.Model):
+    """Imagen reutilizable disponible desde el editor de páginas."""
+
+    nombre = models.CharField('Nombre', max_length=120)
+    imagen = models.ImageField('Imagen', upload_to='biblioteca-imagenes/')
+    texto_alternativo = models.CharField('Texto alternativo', max_length=200)
+    subida_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name='Subida por',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='imagenes_biblioteca',
+    )
+    creada = models.DateTimeField('Fecha de carga', auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'imagen de biblioteca'
+        verbose_name_plural = 'biblioteca de imágenes'
+        ordering = ['nombre', 'pk']
+
+    def __str__(self):
+        return self.nombre

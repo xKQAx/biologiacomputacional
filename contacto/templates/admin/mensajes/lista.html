@@ -8,6 +8,18 @@
     si no sale, el texto queda aquí igual.
   </p>
 
+  <form method="get" class="admin-lab-filtro-mensajes">
+    <label for="filtro-estado">Filtrar por estado</label>
+    <select id="filtro-estado" name="estado">
+      <option value="">Todos</option>
+      {% for valor, etiqueta in estados %}
+      <option value="{{ valor }}"{% if estado_seleccionado == valor %} selected{% endif %}>{{ etiqueta }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit">Filtrar</button>
+    {% if estado_seleccionado %}<a href="{% url 'admin:mensajes' %}">Limpiar</a>{% endif %}
+  </form>
+
   <div class="admin-lab-tabla-wrap">
     <table class="admin-lab-cuentas-tabla">
       <caption class="admin-lab-sr">Mensajes de contacto</caption>
@@ -19,6 +31,8 @@
           <th scope="col">Teléfono</th>
           <th scope="col">Extracto</th>
           <th scope="col">Leído</th>
+          <th scope="col">Estado</th>
+          <th scope="col">Responsable</th>
         </tr>
       </thead>
       <tbody>
@@ -32,10 +46,12 @@
           <td>{{ mensaje.telefono }}</td>
           <td>{% if mensaje.extracto %}{{ mensaje.extracto }}{% else %}—{% endif %}</td>
           <td>{% if mensaje.leido %}Leído{% else %}No leído{% endif %}</td>
+          <td>{{ mensaje.get_estado_display }}</td>
+          <td>{% if mensaje.asignado_a %}{{ mensaje.asignado_a.get_full_name|default:mensaje.asignado_a.username }}{% else %}Sin asignar{% endif %}</td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="6">Todavía no hay mensajes.</td>
+          <td colspan="8">Todavía no hay mensajes para este filtro.</td>
         </tr>
         {% endfor %}
       </tbody>

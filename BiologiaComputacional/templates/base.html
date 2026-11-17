@@ -5,6 +5,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{% block title %}Inicio{% endblock %} · Biología Computacional</title>
+    <meta name="description" content="{% block meta_description %}Laboratorio de Biología Computacional de la Universidad de Santander. Investigación, profesionales y recursos en biología computacional.{% endblock %}" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="{% block og_title %}Laboratorio de Biología Computacional · UDES{% endblock %}" />
+    <meta property="og:description" content="{% block og_description %}Investigación, profesionales y recursos del Laboratorio de Biología Computacional de la Universidad de Santander.{% endblock %}" />
+    <link rel="canonical" href="{{ request.build_absolute_uri|cut:'?' }}" />
+    <meta property="og:url" content="{{ request.build_absolute_uri|cut:'?' }}" />
+    {% static 'images/logo-color.png' as og_image %}
+    <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ og_image }}" />
+    <meta name="twitter:card" content="summary" />
     {% block extra_head %}{% endblock %}
     {% if modo_editor %}
     <script>document.documentElement.dataset.vista = "visitante";</script>
@@ -75,12 +84,15 @@
 
   <body>
     {% asegurar_bloques %}
+    <a class="skip-link" href="#main-content">Saltar al contenido</a>
     <!-- Navbar -->
     {% include "paginas/barra.html" %}
     <!-- Fin Navbar -->
 
     <!-- Contenido variable -->
-    {% block content %} {% endblock %}
+    <main id="main-content" tabindex="-1">
+      {% block content %}{% endblock %}
+    </main>
     <!-- Fin contenido variable -->
 
     <!-- Footer -->

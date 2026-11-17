@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 # El listado del panel muestra un recorte; el detalle conserva el texto entero.
@@ -7,6 +8,11 @@ LARGO_EXTRACTO = 80
 class MensajeContacto(models.Model):
     """Copia de un envío del formulario público, para leerla en el panel."""
 
+    class Estado(models.TextChoices):
+        NUEVO = 'nuevo', 'Nuevo'
+        EN_GESTION = 'en_gestion', 'En gestión'
+        RESUELTO = 'resuelto', 'Resuelto'
+
     nombres = models.CharField('Nombres', max_length=255)
     apellidos = models.CharField('Apellidos', max_length=255)
     email = models.EmailField('Correo')
@@ -14,6 +20,19 @@ class MensajeContacto(models.Model):
     opiniones = models.TextField('Mensaje')
     creado = models.DateTimeField('Fecha', auto_now_add=True, db_index=True)
     leido = models.BooleanField('Leído', default=False)
+    estado = models.CharField(
+        'Estado de seguimiento', max_length=20,
+        choices=Estado.choices, default=Estado.NUEVO, db_index=True,
+    )
+    asignado_a = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name='Asignado a',
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name='mensajes_contacto_asignados',
+        limit_choices_to={'is_staff': True},
+    )
 
     class Meta:
         verbose_name = 'Mensaje de contacto'

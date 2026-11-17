@@ -20,8 +20,13 @@
 
                     <div class="card border-0 w-100">
                         <div class="card-body d-flex flex-column align-items-center text-center">
-                            <img src="{{ profesional.foto.url }}" alt="Imagen de perfil"
+                            {% if profesional.foto %}
+                            <img src="{{ profesional.foto.url }}" alt="Imagen de perfil de {{ profesional.nombre }} {{ profesional.apellido }}"
                                 class="border border-3 img-fluid rounded-5 shadow">
+                            {% else %}
+                            <img src="{% static 'images/default.jpg' %}" alt="Perfil sin fotografía"
+                                class="border border-3 img-fluid rounded-5 shadow">
+                            {% endif %}
 
                             <h4 class="card-title mt-4">Campos de interés
                                 <hr class="mt-3 border border-dark text-primary border-2 shadow opacity-75 mx-auto"

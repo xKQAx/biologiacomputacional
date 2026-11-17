@@ -1,0 +1,44 @@
+<div class="col-12 col-lg-10">
+    <h5 class="mb-1">Datos para encontrar este proyecto</h5>
+    <p class="text-muted small">Todos estos campos son opcionales. Complétalos cuando aporten contexto.</p>
+    <div class="row g-3">
+        <div class="col-12 col-sm-4">
+            <label class="form-label" for="{{ form.anio.id_for_label }}">{{ form.anio.label }}</label>
+            {{ form.anio }}
+            {% for error in form.anio.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="col-12 col-sm-8">
+            <label class="form-label" for="{{ form.organismo.id_for_label }}">{{ form.organismo.label }}</label>
+            {{ form.organismo }}
+            {% if form.organismo.help_text %}<div class="form-text">{{ form.organismo.help_text }}</div>{% endif %}
+            {% for error in form.organismo.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="col-12 col-md-6">
+            <label class="form-label" for="{{ form.metodos.id_for_label }}">{{ form.metodos.label }}</label>
+            {{ form.metodos }}
+            {% if form.metodos.help_text %}<div class="form-text">{{ form.metodos.help_text }}</div>{% endif %}
+            {% for error in form.metodos.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="col-12 col-md-6">
+            <label class="form-label" for="{{ form.palabras_clave.id_for_label }}">{{ form.palabras_clave.label }}</label>
+            {{ form.palabras_clave }}
+            {% if form.palabras_clave.help_text %}<div class="form-text">{{ form.palabras_clave.help_text }}</div>{% endif %}
+            {% for error in form.palabras_clave.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="col-12 col-md-4">
+            <label class="form-label" for="{{ form.publicacion_url.id_for_label }}">{{ form.publicacion_url.label }}</label>
+            {{ form.publicacion_url }}
+            {% for error in form.publicacion_url.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="col-12 col-md-4">
+            <label class="form-label" for="{{ form.datos_url.id_for_label }}">{{ form.datos_url.label }}</label>
+            {{ form.datos_url }}
+            {% for error in form.datos_url.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="col-12 col-md-4">
+            <label class="form-label" for="{{ form.codigo_url.id_for_label }}">{{ form.codigo_url.label }}</label>
+            {{ form.codigo_url }}
+            {% for error in form.codigo_url.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+        </div>
+    </div>
+</div>

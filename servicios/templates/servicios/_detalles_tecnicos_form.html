@@ -1,0 +1,40 @@
+<fieldset class="border border-1 rounded-4 bg-white p-3 my-3 text-start">
+    <legend class="float-none w-auto px-2 fs-5">Detalles para usar el recurso <small class="text-body-secondary">(opcionales)</small></legend>
+    <div class="row g-3">
+        <div class="col-12 col-md-6">
+            <label for="{{ form.version.id_for_label }}" class="form-label">Versión</label>
+            {{ form.version }}
+            {{ form.version.errors }}
+        </div>
+        <div class="col-12 col-md-6">
+            <label for="{{ form.fecha_actualizacion.id_for_label }}" class="form-label">Última actualización</label>
+            {{ form.fecha_actualizacion }}
+            {{ form.fecha_actualizacion.errors }}
+        </div>
+        <div class="col-12 col-md-6">
+            <label for="{{ form.compatibilidad.id_for_label }}" class="form-label">Sistemas o entornos compatibles</label>
+            {{ form.compatibilidad }}
+            {{ form.compatibilidad.errors }}
+        </div>
+        <div class="col-12 col-md-6">
+            <label for="{{ form.requisitos.id_for_label }}" class="form-label">Requisitos</label>
+            {{ form.requisitos }}
+            {{ form.requisitos.errors }}
+        </div>
+        <div class="col-12">
+            <label for="{{ form.instrucciones.id_for_label }}" class="form-label">Guía breve de uso</label>
+            {{ form.instrucciones }}
+            {{ form.instrucciones.errors }}
+        </div>
+        <div class="col-12">
+            <label for="{{ form.documentacion_url.id_for_label }}" class="form-label">Enlace a documentación</label>
+            {{ form.documentacion_url }}
+            {{ form.documentacion_url.errors }}
+        </div>
+        <div class="col-12">
+            <label for="{{ form.citacion.id_for_label }}" class="form-label">Cómo citar este recurso</label>
+            {{ form.citacion }}
+            {{ form.citacion.errors }}
+        </div>
+    </div>
+</fieldset>

@@ -63,6 +63,7 @@
 
         <!-- Seccion descripcion -->
         <p class="fw-light mt-4">{{ servicio.descrip }}</p>
+        {% include "servicios/_detalles_tecnicos.html" %}
 
         <!-- Seccion para archivo -->
         <div class="d-flex justify-content-center border border-2 rounded-4 bg-white py-4 mt-4 shadow-sm">
@@ -204,6 +205,7 @@
 
         <!-- Seccion descripcion -->
         <p class="fw-light mt-4">{{ servicio.descrip }}</p>
+        {% include "servicios/_detalles_tecnicos.html" %}
 
         <!-- Seccion imagen -->
         {% if servicio.imagen_servicio %}

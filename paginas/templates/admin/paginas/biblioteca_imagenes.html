@@ -1,0 +1,48 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div id="content-main">
+  <p>Sube una imagen una vez y reutilízala desde los campos de imagen del editor de páginas. Cada imagen requiere un texto alternativo.</p>
+  <form method="post" enctype="multipart/form-data" class="module aligned">
+    {% csrf_token %}
+    {{ formulario.non_field_errors }}
+    <div class="form-row">
+      {{ formulario.nombre.errors }}
+      {{ formulario.nombre.label_tag }} {{ formulario.nombre }}
+    </div>
+    <div class="form-row">
+      {{ formulario.imagen.errors }}
+      {{ formulario.imagen.label_tag }} {{ formulario.imagen }}
+      <p class="help">JPG, PNG, GIF o WEBP; máximo 2 MB.</p>
+    </div>
+    <div class="form-row">
+      {{ formulario.texto_alternativo.errors }}
+      {{ formulario.texto_alternativo.label_tag }} {{ formulario.texto_alternativo }}
+      <p class="help">Describe la información que aporta la imagen, hasta 200 caracteres.</p>
+    </div>
+    <div class="submit-row"><button type="submit" class="default">Guardar imagen</button></div>
+  </form>
+
+  <section class="module" aria-labelledby="imagenes-guardadas">
+    <h2 id="imagenes-guardadas">Imágenes guardadas</h2>
+    <form method="get" role="search">
+      <label for="buscar-imagen">Buscar por nombre</label>
+      <input id="buscar-imagen" type="search" name="q" value="{{ consulta }}">
+      <button type="submit">Buscar</button>
+      {% if consulta %}<a href="{% url 'admin:pagina_biblioteca_imagenes' %}">Limpiar</a>{% endif %}
+    </form>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem;padding:1rem 0">
+      {% for imagen in imagenes %}
+      <article style="border:1px solid var(--hairline-color,#ddd);border-radius:8px;padding:12px">
+        <img src="{{ imagen.imagen.url }}" alt="{{ imagen.texto_alternativo }}" style="display:block;width:100%;height:150px;object-fit:contain;background:#f5f5f5">
+        <h3 style="font-size:1rem;margin:12px 0 4px">{{ imagen.nombre }}</h3>
+        <p><strong>Texto alternativo:</strong> {{ imagen.texto_alternativo }}</p>
+        <p class="help">Subida {{ imagen.creada|date:"d/m/Y" }}{% if imagen.subida_por %} por {{ imagen.subida_por.get_username }}{% endif %}</p>
+      </article>
+      {% empty %}
+      <p>{% if consulta %}No hay imágenes con ese nombre.{% else %}Aún no se han guardado imágenes.{% endif %}</p>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}

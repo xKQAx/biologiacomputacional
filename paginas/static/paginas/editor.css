@@ -949,6 +949,42 @@ body.editor-portada #content {
   background: var(--primary-blue, #0352a6);
 }
 
+.editor-revision {
+  margin: 0.8rem 1rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--border-color, #d5dbe3);
+  border-left: 4px solid var(--accent-gold, #efb810);
+  border-radius: 0.35rem;
+  background: var(--selected-bg, #f7f9fc);
+  color: var(--body-fg, #333);
+  font-size: 0.9rem;
+}
+
+.editor-revision h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+}
+
+.editor-revision p,
+.editor-revision ul {
+  margin: 0.3rem 0;
+}
+
+.editor-revision-alerta {
+  color: #8a4b08;
+  font-weight: 600;
+}
+
+.editor-biblioteca {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0.65rem 0;
+}
+
+.editor-biblioteca select {
+  max-width: 100%;
+}
+
 @media (max-width: 900px) {
   .editor-app {
     height: auto;

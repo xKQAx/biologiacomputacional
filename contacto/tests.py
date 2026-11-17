@@ -41,6 +41,8 @@ class ContactoPublicoTests(TestCase):
         self.assertEqual(guardado.telefono, '3001234567')
         self.assertEqual(guardado.opiniones, 'Quiero saber del laboratorio')
         self.assertFalse(guardado.leido)
+        self.assertEqual(guardado.estado, MensajeContacto.Estado.NUEVO)
+        self.assertIsNone(guardado.asignado_a)
         self.assertNotContains(respuesta, 'Quiero saber del laboratorio')
 
     def test_el_telefono_invalido_conserva_lo_escrito(self):
@@ -124,6 +126,7 @@ class BandejaContactoTests(TestCase):
         for ruta in (
             reverse('admin:mensajes'),
             reverse('admin:mensajes_detalle', args=[self.mensaje.pk]),
+            reverse('admin:mensajes_seguimiento', args=[self.mensaje.pk]),
         ):
             respuesta = self.client.get(ruta)
             self.assertEqual(respuesta.status_code, 302, ruta)
@@ -191,6 +194,80 @@ class BandejaContactoTests(TestCase):
         self.assertLess(nav.find('>Usuarios<'), nav.find('>Mensajes<'))
         self.assertLess(nav.find('>Cuentas<'), nav.find('>Mensajes de contacto<'))
         self.assertIn('aria-current="page">Mensajes de contacto', nav)
+
+    def test_personal_puede_actualizar_estado_y_asignar_responsable(self):
+        responsable = User.objects.create_user(
+            'responsable', 'responsable@example.com', 'ClaveSegura1',
+            is_staff=True,
+        )
+        actor = User.objects.create_user(
+            'gestor', 'gestor@example.com', 'ClaveSegura1', is_staff=True,
+        )
+        self.client.force_login(actor)
+
+        respuesta = self.client.post(
+            reverse('admin:mensajes_seguimiento', args=[self.mensaje.pk]),
+            {'estado': MensajeContacto.Estado.EN_GESTION, 'asignado_a': responsable.pk},
+            follow=True,
+        )
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(respuesta, 'Seguimiento actualizado.')
+        self.assertContains(respuesta, 'En gestión')
+        self.assertContains(respuesta, 'responsable')
+        self.mensaje.refresh_from_db()
+        self.assertEqual(self.mensaje.estado, MensajeContacto.Estado.EN_GESTION)
+        self.assertEqual(self.mensaje.asignado_a, responsable)
+
+    def test_se_puede_filtrar_la_bandeja_por_estado(self):
+        resuelto = MensajeContacto.objects.create(
+            nombres='Luis', apellidos='Díaz', email='luis@example.com',
+            telefono='3009876543', opiniones='Resuelto',
+            estado=MensajeContacto.Estado.RESUELTO,
+        )
+        staff = User.objects.create_user(
+            'filtro', 'filtro@example.com', 'ClaveSegura1', is_staff=True,
+        )
+        self.client.force_login(staff)
+
+        respuesta = self.client.get(
+            reverse('admin:mensajes'), {'estado': MensajeContacto.Estado.RESUELTO},
+        )
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(respuesta, 'Luis Díaz')
+        self.assertNotContains(respuesta, 'Ana Pérez')
+        self.assertContains(respuesta, 'selected')
+        self.assertEqual(resuelto.estado, MensajeContacto.Estado.RESUELTO)
+
+    def test_asignacion_rechaza_usuarios_que_no_son_staff(self):
+        visitante = User.objects.create_user(
+            'externo', 'externo@example.com', 'ClaveSegura1', is_staff=False,
+        )
+        staff = User.objects.create_user(
+            'gestor_invalido', 'gestor.invalido@example.com', 'ClaveSegura1', is_staff=True,
+        )
+        self.client.force_login(staff)
+
+        respuesta = self.client.post(
+            reverse('admin:mensajes_seguimiento', args=[self.mensaje.pk]),
+            {'estado': MensajeContacto.Estado.RESUELTO, 'asignado_a': visitante.pk},
+        )
+
+        self.assertEqual(respuesta.status_code, 400)
+        self.mensaje.refresh_from_db()
+        self.assertEqual(self.mensaje.estado, MensajeContacto.Estado.NUEVO)
+        self.assertIsNone(self.mensaje.asignado_a)
+
+    def test_seguimiento_solo_acepta_post(self):
+        staff = User.objects.create_user(
+            'metodo', 'metodo@example.com', 'ClaveSegura1', is_staff=True,
+        )
+        self.client.force_login(staff)
+        respuesta = self.client.get(
+            reverse('admin:mensajes_seguimiento', args=[self.mensaje.pk]),
+        )
+        self.assertEqual(respuesta.status_code, 405)
 
     def test_el_sitio_publico_no_muestra_los_mensajes(self):
         for ruta in ('/', reverse('contactos')):

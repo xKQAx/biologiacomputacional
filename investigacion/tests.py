@@ -112,6 +112,21 @@ class PaginaInvestigacionTests(_MediaAislada, TestCase):
         self.assertContains(response, 'order-1')
         self.assertNotContains(response, 'Editar investigación')
 
+    def test_una_ficha_sin_imagen_muestra_un_relleno_y_no_rompe_la_pagina(self):
+        categoria = CategoriaI.objects.create(nombre_categoria='Demostración')
+        Investigacion.objects.create(
+            categoria=categoria,
+            nombre='Proyecto sin imagen',
+            descrip='Registro de demostración para revisar la ficha.',
+            imagen_investigacion='',
+        )
+
+        response = self.client.get('/investigacion/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Proyecto sin imagen')
+        self.assertContains(response, 'Imagen de demostración pendiente')
+
     def test_superusuario_sin_staff_puede_editar(self):
         categoria = CategoriaI.objects.create(nombre_categoria='Otros')
         self._investigacion(categoria, 'ProyectoStaff')
@@ -124,6 +139,65 @@ class PaginaInvestigacionTests(_MediaAislada, TestCase):
         response = self.client.get('/investigacion/')
 
         self.assertContains(response, 'Editar investigación')
+
+    def test_catalogo_filtra_por_anio_organismo_y_metodo(self):
+        categoria = CategoriaI.objects.create(nombre_categoria='Genómica')
+        Investigacion.objects.create(
+            categoria=categoria,
+            nombre='Secuenciación bacteriana',
+            descrip='Análisis de muestras genómicas.',
+            imagen_investigacion=_png(),
+            anio=2024,
+            organismo='Bacillus subtilis',
+            metodos='secuenciación, análisis genómico',
+            palabras_clave='genómica, bacterias',
+        )
+        Investigacion.objects.create(
+            categoria=categoria,
+            nombre='Modelado de proteínas',
+            descrip='Estudio computacional de proteínas.',
+            imagen_investigacion=_png(),
+            anio=2023,
+            organismo='Homo sapiens',
+            metodos='modelado molecular',
+        )
+
+        response = self.client.get('/investigacion/', {
+            'anio': '2024', 'organismo': 'bacillus', 'metodo': 'secuenciación',
+        })
+
+        self.assertContains(response, 'Secuenciación bacteriana')
+        self.assertNotContains(response, 'Modelado de proteínas')
+        self.assertContains(response, '2024')
+        self.assertContains(response, 'Bacillus subtilis')
+
+    def test_staff_crea_proyecto_con_metadatos_y_enlaces(self):
+        categoria = CategoriaI.objects.create(nombre_categoria='Otros')
+        staff = User.objects.create_user(
+            'editor_catalogo', 'editor-catalogo@example.com', 'ClaveSegura1', is_staff=True,
+        )
+        self.client.force_login(staff)
+
+        response = self.client.post('/investigacion/nueva-investigacion/', {
+            'categoria': str(categoria.pk),
+            'nombre': 'Proyecto con datos abiertos',
+            'descrip': 'Descripción del proyecto.',
+            'anio': '2025',
+            'organismo': 'Arabidopsis thaliana',
+            'metodos': 'análisis de expresión',
+            'palabras_clave': 'genómica, plantas',
+            'publicacion_url': 'https://example.org/paper',
+            'datos_url': 'https://example.org/data',
+            'codigo_url': 'https://example.org/code',
+            'imagen_investigacion': _png(),
+        })
+
+        self.assertRedirects(response, '/investigacion/')
+        proyecto = Investigacion.objects.get(nombre='Proyecto con datos abiertos')
+        self.assertEqual(proyecto.anio, 2025)
+        self.assertEqual(proyecto.organismo, 'Arabidopsis thaliana')
+        self.assertEqual(proyecto.publicacion_url, 'https://example.org/paper')
+        self.assertContains(self.client.get('/investigacion/'), 'Datos')
 
 
 class InvestigacionPublicaTests(_MediaAislada, TestCase):

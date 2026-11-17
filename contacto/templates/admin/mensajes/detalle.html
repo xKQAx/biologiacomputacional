@@ -26,9 +26,32 @@
       <dd class="admin-lab-mensaje">{{ mensaje.opiniones }}</dd>
     </div>
     <div>
-      <dt>Estado</dt>
-      <dd>Leído</dd>
+      <dt>Seguimiento</dt>
+      <dd>{{ mensaje.get_estado_display }}</dd>
+    </div>
+    <div>
+      <dt>Responsable</dt>
+      <dd>{% if mensaje.asignado_a %}{{ mensaje.asignado_a.get_full_name|default:mensaje.asignado_a.username }}{% else %}Sin asignar{% endif %}</dd>
     </div>
   </dl>
+
+  <section class="module" aria-labelledby="seguimiento-titulo">
+    <h2 id="seguimiento-titulo">Actualizar seguimiento</h2>
+    <form method="post" action="{% url 'admin:mensajes_seguimiento' mensaje.pk %}">
+      {% csrf_token %}
+      {{ seguimiento_form.non_field_errors }}
+      <p>
+        {{ seguimiento_form.estado.label_tag }}
+        {{ seguimiento_form.estado }}
+        {{ seguimiento_form.estado.errors }}
+      </p>
+      <p>
+        {{ seguimiento_form.asignado_a.label_tag }}
+        {{ seguimiento_form.asignado_a }}
+        {{ seguimiento_form.asignado_a.errors }}
+      </p>
+      <button type="submit" class="button default">Guardar seguimiento</button>
+    </form>
+  </section>
 </div>
 {% endblock %}

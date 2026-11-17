@@ -75,6 +75,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sitemaps',
     'profesionales',
     'investigacion',
     'contacto',
@@ -106,6 +107,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'BiologiaComputacional.context_processors.contacto_publico',
             ],
         },
     },
@@ -205,6 +207,13 @@ else:
 
 CSRF_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+SECURE_SSL_REDIRECT = env_bool('SECURE_SSL_REDIRECT', default=not DEBUG)
+SECURE_HSTS_SECONDS = env_int('SECURE_HSTS_SECONDS', 0)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=False)
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
 # Sin «Recuérdame» la cookie muere al cerrar el navegador.
 # Con la casilla, el login guarda una fecha fija de estas dos semanas.
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True

@@ -1,4 +1,4 @@
-from django.core.validators import FileExtensionValidator
+from django.core.validators import FileExtensionValidator, MaxValueValidator, MinValueValidator
 from django.db import models
 
 # El formulario público ya limita estos campos a PDF. El admin usa el mismo modelo.
@@ -62,6 +62,16 @@ class Investigacion(models.Model):
     imagen_extra_1 = models.ImageField(upload_to='investigacion-imagenes-extras1/', blank=True)
     imagen_extra_2 = models.ImageField(upload_to='investigacion-imagenes-extras2/', blank=True)
     imagen_extra_3 = models.ImageField(upload_to='investigacion-imagenes-extras3/', blank=True)
+    anio = models.PositiveSmallIntegerField(
+        'Año', null=True, blank=True,
+        validators=[MinValueValidator(1900), MaxValueValidator(2100)],
+    )
+    organismo = models.CharField('Organismo o sistema biológico', max_length=120, blank=True)
+    metodos = models.CharField('Métodos o técnicas', max_length=180, blank=True)
+    palabras_clave = models.CharField('Palabras clave', max_length=250, blank=True)
+    publicacion_url = models.URLField('Publicación', blank=True)
+    datos_url = models.URLField('Datos', blank=True)
+    codigo_url = models.URLField('Código', blank=True)
 
     def imagenes_extra(self):
         # Una sola serie: la plantilla no repite el mismo bloque tres veces.

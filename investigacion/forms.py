@@ -1,6 +1,7 @@
 from django import forms
 
 from investigacion.carrusel import CAMPOS_IMAGEN, imagen_disponible
+from investigacion.models import Investigacion
 
 
 def _campo_texto(numero):
@@ -76,3 +77,40 @@ def filas_del_formulario(form, urls):
             'url': urls.get(f'imagen{numero}', ''),
         })
     return filas
+
+
+class InvestigacionForm(forms.ModelForm):
+    """Formulario de ficha con metadatos opcionales para facilitar su búsqueda."""
+
+    class Meta:
+        model = Investigacion
+        fields = [
+            'categoria', 'nombre', 'descrip', 'anio', 'organismo', 'metodos',
+            'palabras_clave', 'publicacion_url', 'datos_url', 'codigo_url',
+            'imagen_investigacion', 'imagen_tif', 'pdf', 'mejores_pdf',
+            'imagen_extra_1', 'imagen_extra_2', 'imagen_extra_3',
+        ]
+        widgets = {
+            'anio': forms.NumberInput(attrs={'min': 1900, 'max': 2100}),
+            'metodos': forms.TextInput(attrs={
+                'placeholder': 'p. ej. modelado molecular, análisis estadístico',
+            }),
+            'palabras_clave': forms.TextInput(attrs={
+                'placeholder': 'Separadas por comas',
+            }),
+        }
+        help_texts = {
+            'organismo': 'Es opcional; ayuda a encontrar proyectos relacionados.',
+            'metodos': 'Puedes escribir varias técnicas separadas por comas.',
+            'palabras_clave': 'Usa términos breves separados por comas.',
+            'publicacion_url': 'Enlace a artículo, DOI o página de publicación.',
+            'datos_url': 'Enlace a datos públicos o repositorio.',
+            'codigo_url': 'Enlace al código fuente o repositorio.',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for campo in self.fields.values():
+            clase = 'form-select' if isinstance(campo.widget, forms.Select) else 'form-control'
+            clases_previas = campo.widget.attrs.get('class', '')
+            campo.widget.attrs['class'] = f'{clases_previas} {clase}'.strip()

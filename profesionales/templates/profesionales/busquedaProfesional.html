@@ -64,12 +64,21 @@
   <div class="profesionales-grid">
     {% for profesional in profesionales %}
     <div class="tarjetaprofesional">
+      {% if profesional.foto %}
       <img
         src="{{ profesional.foto.url }}"
         alt="Foto de {{ profesional.nombre }} {{ profesional.apellido }}"
         width="120"
         height="120"
       />
+      {% else %}
+      <img
+        src="{% static 'images/default.jpg' %}"
+        alt="Sin foto de {{ profesional.nombre }} {{ profesional.apellido }}"
+        width="120"
+        height="120"
+      />
+      {% endif %}
       <h3>{{ profesional.nombre }}</h3>
       <h3>{{ profesional.apellido }}</h3>
       <a

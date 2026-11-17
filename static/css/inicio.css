@@ -69,8 +69,14 @@ h1.fw-bold::after {
   display: block;
   width: 120px;
   height: 4px;
-  background: gradient linear(90deg, var(--accent-gold), transparent);
+  background: linear-gradient(90deg, var(--accent-gold), transparent);
   margin: 1rem auto 0;
+}
+
+@media (max-width: 768px) {
+  .inicio {
+    background-attachment: scroll;
+  }
 }
 
 .fs-5.text-center {

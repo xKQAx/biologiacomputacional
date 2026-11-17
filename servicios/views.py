@@ -3,7 +3,7 @@ from servicios.models import Categoria, Servicio
 from django.db.models import Q
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import request
-from BiologiaComputacional.forms import ServicioForm
+from servicios.forms import ServicioForm
 import os
 from django.contrib import messages
 from django.utils.decorators import method_decorator
@@ -155,8 +155,6 @@ class servicio_edit_view(TemplateView):
                 'form_errors': form.errors
             }
             return render(request, self.template_name, context)
-        
-        
 # Vista para agregar una herramienta o base de datos
 
 
@@ -194,4 +192,3 @@ class nuevo_servicio_view(TemplateView):
             }
             
             return render(request, self.template_name, context)
-        
