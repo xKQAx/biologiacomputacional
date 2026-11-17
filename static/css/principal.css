@@ -482,7 +482,7 @@ textarea:focus {
   transform: translateY(-150%);
 }
 
-.skip-link:focus {
+.skip-link:focus-visible {
   color: #fff;
   transform: translateY(0);
 }
